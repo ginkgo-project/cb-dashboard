@@ -40,12 +40,19 @@ faces exactly when n is a multiple of 8.
 
 Small entries: next to the boundary, where the nodes don't move, P2 elasticity
 still has couplings that cancel exactly. In floating point they leave a rounding
-residue instead of a zero: 12782 of 691698 entries at n = 7, at most
-1.3e-17 * max|A|. Without the drop, the pattern of the symmetric matrix wouldn't
-be symmetric (2200 entries at n = 7). Every entry at most ``_RESIDUE * max|A|``
-is therefore dropped with the explicit zeros. At the test sizes the smallest
-kept entry is 2.5e-8 * max|A| in elasticity and 1.8e-12 * max|A| in
-porous_pressure (its 1e6 contrast). The other problems have no residue.
+residue instead of a zero: 12782 of 691698 entries at n = 7. Without the drop,
+the pattern of the symmetric matrix wouldn't be symmetric (2200 entries at
+n = 7). So an entry is dropped, with the explicit zeros, when
+
+    max(|a_ij|, |a_ji|) <= _RESIDUE * sqrt(|a_ii * a_jj|).
+
+The rule looks at both entries of a pair, so it keeps or drops both and the
+pattern stays symmetric. It compares with the diagonals of the two rows, not
+with max|A|, so it doesn't depend on a coefficient contrast elsewhere in the
+matrix. At the test sizes it drops 12782 entries in elasticity_p2 and 19993 in
+elasticity_p2_graded, at most 8.4e-17 * sqrt(|a_ii * a_jj|), and nothing in
+the P1 and Nedelec problems. The smallest kept off-diagonal entry is
+1.1e-10 * sqrt(|a_ii * a_jj|) (porous_pressure) and 5.7e-8 in elasticity_p2.
 """
 from __future__ import annotations
 
@@ -123,10 +130,29 @@ def _graded_cube(n: int) -> fem.MeshTet:
     return m
 
 
+def _residue(A: sp.csr_matrix) -> np.ndarray:
+    """Mask of the entries of A (canonical CSR) that the drop rule removes.
+
+    True where max(|a_ij|, |a_ji|) <= _RESIDUE * sqrt(|a_ii * a_jj|); with
+    a_ji = 0 when it isn't stored. Explicit zeros are always in the mask.
+    """
+    n_rows, n_cols = A.shape
+    rows = np.repeat(np.arange(n_rows, dtype=np.int64), np.diff(A.indptr))
+    cols = A.indices.astype(np.int64)
+    key = rows * n_cols + cols  # increasing, since the indices are sorted
+    mirror = cols * n_cols + rows
+    pos = np.minimum(np.searchsorted(key, mirror), len(key) - 1)
+    a_ji = np.where(key[pos] == mirror, A.data[pos], 0.0)
+    pair = np.maximum(np.abs(A.data), np.abs(a_ji))
+    root = np.sqrt(np.abs(A.diagonal()))  # sqrt per factor: no overflow
+    return pair <= _RESIDUE * root[rows] * root[cols]
+
+
 def _finish(A, D) -> sp.csr_matrix:
     A = sp.csr_matrix(fem.condense(A, D=D, expand=False), dtype=np.float64)
     A.sum_duplicates()
-    A.data[np.abs(A.data) <= _RESIDUE * np.abs(A.data).max()] = 0.0
+    A.sort_indices()
+    A.data[_residue(A)] = 0.0
     A.eliminate_zeros()
     return A
 

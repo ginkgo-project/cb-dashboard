@@ -153,3 +153,48 @@ def test_deterministic(problem):
     assert A.indptr.tobytes() == B.indptr.tobytes()
     assert A.indices.tobytes() == B.indices.tobytes()
     assert A.data.tobytes() == B.data.tobytes()
+
+
+def _with_and_without_drop(monkeypatch, problem):
+    """The matrix, and the same one with only the explicit zeros dropped."""
+    A = _matrix(problem)  # first: _matrix caches, and must not see the patch
+    with monkeypatch.context() as mp:
+        mp.setattr(fem, "_residue", lambda B: B.data == 0)
+        raw = fem.generate(problem, SMALL[problem])
+    return A, raw
+
+
+def test_residue_rule_is_per_pair():
+    A = sp.csr_matrix(np.array([[4.0, 1e-20, 1e-20],
+                                [0.0, 9.0, 2.0],
+                                [1.0, 2.0, 1.0]]))
+    A.sort_indices()
+    # (0,1): max(1e-20, 0) <= 1e-14 * sqrt(4 * 9), dropped. (0,2): its mirror
+    # (2,0) is 1, so both stay.
+    kept = A.copy()
+    kept.data[fem._residue(A)] = 0.0
+    kept.eliminate_zeros()
+    assert kept[0, 1] == 0 and kept[0, 2] == 1e-20 and kept[2, 0] == 1.0
+    assert kept.nnz == A.nnz - 1
+
+
+@pytest.mark.parametrize("problem", ["porous_pressure", "anisotropic_heat", "poisson_p1",
+                                     "convection_diffusion", "curl_curl"])
+def test_p1_and_n0_drop_nothing(monkeypatch, problem):
+    A, raw = _with_and_without_drop(monkeypatch, problem)
+    assert A.nnz == raw.nnz
+    assert A.indices.tobytes() == raw.indices.tobytes()
+    assert A.data.tobytes() == raw.data.tobytes()
+
+
+def test_elasticity_residue_dropped_symmetrically(monkeypatch):
+    A, raw = _with_and_without_drop(monkeypatch, "elasticity_p2")
+    P, R = A.copy(), raw.copy()
+    P.data[:] = 1.0
+    R.data[:] = 1.0
+    assert (R - R.T).nnz > 0  # the residue alone leaves the pattern unsymmetric
+    assert (P - P.T).nnz == 0
+    assert 0 < raw.nnz - A.nnz < 0.05 * raw.nnz
+    # Only rounding residue goes: the dropped entries are tiny next to max|A|.
+    dropped = abs(raw - raw.multiply(P.astype(bool)))
+    assert dropped.max() <= 1e-14 * abs(A).max()
