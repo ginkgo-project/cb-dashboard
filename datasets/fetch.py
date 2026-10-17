@@ -7,6 +7,9 @@ from pathlib import Path
 
 CHUNK = 1 << 20
 WEBGRAPH_EXTENSIONS = ("graph", "properties", "offsets")
+# Seconds a connect or a single read may stall, so a dead server fails the
+# entry instead of holding a 6-hour job.
+TIMEOUT_S = 60
 
 
 def _sha256_file(path: Path) -> str:
@@ -35,7 +38,7 @@ def download(url: str, dest: Path) -> str:
         req.add_header("Range", f"bytes={have}-")
     complete = False
     try:
-        resp = urllib.request.urlopen(req)
+        resp = urllib.request.urlopen(req, timeout=TIMEOUT_S)
     except urllib.error.HTTPError as e:
         if e.code == 416 and have:
             complete = True  # .part already holds the whole file

@@ -1,9 +1,12 @@
 import hashlib
 import http.server
 import threading
+import time
+import urllib.error
 
 import pytest
 
+from datasets import fetch
 from datasets.fetch import download, fetch_webgraph
 
 PAYLOAD = bytes(range(256)) * 4000  # ~1 MB
@@ -13,11 +16,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
     files = {}
     requests = []
     honour_range = True
+    stall = 0.0  # seconds to wait before answering
 
     def log_message(self, *a):
         pass
 
     def do_GET(self):
+        if self.stall:
+            time.sleep(self.stall)
         body = self.files.get(self.path)
         if body is None:
             self.send_error(404)
@@ -47,6 +53,7 @@ def server():
     _Handler.files = {"/a.bin": PAYLOAD}
     _Handler.requests = []
     _Handler.honour_range = True
+    _Handler.stall = 0.0
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
@@ -117,3 +124,28 @@ def test_fetch_webgraph(server, tmp_path):
     for e, s in out.items():
         assert (tmp_path / "d" / f"web.{e}").exists()
         assert s == sha(e.encode() * 10)
+
+
+def test_urlopen_has_timeout(server, tmp_path, monkeypatch):
+    base, h = server
+    seen = []
+    real = fetch.urllib.request.urlopen
+
+    def urlopen(req, *a, **kw):
+        seen.append(kw.get("timeout"))
+        return real(req, *a, **kw)
+    monkeypatch.setattr(fetch.urllib.request, "urlopen", urlopen)
+    download(base + "/a.bin", tmp_path / "a.bin")
+    assert seen == [60] and fetch.TIMEOUT_S == 60
+
+
+def test_stalled_server_times_out(server, tmp_path, monkeypatch):
+    base, h = server
+    h.stall = 3.0
+    monkeypatch.setattr(fetch, "TIMEOUT_S", 0.5)
+    dest = tmp_path / "a.bin"
+    t = time.monotonic()
+    with pytest.raises((TimeoutError, urllib.error.URLError)):
+        download(base + "/a.bin", dest)
+    assert time.monotonic() - t < 2.5
+    assert not dest.exists()
