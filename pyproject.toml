@@ -16,10 +16,11 @@ dependencies = [
 dev = ["pytest"]
 
 [tool.setuptools]
-packages = ["datasets"]
+packages = ["datasets", "bench"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.setuptools.package-data]
 datasets = ["catalog.toml"]
+bench = ["machines/*.toml"]

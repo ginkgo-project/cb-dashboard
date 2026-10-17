@@ -1,0 +1,16 @@
+include = "common.toml"
+executor = "hip"
+uenv = "prgenv-gnu/25.07-6.3.3:v12"
+arch = "x86_64"
+needs_gcc_root = true
+sbatch = ["--partition=mi300", "--nodes=1", "--exclusive", "--time=04:00:00", "--account=d131"]
+srun = ["--ntasks=1", "--gpus-per-task=1", "--cpus-per-task=24", "--cpu-bind=cores"]
+cmake_flags = [
+    "-DGINKGO_BUILD_HIP=ON",
+    "-DCMAKE_HIP_ARCHITECTURES=gfx942",
+    "-DGINKGO_BUILD_CUDA=OFF",
+    "-DCMAKE_C_COMPILER={gcc_root}/bin/gcc",
+    "-DCMAKE_CXX_COMPILER={gcc_root}/bin/g++",
+    "-DCMAKE_HIP_COMPILER=/user-environment/env/default/bin/clang++",
+    "-DCMAKE_HIP_FLAGS=--gcc-toolchain={gcc_root}",
+]
