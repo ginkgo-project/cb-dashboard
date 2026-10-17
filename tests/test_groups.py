@@ -83,7 +83,15 @@ def test_solver_three_invocations(m):
         assert flag(i, "-rel_res_goal") == "1e-10" and flag(i, "-max_iters") == "1000"
         assert flag(i, "-preconditioners") == "jacobi" and flag(i, "-jacobi_max_block_size") == "1"
         assert flag(i, "-rhs_generation") == "sinus" and flag(i, "-initial_guess_generation") == "0"
-        assert json.loads(i.stdin) == [{"size": 8000000, "stencil": s} for s in ("5pt", "7pt", "27pt")]
+        assert json.loads(i.stdin) == [{"size": 8000000, "stencil": s, "optimal": {"spmv": "csr"}}
+                                       for s in ("5pt", "7pt", "27pt")]
+
+
+def test_solver_cases_name_the_optimal_format(m):
+    # Ginkgo's solver benchmark exits with 2 on a case without optimal.spmv.
+    for i in by_group(m, "solver"):
+        for case in json.loads(i.stdin):
+            assert isinstance(case["optimal"]["spmv"], str) and case["optimal"]["spmv"] == "csr"
 
 
 def test_precond_lists_by_spd(m):

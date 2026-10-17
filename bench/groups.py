@@ -11,7 +11,10 @@ from bench.machine import Machine
 GROUPS = ["blas", "spmv", "spgemm", "solver", "preconditioner"]
 
 VECTOR_LENGTHS = [1048576, 16777216, 134217728]
-STENCILS = [{"size": 8000000, "stencil": s} for s in ("5pt", "7pt", "27pt")]
+# The solver benchmark rejects a test case without "optimal": {"spmv": ...}
+# (benchmark/solver/solver_common.hpp, validate_config) and then exits with 2.
+STENCILS = [{"size": 8000000, "stencil": s, "optimal": {"spmv": "csr"}}
+            for s in ("5pt", "7pt", "27pt")]
 PRECOND_SPD = "jacobi,ilu,ilu-syncfree,ic,ic-syncfree,spd-isai,mg-pgm,mg-pmis,mg-uniform"
 PRECOND_GENERAL = "jacobi,ilu,ilu-syncfree,general-isai,mg-pgm,mg-pmis,mg-uniform"
 SOLVER_SETTINGS = [
