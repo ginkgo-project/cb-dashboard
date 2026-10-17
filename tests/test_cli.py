@@ -1,5 +1,6 @@
 import json
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -67,6 +68,7 @@ def patch_common(monkeypatch, m, commit):
     monkeypatch.setattr(cli, "prepare_worktree", lambda *a: None)
     monkeypatch.setattr(cli, "gpu_info", lambda m: {"gpu": "g"})
     monkeypatch.setattr(cli, "toolchain_info", lambda m: {"g++": "x"})
+    monkeypatch.setattr(cli, "job_deadline", lambda: None)
 
 
 COMMIT = Commit("a" * 40, "2026-10-16", "b" * 40)
@@ -103,19 +105,26 @@ def test_arch_mismatch_exits_two(tmp_path, monkeypatch, manifest):
     assert cli.main(["run", "daint-gh200", "--manifest", str(manifest)]) == 2
 
 
-def full_run(tmp_path, monkeypatch, manifest, argv=(), status="ok"):
+def full_run(tmp_path, monkeypatch, manifest, argv=(), status="ok", during=None):
+    """Run the CLI with fakes; `during(group, out)` runs inside each fake group."""
     m = fake_machine(tmp_path)
     patch_common(monkeypatch, m, COMMIT)
     order = []
     monkeypatch.setattr(cli, "build", lambda m, src: order.append("build") or
                         {"configured": True, "seconds": 1.0, "cmake_cache": {}})
-    def rg(group, invs, srun, out):
+    def rg(group, invs, srun, out, deadline=None):
         order.append(group)
         out.mkdir(parents=True, exist_ok=True)
+        if during:
+            during(group, out)
         return {"status": status, "seconds": 0.0, "invocations": []}
     monkeypatch.setattr(cli, "run_group", rg)
     rc = cli.main(["run", "daint-gh200", "--manifest", str(manifest), *argv])
     return m, rc, order
+
+
+def run_json(m):
+    return json.loads(next(m.results_dir.glob("*/run.json")).read_text())
 
 
 def test_full_run_writes_record_and_last(tmp_path, monkeypatch, manifest):
@@ -150,8 +159,10 @@ def test_build_failure(tmp_path, monkeypatch, manifest):
     monkeypatch.setattr(cli, "build", boom)
     monkeypatch.setattr(cli, "run_group", lambda *a, **k: pytest.fail("ran"))
     assert cli.main(["run", "daint-gh200", "--manifest", str(manifest)]) == 1
-    rec = json.loads(next(m.results_dir.glob("*/run.json")).read_text())
-    assert "error" in rec["build"] and rec["groups"] == {}
+    rec = run_json(m)
+    assert "error" in rec["build"] and rec["finished"] is not None
+    assert rec["groups"] == {g: {"status": "skipped", "reason": "build failed"}
+                             for g in cli.GROUPS}
     assert not (m.root / "state" / m.name / "last_commit").exists()
 
 
@@ -159,3 +170,101 @@ def test_subset_groups_does_not_write_last(tmp_path, monkeypatch, manifest):
     m, rc, _ = full_run(tmp_path, monkeypatch, manifest, ["--groups", "blas"])
     assert rc == 0
     assert not (m.root / "state" / m.name / "last_commit").exists()
+
+
+def test_record_written_after_build_and_each_group(tmp_path, monkeypatch, manifest):
+    seen = {}
+
+    def during(group, out):
+        seen[group] = json.loads((out / "run.json").read_text())
+    m, rc, order = full_run(tmp_path, monkeypatch, manifest, during=during)
+    assert rc == 0
+    first = seen["blas"]
+    assert first["finished"] is None and first["build"]["configured"] is True
+    assert first["groups"]["blas"] == {"status": "running"}
+    assert all(first["groups"][g] == {"status": "pending"} for g in cli.GROUPS[1:])
+    later = seen["solver"]
+    assert [later["groups"][g]["status"] for g in cli.GROUPS] == [
+        "ok", "ok", "ok", "running", "pending"]
+    rec = run_json(m)
+    assert rec["finished"] is not None
+    assert all(rec["groups"][g]["status"] == "ok" for g in cli.GROUPS)
+    assert not list(m.results_dir.glob("*/run.json.tmp"))
+
+
+def test_exception_in_group_recorded_next_runs(tmp_path, monkeypatch, manifest):
+    def during(group, out):
+        if group == "spgemm":
+            raise RuntimeError("no such matrix field")
+    m, rc, order = full_run(tmp_path, monkeypatch, manifest, during=during)
+    assert rc == 0
+    assert order == ["build", *cli.GROUPS]
+    g = run_json(m)["groups"]
+    assert g["spgemm"]["status"] == "failed"
+    assert g["spgemm"]["reason"] == "RuntimeError: no such matrix field"
+    assert g["solver"]["status"] == "ok" and g["preconditioner"]["status"] == "ok"
+
+
+def test_sigterm_writes_record_and_exits(tmp_path, monkeypatch, manifest):
+    before = signal.getsignal(signal.SIGTERM)
+
+    def during(group, out):
+        if group == "spgemm":
+            os.kill(os.getpid(), signal.SIGTERM)
+            raise AssertionError("SIGTERM did not stop the group")
+    m, rc, order = full_run(tmp_path, monkeypatch, manifest, during=during)
+    assert rc == 128 + signal.SIGTERM
+    assert order == ["build", "blas", "spmv", "spgemm"]
+    rec = run_json(m)
+    assert rec["finished"] is not None
+    assert [rec["groups"][g]["status"] for g in cli.GROUPS] == [
+        "ok", "ok", "killed", "skipped", "skipped"]
+    assert rec["groups"]["solver"]["reason"] == "job killed"
+    assert not (m.root / "state" / m.name / "last_commit").exists()
+    assert signal.getsignal(signal.SIGTERM) is before
+
+
+def test_sigterm_during_build(tmp_path, monkeypatch, manifest):
+    m = fake_machine(tmp_path)
+    patch_common(monkeypatch, m, COMMIT)
+
+    def build(m, src):
+        os.kill(os.getpid(), signal.SIGTERM)
+        raise AssertionError("SIGTERM did not stop the build")
+    monkeypatch.setattr(cli, "build", build)
+    monkeypatch.setattr(cli, "run_group", lambda *a, **k: pytest.fail("ran"))
+    assert cli.main(["run", "daint-gh200", "--manifest", str(manifest)]) == 143
+    rec = run_json(m)
+    assert "SIGTERM" in rec["build"]["error"]
+    assert all(rec["groups"][g] == {"status": "skipped", "reason": "job killed"}
+               for g in cli.GROUPS)
+
+
+def test_groups_in_any_order_are_a_full_run(tmp_path, monkeypatch, manifest):
+    m, rc, order = full_run(tmp_path, monkeypatch, manifest,
+                            ["--groups", "preconditioner,solver,spgemm,spmv,blas,spmv"])
+    assert rc == 0
+    assert order == ["build", *cli.GROUPS]
+    assert (m.root / "state" / m.name / "last_commit").read_text().strip() == COMMIT.sha
+
+
+def test_unrequested_groups_recorded_as_skipped(tmp_path, monkeypatch, manifest):
+    m, rc, order = full_run(tmp_path, monkeypatch, manifest, ["--groups", "solver,blas"])
+    assert order == ["build", "blas", "solver"]
+    g = run_json(m)["groups"]
+    assert list(g) == cli.GROUPS
+    assert g["blas"]["status"] == "ok" and g["solver"]["status"] == "ok"
+    for name in ("spmv", "spgemm", "preconditioner"):
+        assert g[name] == {"status": "skipped", "reason": "not requested"}
+
+
+def test_deadline_passed_to_groups(tmp_path, monkeypatch, manifest):
+    m = fake_machine(tmp_path)
+    patch_common(monkeypatch, m, COMMIT)
+    monkeypatch.setattr(cli, "job_deadline", lambda: 12345.0)
+    monkeypatch.setattr(cli, "build", lambda m, src: {"cmake_cache": {}})
+    seen = []
+    monkeypatch.setattr(cli, "run_group", lambda g, invs, srun, out, deadline=None:
+                        seen.append(deadline) or {"status": "ok", "seconds": 0.0, "invocations": []})
+    assert cli.main(["run", "daint-gh200", "--manifest", str(manifest), "--groups", "blas"]) == 0
+    assert seen == [12345.0]

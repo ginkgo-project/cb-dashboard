@@ -5,7 +5,9 @@ import argparse
 import json
 import os
 import platform
+import signal
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,7 +17,7 @@ from bench.checkout import (DEVELOP, ensure_clone, prepare_worktree, read_last, 
 from bench.groups import GROUPS, invocations
 from bench.machine import load_machine
 from bench.record import gpu_info, results_dir_name, run_record, toolchain_info
-from bench.runner import run_group
+from bench.runner import Killed, job_deadline, run_group
 
 GINKGO_URL = "https://github.com/ginkgo-project/ginkgo.git"
 DEFAULT_MANIFEST = Path(__file__).resolve().parent.parent / "datasets" / "manifest.json"
@@ -36,6 +38,13 @@ def _make_results_dir(base: Path, commit) -> Path:
             continue
 
 
+def _write_json(path: Path, data) -> None:
+    """Write atomically: a reader (or a kill) never sees half a file."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2))
+    os.replace(tmp, path)
+
+
 def cmd_sbatch_args(args) -> int:
     m = load_machine(args.machine, env={**os.environ, "SCRATCH": os.environ.get("SCRATCH", "/unused")})
     print(" ".join([*m.sbatch, f"--uenv={m.uenv}"]))
@@ -44,11 +53,12 @@ def cmd_sbatch_args(args) -> int:
 
 def cmd_run(args) -> int:
     m = load_machine(args.machine)
-    groups = [g for g in args.groups.split(",") if g]
-    bad = [g for g in groups if g not in GROUPS]
+    requested = [g for g in args.groups.split(",") if g]
+    bad = [g for g in requested if g not in GROUPS]
     if bad:
         print(f"error: unknown groups {bad}; known: {', '.join(GROUPS)}", file=sys.stderr)
         return 2
+    groups = [g for g in GROUPS if g in requested]  # the spec's order, no repeats
     manifest = json.loads(Path(args.manifest).read_text())
     if args.dry_run:
         print(f"machine: {m.name}")
@@ -72,24 +82,68 @@ def cmd_run(args) -> int:
     prepare_worktree(clone, worktree, commit.sha)
     out = _make_results_dir(m.results_dir, commit)
 
-    def record(build_info, group_results):
-        rec = run_record(m, commit, args.ref, {"cmake_cache": {}}, manifest, group_results,
-                         started, _now(), gpu=gpu, toolchain=toolchain)
-        rec["build"] = build_info
-        rec["cmake_cache"] = build_info.get("cmake_cache", {})
-        (out / "run.json").write_text(json.dumps(rec, indent=2))
+    results = {g: {"status": "pending"} if g in groups else
+               {"status": "skipped", "reason": "not requested"} for g in GROUPS}
+    build_info: dict | None = None
 
+    def record(finished=None):
+        info = build_info if build_info is not None else {}
+        rec = run_record(m, commit, args.ref, {"cmake_cache": info.get("cmake_cache", {})},
+                         manifest, results, started, finished, gpu=gpu, toolchain=toolchain)
+        rec["build"] = info
+        _write_json(out / "run.json", rec)
+
+    def skip_pending(reason):
+        for g, r in results.items():
+            if r["status"] in ("pending", "running"):
+                results[g] = {"status": "skipped", "reason": reason}
+
+    killed: list[int] = []
+
+    def on_sigterm(signum, frame):
+        if not killed:  # raise once; the handling below must not be interrupted
+            killed.append(signum)
+            raise Killed(signum)
+
+    previous = signal.signal(signal.SIGTERM, on_sigterm)
+    current = None
     try:
-        info = build(m, worktree)
-    except Exception as e:
-        record({"error": f"{type(e).__name__}: {e}"}, {})
-        print(f"error: build failed: {e}", file=sys.stderr)
-        return 1
-    results = {}
-    for g in groups:
-        invs = invocations(m, manifest, [g])
-        results[g] = run_group(g, invs, m.srun, out)
-    record(info, results)
+        try:
+            build_info = build(m, worktree)
+        except Exception as e:
+            build_info = {"error": f"{type(e).__name__}: {e}"}
+            skip_pending("build failed")
+            record(_now())
+            print(f"error: build failed: {e}", file=sys.stderr)
+            return 1
+        record()
+        deadline = job_deadline()
+        for g in groups:
+            current = g
+            results[g] = {"status": "running"}
+            record()
+            t = time.monotonic()
+            try:
+                results[g] = run_group(g, invocations(m, manifest, [g]), m.srun, out,
+                                       deadline=deadline)
+            except Exception as e:
+                results[g] = {"status": "failed", "reason": f"{type(e).__name__}: {e}",
+                              "seconds": time.monotonic() - t, "invocations": []}
+            current = None
+            record()
+        record(_now())
+    except Killed as k:
+        if build_info is None:
+            build_info = {"error": "killed (SIGTERM) during the build"}
+        if current is not None:
+            results[current] = k.group_result or {"status": "killed",
+                                                  "reason": "job killed (SIGTERM)"}
+        skip_pending("job killed")
+        record(_now())
+        print(f"error: killed by signal {k.signum}; run.json written", file=sys.stderr)
+        return 128 + k.signum
+    finally:
+        signal.signal(signal.SIGTERM, previous)
     if args.ref == DEVELOP and groups == GROUPS:
         write_last(state, commit.sha)
     return 0

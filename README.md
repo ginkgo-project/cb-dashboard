@@ -83,9 +83,12 @@ or srun.
 
 The default ref is `origin/develop`. Without `--force`, a run of develop's head
 that was already benchmarked exits with "nothing to do". `last_commit` is only
-updated after a completed run of `origin/develop` with all groups (a `--groups` subset is a debugging run). `SUBMIT_DRY_RUN=1` prints the
+updated after a completed run of `origin/develop` with all groups, in any order
+(a `--groups` subset is a debugging run). The groups always run in the order
+blas, spmv, spgemm, solver, preconditioner. `SUBMIT_DRY_RUN=1` prints the
 sbatch command instead of submitting it. Exit codes of the job: 0 on success or
-nothing to do, 1 on a build failure, 2 on an architecture mismatch.
+nothing to do, 1 on a build failure, 2 on an architecture mismatch, 143 when
+Slurm stopped the job with SIGTERM (time limit or `scancel`).
 
 ### Logs and results
 
@@ -93,6 +96,12 @@ nothing to do, 1 on a build failure, 2 on an architecture mismatch.
 - Results: `$SCRATCH/cb/results/<machine>/<date>_<sha10>/` (a rerun of the same
   commit gets `_2`, `_3`, ...) with `run.json`, one `<group>.json` per group and
   `logs/<group>/<label>.log` per invocation.
+- `run.json` is rewritten after the build and after every group, so a killed
+  job still has one. `finished` stays `null` until the run ends. A group is
+  `pending`, `running`, `ok`, `partial`, `failed`, `killed` (the job got
+  SIGTERM while it ran) or `skipped` (not requested, build failed, job killed).
+  An invocation is `ok`, `partial` or `failed` (Ginkgo's own errors are listed
+  under `failures`), or `skipped` when its timeout no longer fits in the job.
 
 ### Copy back
 
