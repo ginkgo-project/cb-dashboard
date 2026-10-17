@@ -118,6 +118,9 @@ def _build_entry(entry: Entry, catalog: Catalog, root: Path,
         rows, cols, vals = assemble(pattern, symmetric=symmetric,
                                     add_diagonal=entry.add_diagonal, seed=catalog.seed)
         del pattern
+    if entry.expected_rows is not None and shape[0] != entry.expected_rows:
+        raise ValueError(f"{entry.name}: row check failed: got {shape[0]}, "
+                         f"expected {entry.expected_rows}")
     nnz = len(rows)
     check_nnz(entry, nnz, shape[0])
     stats = row_length_stats(shape[0], rows)

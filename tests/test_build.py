@@ -234,3 +234,23 @@ def test_webgraph_without_command_fails(tmp_path, server):
     cat = extra_catalog(tmp_path, server, WEB)
     with pytest.raises(BuildError, match="webgraph-cmd"):
         build(cat, tmp_path / "root", tmp_path / "manifest.json", None, None)
+
+
+def test_rows_check_fails_loudly(tmp_path, server):
+    cat = extra_catalog(tmp_path, server, '''
+[[entry]]
+name = "badrows"
+set = "spmv"
+source = "t"
+url = "URL/tiny.graph"
+format = "metis"
+symmetric = true
+add_diagonal = false
+expected_rows = 5
+nnz_check = "none"
+''')
+    manifest = tmp_path / "manifest.json"
+    with pytest.raises(BuildError, match=r"badrows.*3.*5"):
+        build(cat, tmp_path / "root", manifest, None, None)
+    assert json.loads(manifest.read_text())["matrices"] == []
+    assert not (tmp_path / "root/matrices/spmv/badrows.bin").exists()
