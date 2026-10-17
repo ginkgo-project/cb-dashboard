@@ -121,8 +121,9 @@ expected_rows = 41652230
 expected_nnz = 1468365182
 nnz_check = "exact"
 
-# FEM entries are generated (Task 4). size = 1 is a placeholder; the real
-# sizes are tuned in Task 7.
+# FEM entries are generated (Task 4). The sizes are placeholders, the test
+# sizes of tests/test_fem.py (about 1e4 rows); the real sizes are tuned in
+# Task 7.
 
 [[entry]]
 name = "porous_pressure"
@@ -134,7 +135,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "porous_pressure", size = 1}
+fem = {problem = "porous_pressure", size = 22}
 
 [[entry]]
 name = "anisotropic_heat"
@@ -146,7 +147,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "anisotropic_heat", size = 1}
+fem = {problem = "anisotropic_heat", size = 101}
 
 [[entry]]
 name = "elasticity_p2"
@@ -158,7 +159,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "elasticity_p2", size = 1}
+fem = {problem = "elasticity_p2", size = 7}
 
 [[entry]]
 name = "convection_diffusion"
@@ -170,7 +171,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = false
-fem = {problem = "convection_diffusion", size = 1}
+fem = {problem = "convection_diffusion", size = 101}
 
 [[entry]]
 name = "curl_curl"
@@ -182,7 +183,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "curl_curl", size = 1}
+fem = {problem = "curl_curl", size = 12}
 
 [[entry]]
 name = "poisson_p1"
@@ -194,7 +195,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["spgemm"]
 spd = true
-fem = {problem = "poisson_p1", size = 1}
+fem = {problem = "poisson_p1", size = 22}
 
 [[entry]]
 name = "elasticity_p2_graded"
@@ -206,4 +207,4 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["spgemm"]
 spd = true
-fem = {problem = "elasticity_p2_graded", size = 1}
+fem = {problem = "elasticity_p2_graded", size = 8}

@@ -4,6 +4,7 @@ import functools
 import numpy as np
 import pytest
 import scipy.sparse as sp
+import skfem
 from scipy.sparse.linalg import eigsh
 
 from datasets import fem
@@ -17,9 +18,8 @@ SMALL = {
     "convection_diffusion": 101,  # 10000 rows
     "curl_curl": 12,  # 10836 rows
     "poisson_p1": 22,  # 9261 rows
-    # Below 10 cells per direction no centroid lies within 0.1 of the corner,
-    # so nothing would be refined. 10 gives about 26500 rows.
-    "elasticity_p2_graded": 10,
+    # The smallest size at which all four refinement passes mark elements.
+    "elasticity_p2_graded": 8,
 }
 SPD = [p for p in SMALL if p != "convection_diffusion"]
 
@@ -37,6 +37,7 @@ def test_catalog_problems():
     entries = [e for e in load_catalog().entries if e.set == "fem"]
     assert {e.fem["problem"] for e in entries} == set(SMALL)
     assert {e.fem["problem"] for e in entries if e.spd} == set(SPD)
+    assert all(e.fem["size"] >= SMALL[e.fem["problem"]] for e in entries)
 
 
 def test_unknown_problem():
@@ -45,7 +46,7 @@ def test_unknown_problem():
 
 
 def test_size_too_small():
-    # The catalog's placeholder size 1 must not build silently.
+    # n = 1 leaves the P1 problems without interior unknowns.
     with pytest.raises(ValueError, match="at least 2"):
         fem.generate("poisson_p1", 1)
 
@@ -100,7 +101,48 @@ def test_graded_mesh_is_refined():
     n = SMALL["elasticity_p2_graded"]
     # P2 vector unknowns of the unrefined mesh, with the face x = 0 clamped.
     unrefined = 3 * (2 * n + 1) ** 2 * (2 * n)
-    assert _matrix("elasticity_p2_graded").shape[0] > unrefined
+    # The region within 0.5 of the corner alone is 6.5% of the cube.
+    assert _matrix("elasticity_p2_graded").shape[0] > 1.05 * unrefined
+
+
+def test_graded_mesh_is_graded():
+    # The four nested passes leave the elements near the corner several
+    # bisections smaller than those away from it.
+    m = fem._graded_cube(SMALL["elasticity_p2_graded"])
+    vol = np.abs(_volumes(m.p, m.t))
+    dist = np.linalg.norm(m.p[:, m.t].mean(axis=1), axis=0)
+    assert vol[dist <= 0.0625].mean() < vol[dist > 0.5].mean() / 4
+
+
+def test_p1_not_stencil():
+    lens = np.diff(_matrix("poisson_p1").indptr)
+    assert lens.max() > 7
+
+
+def _volumes(p, t):
+    """Signed volumes (3D) or areas (2D) of the simplices."""
+    x = p[:, t]
+    e = x[:, 1:] - x[:, :1]
+    return np.linalg.det(np.moveaxis(e, -1, 0)) / (6 if len(p) == 3 else 2)
+
+
+@pytest.mark.parametrize("dim", [2, 3])
+def test_mesh_perturbation(dim):
+    n = 9
+    x = np.linspace(0.0, 1.0, n + 1)
+    if dim == 2:
+        m, grid = fem._square(n), skfem.MeshTri.init_tensor(x, x)
+    else:
+        m, grid = fem._cube(n), skfem.MeshTet.init_tensor(x, x, x)
+    assert np.array_equal(m.t, grid.t)
+    on_boundary = np.any((grid.p == 0) | (grid.p == 1), axis=0)
+    # Boundary nodes stay exactly where they were.
+    assert np.array_equal(m.p[:, on_boundary], grid.p[:, on_boundary])
+    # Interior nodes move, by at most 0.2 h per coordinate.
+    d = np.abs(m.p[:, ~on_boundary] - grid.p[:, ~on_boundary])
+    assert d.max() <= 0.2 / n and np.all(d.max(axis=0) > 0)
+    # No element is inverted.
+    assert np.all(_volumes(m.p, m.t) / _volumes(grid.p, grid.t) > 0)
 
 
 @pytest.mark.parametrize("problem", list(SMALL))
