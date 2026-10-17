@@ -116,3 +116,6 @@ def test_common_flags_everywhere(m):
         j = " ".join(i.args)
         assert "-warmup 1 -repetitions 5 -gpu_timer" in j
         assert j.startswith(f"-executor {m.executor} ")
+        assert flag(i, "-repetition_growth_factor") == "1"
+        assert flag(i, "-seed") == "42"
+        assert i.args.count("-seed") == 1 and i.args.count("-repetition_growth_factor") == 1

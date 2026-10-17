@@ -39,7 +39,10 @@ class Invocation:
 
 
 def _base(m: Machine) -> list[str]:
-    return ["-executor", m.executor, "-warmup", "1", "-repetitions", "5", "-gpu_timer"]
+    # A growth factor above 1 (Ginkgo's default is 1.5) times the repetitions in
+    # growing batches, even with a fixed count; at 1 each one is timed alone.
+    return ["-executor", m.executor, "-warmup", "1", "-repetitions", "5", "-gpu_timer",
+            "-repetition_growth_factor", "1", "-seed", "42"]
 
 
 def _matrix(m: Machine, entry: dict) -> tuple[list[str], Path | None]:
