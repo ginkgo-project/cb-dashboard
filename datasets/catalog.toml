@@ -20,10 +20,12 @@ source = "Network Repository (SuiteSparse)"
 url = "https://nrvis.com/download/data/sc/sc-TSOPF-RS-b2383-c1.zip"
 format = "mtx-zip"
 symmetric = false
-add_diagonal = false
+# The Network Repository copy is a pattern without the diagonal (spec). Adding
+# a diagonal entry that is already there does nothing.
+add_diagonal = true
 expected_rows = 38120
 expected_nnz = 16171169
-nnz_check = "exact"
+nnz_check = "plus_diagonal"
 
 [[entry]]
 name = "audikw1"

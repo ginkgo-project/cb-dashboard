@@ -33,3 +33,9 @@ def test_sha_changes_with_content(tmp_path):
     assert a == load_catalog(DEFAULT).sha256
     p.write_text(p.read_text() + "\n# edit\n")
     assert load_catalog(p).sha256 != a
+
+
+def test_tsopf_gets_its_diagonal():
+    (e,) = [e for e in load_catalog().entries if e.name == "TSOPF_RS_b2383_c1"]
+    assert e.add_diagonal is True and e.nnz_check == "plus_diagonal"
+    assert e.expected_nnz == 16171169
