@@ -69,6 +69,15 @@ Use the venv (`datasets/setup_env.sh`) and the checkout of this repository from
 the "Datasets" section above. The dataset manifest `datasets/manifest.json` must
 exist.
 
+### Build
+
+The build directory is `$SCRATCH/cb/build/<machine>`, and rebuilds are
+incremental. A missing or half configured directory is configured again. So is
+one whose `cb-config.json` (the uenv, the CMake arguments and the `g++`, `nvcc`
+and `clang++` versions) doesn't match the current run, then with
+`cmake --fresh`. Besides the five benchmarks, the build makes
+`matrix_statistics` and `mtx_to_binary`.
+
 ### Dry run (login node)
 
     cd $CB_ROOT/cb-dashboard

@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -22,11 +23,17 @@ def fakes(tmp_path, monkeypatch):
         p.write_text(f'#!/bin/sh\necho "{tool} $*" >> "{log}"\n')
         p.chmod(0o755)
     monkeypatch.setenv("PATH", f"{bindir}:{os.environ['PATH']}")
+    monkeypatch.setattr(B, "compiler_versions", lambda: dict(COMPILERS))
     return log
 
 
+COMPILERS = {"g++": "g++ (GCC) 13.2.0", "nvcc": "Cuda compilation tools, release 12.6",
+             "clang++": None}
+
+
 def test_targets():
-    assert B.TARGETS == ["blas", "spmv", "sparse_blas", "solver", "preconditioner", "matrix_statistics"]
+    assert B.TARGETS == ["blas", "spmv", "sparse_blas", "solver", "preconditioner",
+                         "matrix_statistics", "mtx_to_binary"]
 
 
 def test_exe(tmp_path):
@@ -74,18 +81,107 @@ def test_fresh_configure_when_build_dir_missing(tmp_path, fakes):
     assert B.build(m, Path("/src"))["configured"] is True
 
 
+def configured_once(m, fakes):
+    """A first build, as cmake would leave it: build.ninja and CMakeCache.txt."""
+    B.build(m, Path("/src"))
+    (m.build_dir / "build.ninja").write_text("")
+    (m.build_dir / "CMakeCache.txt").write_text("")
+    fakes.write_text("")
+
+
 def test_no_configure_when_ninja_file_exists(tmp_path, fakes):
     m = machine("daint-gh200", tmp_path)
-    m.build_dir.mkdir(parents=True)
-    (m.build_dir / "build.ninja").write_text("")
+    configured_once(m, fakes)
     r = B.build(m, Path("/src"))
     calls = fakes.read_text().splitlines()
     assert len(calls) == 1 and calls[0].startswith("cmake --build ")
     assert "-S" not in calls[0]
-    assert r["configured"] is False
+    assert r["configured"] is False and r["fresh"] is False
+
+
+def test_fingerprint_written(tmp_path, fakes):
+    m = machine("daint-gh200", tmp_path)
+    B.build(m, Path("/src"))
+    fp = json.loads((m.build_dir / "cb-config.json").read_text())
+    assert fp == {"uenv": m.uenv, "configure_args": B.configure_args(m, Path("/src"), None),
+                  "compilers": COMPILERS}
+
+
+def test_fingerprint_has_gcc_root_substituted(tmp_path, fakes, monkeypatch):
+    monkeypatch.setattr(B, "detect_gcc_root", lambda: Path("/g"))
+    m = machine("beverin-mi300a", tmp_path)
+    B.build(m, Path("/src"))
+    args = json.loads((m.build_dir / "cb-config.json").read_text())["configure_args"]
+    assert "-DCMAKE_CXX_COMPILER=/g/bin/g++" in args
+    assert not any("{gcc_root}" in a for a in args)
+
+
+def assert_fresh_configure(m, fakes, r):
+    calls = fakes.read_text().splitlines()
+    assert calls[0].startswith(f"cmake --fresh -S /src -B {m.build_dir} ")
+    assert calls[1].startswith("cmake --build ")
+    assert r["configured"] is True and r["fresh"] is True
+
+
+def test_changed_flag_reconfigures_fresh(tmp_path, fakes):
+    m = machine("daint-gh200", tmp_path)
+    configured_once(m, fakes)
+    m.cmake_flags = [*m.cmake_flags, "-DGINKGO_MIXED_PRECISION=ON"]
+    r = B.build(m, Path("/src"))
+    assert_fresh_configure(m, fakes, r)
+    assert "-DGINKGO_MIXED_PRECISION=ON" in fakes.read_text().splitlines()[0]
+    # The new fingerprint is stored, so the next build doesn't configure.
+    fakes.write_text("")
+    assert B.build(m, Path("/src"))["configured"] is False
+
+
+def test_changed_uenv_reconfigures_fresh(tmp_path, fakes):
+    m = machine("daint-gh200", tmp_path)
+    configured_once(m, fakes)
+    m.uenv = "prgenv-gnu/26.9:v1"
+    assert_fresh_configure(m, fakes, B.build(m, Path("/src")))
+
+
+def test_changed_compiler_reconfigures_fresh(tmp_path, fakes, monkeypatch):
+    m = machine("daint-gh200", tmp_path)
+    configured_once(m, fakes)
+    monkeypatch.setattr(B, "compiler_versions", lambda: {**COMPILERS, "nvcc": "release 12.8"})
+    assert_fresh_configure(m, fakes, B.build(m, Path("/src")))
+
+
+def test_old_build_dir_without_fingerprint_reconfigures_fresh(tmp_path, fakes):
+    m = machine("daint-gh200", tmp_path)
+    m.build_dir.mkdir(parents=True)
+    (m.build_dir / "build.ninja").write_text("")
+    (m.build_dir / "CMakeCache.txt").write_text("")
+    assert_fresh_configure(m, fakes, B.build(m, Path("/src")))
+
+
+def test_failed_configure_leaves_no_fingerprint(tmp_path, fakes, monkeypatch):
+    m = machine("daint-gh200", tmp_path)
+    configured_once(m, fakes)
+    m.uenv = "other"
+    bindir = tmp_path / "bin"
+    (bindir / "cmake").write_text("#!/bin/sh\nexit 1\n")
+    with pytest.raises(subprocess.CalledProcessError):
+        B.build(m, Path("/src"))
+    assert not (m.build_dir / "cb-config.json").exists()
+
+
+def test_compiler_versions_probe():
+    def run(cmd, **kw):
+        if cmd[0] == "clang++":
+            raise FileNotFoundError(cmd[0])
+        out = {"g++": "g++ (GCC) 13.2.0\nCopyright\n",
+               "nvcc": "nvcc: NVIDIA\nCuda compilation tools, release 12.6\n"}[cmd[0]]
+        return subprocess.CompletedProcess(cmd, 0, out, "")
+    assert B.compiler_versions(run) == {"g++": "g++ (GCC) 13.2.0",
+                                        "nvcc": "Cuda compilation tools, release 12.6",
+                                        "clang++": None}
 
 
 def test_build_failure_raises(tmp_path, monkeypatch):
+    monkeypatch.setattr(B, "compiler_versions", lambda: dict(COMPILERS))
     bindir = tmp_path / "bin"
     bindir.mkdir()
     p = bindir / "cmake"
@@ -99,8 +195,7 @@ def test_build_failure_raises(tmp_path, monkeypatch):
 
 def test_cmake_cache_subset(tmp_path, fakes):
     m = machine("daint-gh200", tmp_path)
-    m.build_dir.mkdir(parents=True)
-    (m.build_dir / "build.ninja").write_text("")
+    configured_once(m, fakes)
     (m.build_dir / "CMakeCache.txt").write_text(
         "# comment\n// help\n"
         "CMAKE_BUILD_TYPE:STRING=Release\n"

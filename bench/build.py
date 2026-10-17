@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import os
 import re
 import subprocess
@@ -11,7 +12,10 @@ from typing import Callable, Iterable
 
 from bench.machine import Machine
 
-TARGETS = ["blas", "spmv", "sparse_blas", "solver", "preconditioner", "matrix_statistics"]
+# mtx_to_binary is built from benchmark/tools, so exe() doesn't name it.
+TARGETS = ["blas", "spmv", "sparse_blas", "solver", "preconditioner", "matrix_statistics",
+           "mtx_to_binary"]
+FINGERPRINT = "cb-config.json"
 
 UENV_PREFIX = Path("/user-environment")
 _CACHE_KEY = re.compile(r"^(CMAKE_BUILD_TYPE|CMAKE_\w*_COMPILER|CMAKE_\w*_FLAGS\w*|GINKGO_\w+)$")
@@ -71,19 +75,56 @@ def read_cmake_cache(build_dir: Path) -> dict[str, str]:
     return out
 
 
+def compiler_versions(run: Callable = subprocess.run) -> dict[str, str | None]:
+    """The version line of each compiler on PATH, None where it isn't there."""
+    out: dict[str, str | None] = {}
+    for name, line in (("g++", 0), ("nvcc", -1), ("clang++", 0)):
+        try:
+            lines = run([name, "--version"], capture_output=True, text=True, check=True,
+                        timeout=60).stdout.strip().splitlines()
+            out[name] = lines[line] if lines else None
+        except (OSError, subprocess.SubprocessError):
+            out[name] = None
+    return out
+
+
+def _read_json(path: Path):
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+
+
 def build(m: Machine, src: Path, jobs: int = 64) -> dict:
+    """Configure if needed, then build TARGETS.
+
+    It configures when there is no build.ninja (missing or half configured
+    directory), or when the fingerprint in build_dir/cb-config.json (uenv,
+    configure arguments, compiler versions) differs from this run's; then with
+    `cmake --fresh` if a CMakeCache.txt is there to discard.
+    """
     start = time.monotonic()
-    configured = not (m.build_dir / "build.ninja").is_file()
+    gcc_root = detect_gcc_root() if m.needs_gcc_root else None
+    args = configure_args(m, src, gcc_root)
+    fingerprint = {"uenv": m.uenv, "configure_args": args, "compilers": compiler_versions()}
+    fp_path = m.build_dir / FINGERPRINT
+    changed = _read_json(fp_path) != fingerprint
+    configured = changed or not (m.build_dir / "build.ninja").is_file()
+    fresh = changed and (m.build_dir / "CMakeCache.txt").is_file()
     if configured:
         m.build_dir.mkdir(parents=True, exist_ok=True)
-        gcc_root = detect_gcc_root() if m.needs_gcc_root else None
-        subprocess.run(configure_args(m, src, gcc_root), check=True)
+        fp_path.unlink(missing_ok=True)  # a failed configure must not leave a match
+        subprocess.run([args[0], "--fresh", *args[1:]] if fresh else args, check=True)
+        tmp = fp_path.with_name(fp_path.name + ".tmp")
+        tmp.write_text(json.dumps(fingerprint, indent=2))
+        os.replace(tmp, fp_path)
     subprocess.run(
         ["cmake", "--build", str(m.build_dir), "--parallel", str(jobs), "--target", *TARGETS],
         check=True,
     )
     return {
         "configured": configured,
+        "fresh": fresh,
         "seconds": time.monotonic() - start,
         "cmake_cache": read_cmake_cache(m.build_dir),
     }
