@@ -136,7 +136,7 @@ def test_all_operations_failed_is_failed(tmp_path):
                                  "axpy": {"completed": False, "error": "y"}}}]
     r = run_group("g", [inv(ginkgo_fake(tmp_path, "f", cases))], [], tmp_path / "out")
     i = r["invocations"][0]
-    assert i["status"] == "failed" and i["reason"] == "2 of 2 operations failed"
+    assert i["status"] == "failed" and i["reason"] == "2 of 2 operations or test cases failed"
     assert [f["op"] for f in i["failures"]] == ["dot", "axpy"]
     assert i["failures"][0]["case"] == "n = 100"
 

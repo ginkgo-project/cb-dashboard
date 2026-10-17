@@ -138,7 +138,7 @@ def _run_one(inv: Invocation, prefix: list[str], log: Path) -> tuple[list, dict]
             return data, {"status": "ok", "exit_code": 0, "reason": None, "failures": []}
         status = "failed" if len(failures) >= units else "partial"
         return data, {"status": status, "exit_code": 0,
-                      "reason": f"{len(failures)} of {units} operations failed",
+                      "reason": f"{len(failures)} of {units} operations or test cases failed",
                       "failures": failures}
 
 
