@@ -24,6 +24,7 @@ class Entry:
     roles: list[str]
     spd: bool | None
     fem: dict | None  # {"problem": str, "size": int}
+    index_base: int = 0  # smallest vertex id in an edge-list file
 
 
 @dataclass
@@ -52,6 +53,7 @@ def load_catalog(path: Path = DEFAULT) -> Catalog:
             roles=list(e.get("roles", [])),
             spd=e.get("spd"),
             fem=e.get("fem"),
+            index_base=e.get("index_base", 0),
         )
         for e in doc["entry"]
     ]

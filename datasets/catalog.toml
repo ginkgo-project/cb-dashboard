@@ -88,6 +88,7 @@ nnz_check = "none"
 [[entry]]
 name = "com-Orkut"
 set = "spmv"
+index_base = 1
 source = "SNAP"
 url = "https://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz"
 format = "edgelist"
