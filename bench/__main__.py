@@ -90,7 +90,7 @@ def cmd_run(args) -> int:
         invs = invocations(m, manifest, [g])
         results[g] = run_group(g, invs, m.srun, out)
     record(info, results)
-    if args.ref == DEVELOP:
+    if args.ref == DEVELOP and groups == GROUPS:
         write_last(state, commit.sha)
     return 0
 

@@ -71,6 +71,7 @@ exist.
 
 ### Dry run (login node)
 
+    cd $CB_ROOT/cb-dashboard
     $CB_ROOT/venv/daint-gh200/bin/python -m bench run daint-gh200 --dry-run
 
 Prints the machine, the ref and one line per invocation. It runs no git, build
@@ -82,7 +83,7 @@ or srun.
 
 The default ref is `origin/develop`. Without `--force`, a run of develop's head
 that was already benchmarked exits with "nothing to do". `last_commit` is only
-updated after a completed run of `origin/develop`. `SUBMIT_DRY_RUN=1` prints the
+updated after a completed run of `origin/develop` with all groups (a `--groups` subset is a debugging run). `SUBMIT_DRY_RUN=1` prints the
 sbatch command instead of submitting it. Exit codes of the job: 0 on success or
 nothing to do, 1 on a build failure, 2 on an architecture mismatch.
 
@@ -95,4 +96,8 @@ nothing to do, 1 on a build failure, 2 on an architecture mismatch.
 
 ### Copy back
 
-    rsync -a daint:$SCRATCH/cb/results/ results/
+    rsync -a daint:/ritom/scratch/cscs/<user>/cb/results/daint-gh200/ results/daint-gh200/
+    rsync -a beverin:/capstor/scratch/cscs/<user>/cb/results/beverin-mi300a/ results/beverin-mi300a/
+
+Replace `<user>` with your cluster user name. `$SCRATCH` would expand on the
+laptop, so the remote paths are written out.

@@ -13,7 +13,7 @@ DATA = Path(__file__).parent / "data"
 
 
 def machine(executor="cuda"):
-    return Machine("daint-gh200", executor, "u/1", [], ["srun", "-n1"], [], False,
+    return Machine("daint-gh200", executor, "u/1", [], ["-n1"], [], False,
                    "90", Path("/r"), Path("/b"), Path("/res"))
 
 
@@ -182,3 +182,16 @@ def test_script_version_outside_git(tmp_path):
                      run=lambda cmd, **kw: (_ for _ in ()).throw(subprocess.CalledProcessError(128, cmd))
                      if "git" in cmd else fake_run([])(cmd, **kw), repo=tmp_path)
     assert "error" in rec["script_version"]
+
+
+def test_probes_use_srun_binary_with_real_machine(tmp_path):
+    from bench.machine import load_machine
+    m = load_machine("daint-gh200", env={"SCRATCH": str(tmp_path)})
+    calls = []
+
+    def run(cmd, **kw):
+        calls.append(cmd)
+        raise OSError("fake")
+    gpu_info(m, run=run)
+    toolchain_info(m, run=run)
+    assert calls and all(c[0] == "srun" and "--gpus-per-task=1" in c for c in calls)

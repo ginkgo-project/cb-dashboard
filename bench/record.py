@@ -79,6 +79,10 @@ def _out(run, cmd: list[str]) -> str:
     return run(cmd, capture_output=True, text=True, check=True).stdout
 
 
+def _prefix(m: Machine) -> list[str]:
+    return ["srun", *m.srun] if m.srun else []
+
+
 def gpu_info(m: Machine, run: Callable = subprocess.run) -> dict:
     cuda = m.executor == "cuda"
     var = "CUDA_VISIBLE_DEVICES" if cuda else "ROCR_VISIBLE_DEVICES"
@@ -88,19 +92,19 @@ def gpu_info(m: Machine, run: Callable = subprocess.run) -> dict:
             cmd = ["nvidia-smi", "-i", "0",
                    "--query-gpu=name,driver_version,clocks.sm,clocks.mem,clocks.max.sm,clocks.max.mem,power.limit",
                    "--format=csv"]
-            info = parse_nvidia_smi(_out(run, [*m.srun, *cmd]))
+            info = parse_nvidia_smi(_out(run, [*_prefix(m), *cmd]))
         else:
             cmd = ["rocm-smi", "-d", "0", "--showproductname", "--showdriverversion",
                    "--showclocks", "--json"]
-            info = parse_rocm_smi(_out(run, [*m.srun, *cmd]))
+            info = parse_rocm_smi(_out(run, [*_prefix(m), *cmd]))
         if not info["gpu"]:
             info["error"] = "no GPU name in smi output"
     except ERRORS as e:
         info["error"] = f"{type(e).__name__}: {e}"
-    binding = {"srun": m.srun, "visible_devices": "", "cpus": ""}
+    binding = {"srun": _prefix(m), "visible_devices": "", "cpus": ""}
     probe = f'echo "${{{var}:-}}"; taskset -cp $$ | sed "s/.*: //"'
     try:
-        lines = _out(run, [*m.srun, "sh", "-c", probe]).split("\n")
+        lines = _out(run, [*_prefix(m), "sh", "-c", probe]).split("\n")
         binding["visible_devices"] = lines[0].strip()
         binding["cpus"] = lines[1].strip()
         if not binding["cpus"]:
@@ -113,7 +117,7 @@ def gpu_info(m: Machine, run: Callable = subprocess.run) -> dict:
 
 def toolchain_info(m: Machine, run: Callable = subprocess.run) -> dict:
     def first_last(cmd, idx):
-        return _out(run, [*m.srun, *cmd]).strip().splitlines()[idx]
+        return _out(run, [*_prefix(m), *cmd]).strip().splitlines()[idx]
 
     items = [("g++", ["g++", "--version"], 0)]
     items.append(("cuda", ["nvcc", "--version"], -1) if m.executor == "cuda"

@@ -153,3 +153,9 @@ def test_build_failure(tmp_path, monkeypatch, manifest):
     rec = json.loads(next(m.results_dir.glob("*/run.json")).read_text())
     assert "error" in rec["build"] and rec["groups"] == {}
     assert not (m.root / "state" / m.name / "last_commit").exists()
+
+
+def test_subset_groups_does_not_write_last(tmp_path, monkeypatch, manifest):
+    m, rc, _ = full_run(tmp_path, monkeypatch, manifest, ["--groups", "blas"])
+    assert rc == 0
+    assert not (m.root / "state" / m.name / "last_commit").exists()
