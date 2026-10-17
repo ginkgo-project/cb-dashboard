@@ -110,3 +110,75 @@ def test_run_record_keys():
     assert rec["machine"] == "daint-gh200"
     assert len(rec["script_version"]) == 40
     json.dumps(rec)
+
+
+NV_HEADER = (DATA / "nvidia-smi.csv").read_text().splitlines()[0]
+
+
+def test_nvidia_na_values():
+    text = NV_HEADER + "\nNVIDIA GH200, 550.1, [N/A], 2619 MHz, 1980 MHz, 2619 MHz, [Not Supported]\n"
+    r = parse_nvidia_smi(text)
+    assert r["gpu"] == "NVIDIA GH200"
+    assert r["clocks"] == {"mem_mhz": 2619, "max_sm_mhz": 1980, "max_mem_mhz": 2619}
+
+
+def test_nvidia_short_row_and_empty():
+    r = parse_nvidia_smi(NV_HEADER + "\nNVIDIA GH200, 550.1\n")
+    assert r == {"gpu": "NVIDIA GH200", "driver": "550.1", "clocks": {}}
+    assert parse_nvidia_smi("")["gpu"] == ""
+
+
+def test_rocm_without_card_key():
+    r = parse_rocm_smi('{"system": {"Driver version": "6.1"}}')
+    assert r == {"gpu": "", "driver": "6.1", "clocks": {}}
+
+
+def test_gpu_info_empty_output_records_error():
+    def run(cmd, **kw):
+        out = "" if "nvidia-smi" in cmd else "0\n0-3\n"
+        return subprocess.CompletedProcess(cmd, 0, out, "")
+    g = gpu_info(machine(), run=run)
+    assert "error" in g
+    assert g["binding"]["cpus"] == "0-3"
+
+
+def test_gpu_info_smi_fails_binding_kept():
+    good = fake_run([])
+
+    def run(cmd, **kw):
+        if "nvidia-smi" in cmd:
+            raise subprocess.CalledProcessError(1, cmd)
+        return good(cmd, **kw)
+    g = gpu_info(machine(), run=run)
+    assert "CalledProcessError" in g["error"]
+    assert g["binding"]["cpus"] == "0-71"
+    assert "error" not in g["binding"]
+
+
+def test_gpu_info_bad_rocm_json_and_probe_failure():
+    def run(cmd, **kw):
+        if "rocm-smi" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, "not json", "")
+        raise OSError("no srun")
+    g = gpu_info(machine("hip"), run=run)
+    assert "error" in g and "error" in g["binding"]
+
+
+def test_toolchain_failure_recorded():
+    good = fake_run([])
+
+    def run(cmd, **kw):
+        if "nvcc" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        return good(cmd, **kw)
+    t = toolchain_info(machine(), run=run)
+    assert t["g++"] == "g++ (GCC) 13.2.0" and "cuda" not in t
+    assert "cuda" in t["error"]
+
+
+def test_script_version_outside_git(tmp_path):
+    c = Commit("a" * 40, "2026-10-16", "b" * 40)
+    rec = run_record(machine(), c, "r", {"cmake_cache": {}}, {"version": "v"}, {}, "t0", "t1",
+                     run=lambda cmd, **kw: (_ for _ in ()).throw(subprocess.CalledProcessError(128, cmd))
+                     if "git" in cmd else fake_run([])(cmd, **kw), repo=tmp_path)
+    assert "error" in rec["script_version"]

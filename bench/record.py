@@ -27,45 +27,47 @@ def results_dir_name(base: Path, commit: Commit) -> Path:
     return path
 
 
-def _num(s: str) -> float:
-    m = re.search(r"-?\d+(?:\.\d+)?", s)
-    if not m:
-        raise ValueError(f"no number in {s!r}")
-    return float(m.group())
+ERRORS = (ValueError, KeyError, StopIteration, IndexError,
+          subprocess.CalledProcessError, OSError)
+
+
+def _num(s) -> float | None:
+    m = re.search(r"-?\d+(?:\.\d+)?", str(s))
+    return float(m.group()) if m else None
+
+
+def _put(d: dict, key: str, val, as_int: bool = True) -> None:
+    if val is not None:
+        d[key] = int(val) if as_int else val
 
 
 def parse_nvidia_smi(csv_text: str) -> dict:
-    rows = list(csv.reader(io.StringIO(csv_text.strip()), skipinitialspace=True))
-    if len(rows) < 2 or len(rows[1]) < 7:
-        raise ValueError("unexpected nvidia-smi output")
-    name, driver, sm, mem, max_sm, max_mem, power = [c.strip() for c in rows[1][:7]]
-    return {
-        "gpu": name,
-        "driver": driver,
-        "clocks": {
-            "sm_mhz": int(_num(sm)),
-            "mem_mhz": int(_num(mem)),
-            "max_sm_mhz": int(_num(max_sm)),
-            "max_mem_mhz": int(_num(max_mem)),
-            "power_limit_w": _num(power),
-        },
-    }
+    rows = [r for r in csv.reader(io.StringIO(csv_text.strip()), skipinitialspace=True) if r]
+    row = [c.strip() for c in rows[1]] if len(rows) > 1 else []
+    row += [""] * (7 - len(row))
+    clocks: dict = {}
+    for key, i in (("sm_mhz", 2), ("mem_mhz", 3), ("max_sm_mhz", 4), ("max_mem_mhz", 5)):
+        _put(clocks, key, _num(row[i]))
+    _put(clocks, "power_limit_w", _num(row[6]), as_int=False)
+    return {"gpu": row[0], "driver": row[1], "clocks": clocks}
 
 
 def parse_rocm_smi(json_text: str) -> dict:
     data = json.loads(json_text)
-    card = next(v for k, v in data.items() if k.startswith("card"))
+    if not isinstance(data, dict):
+        raise ValueError("unexpected rocm-smi output")
+    card = next((v for k, v in data.items() if k.startswith("card") and isinstance(v, dict)), {})
     driver = ""
     for v in data.values():
         if isinstance(v, dict):
             for k, val in v.items():
                 if k.lower().startswith("driver version"):
                     driver = str(val)
-    clocks = {}
+    clocks: dict = {}
     for key in ("sclk", "mclk", "fclk"):
         for k, val in card.items():
             if k.startswith(f"{key} clock speed"):
-                clocks[f"{key}_mhz"] = int(_num(str(val)))
+                _put(clocks, f"{key}_mhz", _num(val))
     return {
         "gpu": card.get("Card Series") or card.get("Card series", ""),
         "driver": driver,
@@ -78,45 +80,69 @@ def _out(run, cmd: list[str]) -> str:
 
 
 def gpu_info(m: Machine, run: Callable = subprocess.run) -> dict:
-    if m.executor == "cuda":
-        cmd = ["nvidia-smi", "-i", "0",
-               "--query-gpu=name,driver_version,clocks.sm,clocks.mem,clocks.max.sm,clocks.max.mem,power.limit",
-               "--format=csv"]
-        info = parse_nvidia_smi(_out(run, [*m.srun, *cmd]))
-        var = "CUDA_VISIBLE_DEVICES"
-    else:
-        cmd = ["rocm-smi", "-d", "0", "--showproductname", "--showdriverversion",
-               "--showclocks", "--json"]
-        info = parse_rocm_smi(_out(run, [*m.srun, *cmd]))
-        var = "ROCR_VISIBLE_DEVICES"
+    cuda = m.executor == "cuda"
+    var = "CUDA_VISIBLE_DEVICES" if cuda else "ROCR_VISIBLE_DEVICES"
+    info: dict = {}
+    try:
+        if cuda:
+            cmd = ["nvidia-smi", "-i", "0",
+                   "--query-gpu=name,driver_version,clocks.sm,clocks.mem,clocks.max.sm,clocks.max.mem,power.limit",
+                   "--format=csv"]
+            info = parse_nvidia_smi(_out(run, [*m.srun, *cmd]))
+        else:
+            cmd = ["rocm-smi", "-d", "0", "--showproductname", "--showdriverversion",
+                   "--showclocks", "--json"]
+            info = parse_rocm_smi(_out(run, [*m.srun, *cmd]))
+        if not info["gpu"]:
+            info["error"] = "no GPU name in smi output"
+    except ERRORS as e:
+        info["error"] = f"{type(e).__name__}: {e}"
+    binding = {"srun": m.srun, "visible_devices": "", "cpus": ""}
     probe = f'echo "${{{var}:-}}"; taskset -cp $$ | sed "s/.*: //"'
-    lines = _out(run, [*m.srun, "sh", "-c", probe]).split("\n")
-    info["binding"] = {
-        "srun": m.srun,
-        "visible_devices": lines[0].strip(),
-        "cpus": lines[1].strip() if len(lines) > 1 else "",
-    }
+    try:
+        lines = _out(run, [*m.srun, "sh", "-c", probe]).split("\n")
+        binding["visible_devices"] = lines[0].strip()
+        binding["cpus"] = lines[1].strip()
+        if not binding["cpus"]:
+            binding["error"] = "taskset reported no CPU list"
+    except ERRORS as e:
+        binding["error"] = f"{type(e).__name__}: {e}"
+    info["binding"] = binding
     return info
 
 
 def toolchain_info(m: Machine, run: Callable = subprocess.run) -> dict:
-    def lines(cmd):
-        return _out(run, [*m.srun, *cmd]).strip().splitlines()
+    def first_last(cmd, idx):
+        return _out(run, [*m.srun, *cmd]).strip().splitlines()[idx]
 
-    t = {"g++": lines(["g++", "--version"])[0]}
-    if m.executor == "cuda":
-        t["cuda"] = lines(["nvcc", "--version"])[-1]
-    else:
-        t["clang++"] = lines(["clang++", "--version"])[0]
-    t["cmake"] = lines(["cmake", "--version"])[0]
+    items = [("g++", ["g++", "--version"], 0)]
+    items.append(("cuda", ["nvcc", "--version"], -1) if m.executor == "cuda"
+                 else ("clang++", ["clang++", "--version"], 0))
+    items.append(("cmake", ["cmake", "--version"], 0))
+    t: dict = {}
+    errors = []
+    for key, cmd, idx in items:
+        try:
+            t[key] = first_last(cmd, idx)
+        except ERRORS as e:
+            errors.append(f"{key}: {type(e).__name__}: {e}")
+    if errors:
+        t["error"] = "; ".join(errors)
     return t
+
+
+def script_version(run: Callable, repo: Path) -> str | dict:
+    try:
+        return run(["git", "-C", str(repo), "rev-parse", "HEAD"],
+                   capture_output=True, text=True, check=True).stdout.strip()
+    except ERRORS as e:
+        return {"error": f"{type(e).__name__}: {e}"}
 
 
 def run_record(m: Machine, commit: Commit, ref: str, build: dict, manifest: dict,
                groups: dict, started: str, finished: str,
                run: Callable = subprocess.run, repo: Path = REPO) -> dict:
-    script = run(["git", "-C", str(repo), "rev-parse", "HEAD"],
-                 capture_output=True, text=True, check=True).stdout.strip()
+    script = script_version(run, repo)
     return {
         "machine": m.name,
         "node": socket.gethostname(),
