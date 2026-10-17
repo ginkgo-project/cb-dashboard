@@ -1,0 +1,209 @@
+version = "1"
+seed = 20261017
+
+[[entry]]
+name = "ecology2"
+set = "spmv"
+source = "DIMACS10"
+url = "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/ecology2.graph.bz2"
+format = "metis"
+symmetric = true
+add_diagonal = true
+expected_rows = 999999
+expected_nnz = 4995991
+nnz_check = "plus_diagonal"
+
+[[entry]]
+name = "TSOPF_RS_b2383_c1"
+set = "spmv"
+source = "Network Repository (SuiteSparse)"
+url = "https://nrvis.com/download/data/sc/sc-TSOPF-RS-b2383-c1.zip"
+format = "mtx-zip"
+symmetric = false
+add_diagonal = false
+expected_rows = 38120
+expected_nnz = 16171169
+nnz_check = "exact"
+
+[[entry]]
+name = "audikw1"
+set = "spmv"
+source = "DIMACS10"
+url = "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/audikw1.graph.bz2"
+format = "metis"
+symmetric = true
+add_diagonal = true
+expected_rows = 943695
+expected_nnz = 77651847
+nnz_check = "plus_diagonal"
+
+[[entry]]
+name = "USA-road-d.USA"
+set = "spmv"
+source = "DIMACS9"
+url = "http://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"
+format = "dimacs9"
+symmetric = false
+add_diagonal = false
+expected_rows = 23947347
+expected_nnz = 57708624
+nnz_check = "exact"
+
+[[entry]]
+name = "soc-LiveJournal1"
+set = "spmv"
+source = "SNAP"
+url = "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz"
+format = "edgelist"
+symmetric = false
+add_diagonal = false
+expected_rows = 4847571
+expected_nnz = 68993773
+nnz_check = "exact"
+
+[[entry]]
+name = "cage15"
+set = "spmv"
+source = "DIMACS10"
+url = "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/cage15.graph.bz2"
+format = "metis"
+symmetric = true
+add_diagonal = true
+expected_rows = 5154859
+expected_nnz = 99199551
+nnz_check = "at_least"
+
+[[entry]]
+name = "kron_g500-logn21"
+set = "spmv"
+source = "DIMACS10"
+url = "https://sites.cc.gatech.edu/dimacs10/archive/data/kronecker/kron_g500-logn21.graph.bz2"
+format = "metis"
+symmetric = true
+add_diagonal = false
+expected_rows = 2097152
+expected_nnz = 182082942
+nnz_check = "none"
+
+[[entry]]
+name = "com-Orkut"
+set = "spmv"
+source = "SNAP"
+url = "https://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz"
+format = "edgelist"
+symmetric = true
+add_diagonal = false
+expected_rows = 3072441
+expected_nnz = 234370166
+nnz_check = "exact"
+
+[[entry]]
+name = "nlpkkt240"
+set = "spmv"
+source = "DIMACS10"
+url = "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/nlpkkt240.graph.bz2"
+format = "metis"
+symmetric = true
+add_diagonal = true
+expected_rows = 27993600
+expected_nnz = 760648352
+nnz_check = "plus_diagonal"
+
+[[entry]]
+name = "twitter-2010"
+set = "spmv"
+source = "LAW"
+url = "http://data.law.di.unimi.it/webdata/twitter-2010/twitter-2010"
+format = "webgraph"
+symmetric = false
+add_diagonal = false
+expected_rows = 41652230
+expected_nnz = 1468365182
+nnz_check = "exact"
+
+# FEM entries are generated (Task 4). size = 1 is a placeholder; the real
+# sizes are tuned in Task 7.
+
+[[entry]]
+name = "porous_pressure"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = true
+add_diagonal = false
+nnz_check = "none"
+roles = ["precond"]
+spd = true
+fem = {problem = "porous_pressure", size = 1}
+
+[[entry]]
+name = "anisotropic_heat"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = true
+add_diagonal = false
+nnz_check = "none"
+roles = ["precond"]
+spd = true
+fem = {problem = "anisotropic_heat", size = 1}
+
+[[entry]]
+name = "elasticity_p2"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = true
+add_diagonal = false
+nnz_check = "none"
+roles = ["precond"]
+spd = true
+fem = {problem = "elasticity_p2", size = 1}
+
+[[entry]]
+name = "convection_diffusion"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = false
+add_diagonal = false
+nnz_check = "none"
+roles = ["precond"]
+spd = false
+fem = {problem = "convection_diffusion", size = 1}
+
+[[entry]]
+name = "curl_curl"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = true
+add_diagonal = false
+nnz_check = "none"
+roles = ["precond"]
+spd = true
+fem = {problem = "curl_curl", size = 1}
+
+[[entry]]
+name = "poisson_p1"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = true
+add_diagonal = false
+nnz_check = "none"
+roles = ["spgemm"]
+spd = true
+fem = {problem = "poisson_p1", size = 1}
+
+[[entry]]
+name = "elasticity_p2_graded"
+set = "fem"
+source = "generated"
+format = "fem"
+symmetric = true
+add_diagonal = false
+nnz_check = "none"
+roles = ["spgemm"]
+spd = true
+fem = {problem = "elasticity_p2_graded", size = 1}
