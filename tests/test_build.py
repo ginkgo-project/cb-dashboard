@@ -1,6 +1,8 @@
 import http.server
+import importlib.metadata
 import json
 import os
+import subprocess
 import threading
 import zipfile
 import io
@@ -8,8 +10,9 @@ import io
 import pytest
 
 from datasets import __main__ as cli
+from datasets import build as B
 from datasets.binary import read_binary
-from datasets.build import BuildError, build
+from datasets.build import BuildError, VersionError, build
 from datasets.catalog import load_catalog
 
 TRIANGLE = b"3 3\n2 3\n1 3\n1 2\n"
@@ -254,3 +257,85 @@ nnz_check = "none"
         build(cat, tmp_path / "root", manifest, None, None)
     assert json.loads(manifest.read_text())["matrices"] == []
     assert not (tmp_path / "root/matrices/spmv/badrows.bin").exists()
+
+
+def git(repo, *args):
+    return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t",
+                           *args], capture_output=True, text=True, check=True).stdout.strip()
+
+
+@pytest.fixture
+def repo(tmp_path, monkeypatch):
+    """A git repository standing in for this one, with a tracked manifest."""
+    r = tmp_path / "repo"
+    (r / "datasets").mkdir(parents=True)
+    git(r, "init", "-q")
+    (r / "datasets" / "fem.py").write_text("x = 1\n")
+    (r / "datasets" / "manifest.json").write_text("{}\n")
+    git(r, "add", ".")
+    git(r, "commit", "-q", "-m", "init")
+    monkeypatch.setattr(B, "REPO", r)
+    return r
+
+
+def test_converter_version(tmp_path, server, repo):
+    cat = load_catalog(write_catalog(tmp_path, server))
+    manifest = repo / "datasets" / "manifest.json"
+    m = build(cat, tmp_path / "root", manifest, None, None)
+    expected = {"repository": git(repo, "rev-parse", "HEAD"),
+                **{p: importlib.metadata.version(p) for p in ("numpy", "scipy", "scikit-fem")}}
+    # Rewriting the tracked manifest doesn't make the tree dirty.
+    assert git(repo, "status", "--porcelain") != ""
+    assert [e["converter_version"] for e in m["matrices"]] == [expected, expected]
+    assert json.loads(manifest.read_text()) == m
+
+
+def test_converter_version_dirty(tmp_path, server, repo):
+    (repo / "datasets" / "fem.py").write_text("x = 2\n")
+    cat = load_catalog(write_catalog(tmp_path, server))
+    m = build(cat, tmp_path / "root", tmp_path / "manifest.json", ["fem1"], None)
+    assert m["matrices"][0]["converter_version"]["repository"] == (
+        git(repo, "rev-parse", "HEAD") + "-dirty")
+
+
+def test_converter_version_outside_git(tmp_path, server, monkeypatch):
+    monkeypatch.setattr(B, "REPO", tmp_path / "not-a-repo")
+    cat = load_catalog(write_catalog(tmp_path, server))
+    m = build(cat, tmp_path / "root", tmp_path / "manifest.json", ["fem1"], None)
+    assert m["matrices"][0]["converter_version"]["repository"] is None
+
+
+def test_webgraph_converter_version(tmp_path, server, monkeypatch):
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    wg = bindir / "webgraph"
+    wg.write_text('#!/bin/sh\n[ "$1" = --version ] && echo "webgraph-cli 0.5.0"\n')
+    wg.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{bindir}:{os.environ['PATH']}")
+    cat = extra_catalog(tmp_path, server, WEB)
+    cmd = "python3 -c \"import sys; open(sys.argv[2],'w').write('0 1\\n1 2\\n2 0\\n')\" {basename} {out}"
+    m = build(cat, tmp_path / "root", tmp_path / "manifest.json", None, cmd)
+    assert m["matrices"][0]["converter_version"]["webgraph-cli"] == "webgraph-cli 0.5.0"
+
+
+def test_changed_data_needs_version_bump(tmp_path, server, monkeypatch):
+    run(tmp_path, server)
+    manifest = tmp_path / "manifest.json"
+    before = json.loads(manifest.read_text())
+    # Same catalog, but the converter now produces other values for fem1.
+    generate = B.fem.generate
+    monkeypatch.setattr(B.fem, "generate", lambda problem, size: 2.0 * generate(problem, size))
+    (tmp_path / "root/matrices/fem/fem1.bin").unlink()
+    with pytest.raises(VersionError, match="fem1.*version bump"):
+        build(load_catalog(tmp_path / "catalog.toml"), tmp_path / "root", manifest, None, None)
+    assert json.loads(manifest.read_text()) == before
+    (tmp_path / "root/matrices/fem/fem1.bin").unlink()
+    assert cli.main(["build", "--root", str(tmp_path / "root"), "--catalog",
+                     str(tmp_path / "catalog.toml"), "--manifest", str(manifest)]) == 2
+
+
+def test_same_data_rebuilt_is_fine(tmp_path, server):
+    m1, root = run(tmp_path, server)
+    (root / "matrices/fem/fem1.bin").unlink()
+    m2, _ = run(tmp_path, server)
+    assert m2["matrices"][1]["binary_sha256"] == m1["matrices"][1]["binary_sha256"]

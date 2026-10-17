@@ -53,7 +53,12 @@ always pass the separate `--manifest` while tuning; the committed
 
 Changing a size changes `catalog_sha256`. No manifest exists yet, so `version`
 stays `"1"`; after the first manifest is committed, any catalog change needs a
-version bump. Also check that `test_row_balance`'s thresholds still hold.
+version bump. So does a converter change that alters the data: a rebuilt matrix
+whose `binary_sha256` differs from the manifest of the same version stops the
+build with exit code 2. Each entry records its `converter_version` (this
+repository's commit, `-dirty` if a tracked file changed, the numpy, scipy and
+scikit-fem versions, and `webgraph --version` for twitter-2010). Also check
+that `test_row_balance`'s thresholds still hold.
 
 ### 4. Full build
 

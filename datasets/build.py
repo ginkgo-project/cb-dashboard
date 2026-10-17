@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import gc
+import importlib.metadata
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import zipfile
 from pathlib import Path
@@ -19,6 +21,8 @@ from .fetch import _sha256_file, download, fetch_webgraph
 
 MANIFEST_VERSION_KEY = "version"
 SELLP_LIMIT = 2.0
+REPO = Path(__file__).resolve().parent.parent
+PACKAGES = ("numpy", "scipy", "scikit-fem")
 
 
 class BuildError(RuntimeError):
@@ -26,7 +30,57 @@ class BuildError(RuntimeError):
 
 
 class VersionError(RuntimeError):
-    """The catalog changed but its version did not."""
+    """The catalog or the converted data changed but the version did not."""
+
+
+def _git(args: list[str]) -> str:
+    return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True,
+                          check=True, timeout=60).stdout
+
+
+def _repository_version(manifest_path: Path) -> str | None:
+    """HEAD of this repository, plus "-dirty" if a tracked file changed.
+
+    Untracked files don't count (as in `git describe --dirty`), and neither does
+    the manifest, which the build itself rewrites.
+    """
+    try:
+        sha = _git(["rev-parse", "HEAD"]).strip()
+        spec = ["--", "."]
+        try:
+            spec.append(f":(exclude){Path(manifest_path).resolve().relative_to(REPO.resolve())}")
+        except ValueError:
+            pass  # the manifest is outside the repository
+        dirty = _git(["status", "--porcelain", "--untracked-files=no", *spec]).strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return sha + ("-dirty" if dirty else "")
+
+
+def _package_version(name: str) -> str | None:
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def webgraph_version() -> str | None:
+    """`webgraph --version` of the webgraph on PATH, best effort."""
+    exe = shutil.which("webgraph")
+    if exe is None:
+        return None
+    try:
+        out = subprocess.run([exe, "--version"], capture_output=True, text=True,
+                             check=True, timeout=60).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.splitlines()[0] if out else None
+
+
+def converter_version(manifest_path: Path) -> dict:
+    """What converted the data: this repository and the packages it uses."""
+    return {"repository": _repository_version(manifest_path),
+            **{name: _package_version(name) for name in PACKAGES}}
 
 
 def check_nnz(entry: Entry, nnz: int, rows: int) -> None:
@@ -176,6 +230,8 @@ def build(catalog: Catalog, root: Path, manifest_path: Path,
         _write_manifest(manifest_path, manifest)
 
     snapshot()
+    converter = converter_version(manifest_path)
+    webgraph: list[str | None] = []  # looked up once, for the first webgraph entry
     failures = []
     for entry in catalog.entries:
         if only and entry.name not in only:
@@ -186,9 +242,23 @@ def build(catalog: Catalog, root: Path, manifest_path: Path,
             continue
         done.pop(entry.name, None)
         try:
-            done[entry.name] = _build_entry(entry, catalog, root, webgraph_cmd)
+            new = _build_entry(entry, catalog, root, webgraph_cmd)
         except Exception as e:  # keep going; report all failures at the end
             failures.append(f"{entry.name}: {e}")
+        else:
+            if prev and new["binary_sha256"] != prev["binary_sha256"]:
+                # The manifest on disk keeps the old entry until the version is bumped.
+                raise VersionError(
+                    f"{entry.name}: the rebuilt binary differs from the one in the "
+                    f"manifest of version {catalog.version!r} (sha256 "
+                    f"{new['binary_sha256']} != {prev['binary_sha256']}); changed data "
+                    "needs a version bump in catalog.toml")
+            new["converter_version"] = dict(converter)
+            if entry.format == "webgraph":
+                if not webgraph:
+                    webgraph.append(webgraph_version())
+                new["converter_version"]["webgraph-cli"] = webgraph[0]
+            done[entry.name] = new
         gc.collect()
         snapshot()
     if failures:
