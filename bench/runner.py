@@ -219,12 +219,12 @@ def parse_time_left(text: str) -> int | None:
 def job_deadline(env: Mapping[str, str] = os.environ, run: Callable = subprocess.run,
                  now: Callable[[], float] = time.time) -> float | None:
     """The job's end as a Unix time: SLURM_JOB_END_TIME, else squeue; None if unknown."""
-    end = env.get("SLURM_JOB_END_TIME", "").strip()
-    if end:
-        try:
-            return float(end)
-        except ValueError:
-            pass
+    try:
+        end = float(env.get("SLURM_JOB_END_TIME", ""))
+    except ValueError:
+        end = 0.0
+    if end > 0:
+        return end
     job = env.get("SLURM_JOB_ID", "").strip()
     if not job:
         return None

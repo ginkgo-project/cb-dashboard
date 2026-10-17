@@ -278,6 +278,8 @@ def test_job_deadline_sources():
         raise AssertionError("ran squeue")
     assert runner.job_deadline({"SLURM_JOB_END_TIME": "1700000000"}, run=no_run) == 1700000000.0
     assert runner.job_deadline({}, run=no_run) is None
+    assert runner.job_deadline({"SLURM_JOB_END_TIME": "0"}, run=no_run) is None
+    assert runner.job_deadline({"SLURM_JOB_END_TIME": "junk"}, run=no_run) is None
     calls = []
 
     def squeue(cmd, **kw):
