@@ -1,9 +1,13 @@
 import os
+import shutil
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 from bench.checkout import (
     Commit,
+    clone_lock,
     ensure_clone,
     prepare_worktree,
     read_last,
@@ -122,3 +126,49 @@ def test_should_run():
     assert should_run(c, "a", "origin/feature", False) is True
     assert should_run(c, "b", "origin/develop", False) is True
     assert should_run(c, None, "origin/develop", False) is True
+
+
+def test_worktree_recreated_after_rmtree(tmp_path, monkeypatch):
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    up, c1, c2 = make_upstream(tmp_path)
+    clone = make_clone(tmp_path, up)
+    wt = tmp_path / "worktrees" / "m"
+    prepare_worktree(clone, wt, c1)
+    shutil.rmtree(wt)
+    prepare_worktree(clone, wt, c2)
+    assert git(wt, "rev-parse", "HEAD") == c2
+
+
+def test_worktree_with_dangling_gitdir(tmp_path, monkeypatch):
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    up, c1, c2 = make_upstream(tmp_path)
+    clone = make_clone(tmp_path, up)
+    wt = tmp_path / "worktrees" / "m"
+    prepare_worktree(clone, wt, c1)
+    shutil.rmtree(clone / ".git" / "worktrees")
+    prepare_worktree(clone, wt, c2)
+    assert git(wt, "rev-parse", "HEAD") == c2
+
+
+def test_ensure_clone_waits_for_lock(tmp_path, monkeypatch):
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    up, c1, c2 = make_upstream(tmp_path)
+    clone = tmp_path / "clone"
+    code = (
+        "import fcntl,sys,time\n"
+        f"f=open({str(clone) + '.lock'!r},'a')\n"
+        "fcntl.flock(f,fcntl.LOCK_EX)\n"
+        "print('ready',flush=True)\n"
+        "time.sleep(1.0)\n"
+    )
+    p = subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.PIPE, text=True)
+    assert p.stdout.readline().strip() == "ready"
+    t0 = time.monotonic()
+    ensure_clone(str(up), clone)
+    assert time.monotonic() - t0 >= 0.8
+    p.wait()
+    with clone_lock(clone):
+        pass

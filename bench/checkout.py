@@ -1,7 +1,10 @@
 """The shared Ginkgo clone, per-machine worktrees and the benchmarked-commit state."""
 from __future__ import annotations
 
+import fcntl
+import shutil
 import subprocess
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,12 +25,26 @@ def _git(*args: str, cwd: Path | None = None) -> str:
     return r.stdout.strip()
 
 
+@contextmanager
+def clone_lock(clone: Path):
+    """Exclusive lock on `<clone>.lock`, serializing mutations of the shared clone."""
+    clone.parent.mkdir(parents=True, exist_ok=True)
+    with open(clone.with_name(clone.name + ".lock"), "a") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
 def ensure_clone(url: str, clone: Path) -> None:
-    if clone.exists():
-        _git("fetch", "--prune", "origin", cwd=clone)
-    else:
-        clone.parent.mkdir(parents=True, exist_ok=True)
-        _git("clone", url, str(clone))
+    with clone_lock(clone):
+        if (clone / ".git").exists():
+            _git("fetch", "--prune", "origin", cwd=clone)
+        else:
+            if clone.exists():  # half-finished clone
+                shutil.rmtree(clone)
+            _git("clone", url, str(clone))
 
 
 def resolve(clone: Path, ref: str = DEVELOP) -> Commit:
@@ -37,10 +54,24 @@ def resolve(clone: Path, ref: str = DEVELOP) -> Commit:
     return Commit(sha=sha, date=date, develop_base=base)
 
 
+def _worktree_valid(worktree: Path) -> bool:
+    if not (worktree / ".git").exists():
+        return False
+    r = subprocess.run(
+        ["git", "-C", str(worktree), "rev-parse", "--git-dir"],
+        capture_output=True,
+    )
+    return r.returncode == 0
+
+
 def prepare_worktree(clone: Path, worktree: Path, sha: str) -> None:
-    if (worktree / ".git").exists():
-        _git("-C", str(worktree), "checkout", "--detach", sha)
-    else:
+    with clone_lock(clone):
+        if _worktree_valid(worktree):
+            _git("-C", str(worktree), "checkout", "--detach", sha)
+            return
+        if (worktree / ".git").exists():  # .git points at a missing gitdir
+            shutil.rmtree(worktree)
+        _git("worktree", "prune", cwd=clone)
         worktree.parent.mkdir(parents=True, exist_ok=True)
         _git("worktree", "add", "--detach", str(worktree), sha, cwd=clone)
 
