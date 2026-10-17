@@ -176,6 +176,7 @@ def test_residue_rule_is_per_pair():
     kept.eliminate_zeros()
     assert kept[0, 1] == 0 and kept[0, 2] == 1e-20 and kept[2, 0] == 1.0
     assert kept.nnz == A.nnz - 1
+    assert fem._residue(sp.csr_matrix((3, 3))).size == 0
 
 
 @pytest.mark.parametrize("problem", ["porous_pressure", "anisotropic_heat", "poisson_p1",

@@ -137,6 +137,8 @@ def _residue(A: sp.csr_matrix) -> np.ndarray:
     a_ji = 0 when it isn't stored. Explicit zeros are always in the mask.
     """
     n_rows, n_cols = A.shape
+    if A.nnz == 0:
+        return np.zeros(0, dtype=bool)
     rows = np.repeat(np.arange(n_rows, dtype=np.int64), np.diff(A.indptr))
     cols = A.indices.astype(np.int64)
     key = rows * n_cols + cols  # increasing, since the indices are sorted
