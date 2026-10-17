@@ -55,7 +55,10 @@ def _run_one(inv: Invocation, prefix: list[str], log: Path) -> tuple[list, dict]
         return data, {"status": "ok", "exit_code": 0, "reason": None}
 
 
-def run_group(invs: list[Invocation], srun: list[str], out_dir: Path) -> dict:
+def run_group(group: str, invs: list[Invocation], srun: list[str], out_dir: Path) -> dict:
+    for inv in invs:
+        if inv.group != group:
+            raise ValueError(f"invocation {inv.label!r} is in group {inv.group!r}, not {group!r}")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     prefix = ["srun", *srun] if srun else []
@@ -74,9 +77,9 @@ def run_group(invs: list[Invocation], srun: list[str], out_dir: Path) -> dict:
         results.extend(data)
         records.append({"label": inv.label, "args": list(inv.args), **st,
                         "seconds": time.monotonic() - t})
-    group = invs[0].group if invs else None
-    if group is not None:
-        (out_dir / f"{group}.json").write_text(json.dumps(results))
+    (out_dir / f"{group}.json").write_text(json.dumps(results))
+    if not records:
+        return {"status": "ok", "seconds": 0.0, "invocations": []}
     n_ok = sum(r["status"] == "ok" for r in records)
     status = "ok" if n_ok == len(records) else ("failed" if n_ok == 0 else "partial")
     return {"status": status, "seconds": time.monotonic() - t0, "invocations": records}

@@ -22,7 +22,7 @@ def test_concatenates_arrays(tmp_path):
     a = fake(tmp_path, "a", 'print(\'[{"a":1}]\')')
     b = fake(tmp_path, "b", 'print(\'[{"b":2}]\')')
     out = tmp_path / "out"
-    r = run_group([inv(a, "a"), inv(b, "b")], [], out)
+    r = run_group("g", [inv(a, "a"), inv(b, "b")], [], out)
     assert r["status"] == "ok"
     assert json.loads((out / "g.json").read_text()) == [{"a": 1}, {"b": 2}]
     assert r["invocations"][0]["args"] == ["-a", "1"]
@@ -33,7 +33,7 @@ def test_crash_is_partial(tmp_path):
     ok = fake(tmp_path, "ok", 'print(\'[{"a":1}]\')')
     bad = fake(tmp_path, "bad", 'sys.stderr.write("boom\\n"); sys.exit(3)')
     out = tmp_path / "out"
-    r = run_group([inv(bad, "bad"), inv(ok, "ok")], [], out)
+    r = run_group("g", [inv(bad, "bad"), inv(ok, "ok")], [], out)
     assert r["status"] == "partial"
     assert r["invocations"][0]["status"] == "failed"
     assert r["invocations"][0]["exit_code"] == 3
@@ -44,7 +44,7 @@ def test_crash_is_partial(tmp_path):
 def test_truncated_json_is_failed(tmp_path):
     t = fake(tmp_path, "t", 'sys.stdout.write(\'[{"a":1},{"b"\')')
     out = tmp_path / "out"
-    r = run_group([inv(t)], [], out)
+    r = run_group("g", [inv(t)], [], out)
     assert r["status"] == "failed"
     assert r["invocations"][0]["status"] == "failed"
     assert json.loads((out / "g.json").read_text()) == []
@@ -52,7 +52,7 @@ def test_truncated_json_is_failed(tmp_path):
 
 def test_timeout(tmp_path):
     s = fake(tmp_path, "s", "import time; time.sleep(5)")
-    r = run_group([inv(s, timeout=1)], [], tmp_path / "out")
+    r = run_group("g", [inv(s, timeout=1)], [], tmp_path / "out")
     assert r["invocations"][0]["reason"] == "timeout"
     assert r["status"] == "failed"
     assert r["seconds"] < 4
@@ -61,7 +61,7 @@ def test_timeout(tmp_path):
 def test_missing_input_not_started(tmp_path):
     marker = tmp_path / "started"
     s = fake(tmp_path, "s", f'open({str(marker)!r}, "w")')
-    r = run_group([inv(s, missing=tmp_path / "nope.mtx")], [], tmp_path / "out")
+    r = run_group("g", [inv(s, missing=tmp_path / "nope.mtx")], [], tmp_path / "out")
     assert r["invocations"][0]["reason"] == "missing input"
     assert r["invocations"][0]["status"] == "failed"
     assert not marker.exists()
@@ -74,6 +74,20 @@ def test_stdin_and_large_output(tmp_path):
     i = inv(s)
     i.stdin = "hello"
     out = tmp_path / "out"
-    r = run_group([i], [], out)
+    r = run_group("g", [i], [], out)
     assert r["status"] == "ok"
     assert json.loads((out / "g.json").read_text())[0] == {"d": "hello"}
+
+
+def test_empty_group_writes_empty_array(tmp_path):
+    out = tmp_path / "out"
+    r = run_group("g", [], [], out)
+    assert r == {"status": "ok", "seconds": 0.0, "invocations": []}
+    assert json.loads((out / "g.json").read_text()) == []
+
+
+def test_mismatched_group_rejected(tmp_path):
+    import pytest
+    s = fake(tmp_path, "s", "pass")
+    with pytest.raises(ValueError):
+        run_group("other", [inv(s)], [], tmp_path / "out")
