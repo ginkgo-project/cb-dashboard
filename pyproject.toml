@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cb-dashboard"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy==2.5.4",
+    "scipy==1.18.1",
+    "scikit-fem==12.0.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["datasets"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

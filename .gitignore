@@ -2,3 +2,5 @@
 __pycache__/
 *.bin
 *.tmp
+*.egg-info/
+.pytest_cache/
