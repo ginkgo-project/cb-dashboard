@@ -57,3 +57,42 @@ nonzero check passes, `du -sh $CB_ROOT/matrices` is about 60 GB. Then:
 
     git add datasets/manifest.json datasets/catalog.toml README.md
     git commit -m "datasets: manifest of dataset version 1"
+
+## Running the benchmarks
+
+`python -m bench run <machine>` builds a Ginkgo commit and runs the five
+benchmark groups (blas, spmv, spgemm, solver, preconditioner) on one node.
+
+### Setup
+
+Use the venv (`datasets/setup_env.sh`) and the checkout of this repository from
+the "Datasets" section above. The dataset manifest `datasets/manifest.json` must
+exist.
+
+### Dry run (login node)
+
+    $CB_ROOT/venv/daint-gh200/bin/python -m bench run daint-gh200 --dry-run
+
+Prints the machine, the ref and one line per invocation. It runs no git, build
+or srun.
+
+### Submit
+
+    bench/submit.sh <machine> [--ref REF] [--force]
+
+The default ref is `origin/develop`. Without `--force`, a run of develop's head
+that was already benchmarked exits with "nothing to do". `last_commit` is only
+updated after a completed run of `origin/develop`. `SUBMIT_DRY_RUN=1` prints the
+sbatch command instead of submitting it. Exit codes of the job: 0 on success or
+nothing to do, 1 on a build failure, 2 on an architecture mismatch.
+
+### Logs and results
+
+- Slurm logs: `$SCRATCH/cb/logs/<jobid>.out`
+- Results: `$SCRATCH/cb/results/<machine>/<date>_<sha10>/` (a rerun of the same
+  commit gets `_2`, `_3`, ...) with `run.json`, one `<group>.json` per group and
+  `logs/<group>/<label>.log` per invocation.
+
+### Copy back
+
+    rsync -a daint:$SCRATCH/cb/results/ results/

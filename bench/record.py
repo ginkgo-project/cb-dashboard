@@ -141,13 +141,14 @@ def script_version(run: Callable, repo: Path) -> str | dict:
 
 def run_record(m: Machine, commit: Commit, ref: str, build: dict, manifest: dict,
                groups: dict, started: str, finished: str,
-               run: Callable = subprocess.run, repo: Path = REPO) -> dict:
+               run: Callable = subprocess.run, repo: Path = REPO,
+               gpu: dict | None = None, toolchain: dict | None = None) -> dict:
     script = script_version(run, repo)
     return {
         "machine": m.name,
         "node": socket.gethostname(),
-        "gpu": gpu_info(m, run),
-        "toolchain": toolchain_info(m, run),
+        "gpu": gpu if gpu is not None else gpu_info(m, run),
+        "toolchain": toolchain if toolchain is not None else toolchain_info(m, run),
         "uenv": m.uenv,
         "cmake_cache": build["cmake_cache"],
         "ginkgo": {"commit": commit.sha, "commit_date": commit.date,
