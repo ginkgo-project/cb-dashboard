@@ -28,7 +28,13 @@ TOOLS="$ROOT/tools/bin"
 VENV="$ROOT/venv/$MACHINE"
 UV="$TOOLS/uv"
 
-run "mkdir -p '$TOOLS' '$ROOT/venv'"
+# Keep uv's managed CPython and cache on the shared root, not in one user's home.
+export UV_PYTHON_INSTALL_DIR="$ROOT/tools/python"
+export UV_CACHE_DIR="$ROOT/tools/uv-cache"
+echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR"
+echo "UV_CACHE_DIR=$UV_CACHE_DIR"
+
+run "mkdir -p '$TOOLS' '$ROOT/venv' '$UV_PYTHON_INSTALL_DIR' '$UV_CACHE_DIR'"
 if [ ! -x "$UV" ]; then
   run "curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR='$TOOLS' UV_NO_MODIFY_PATH=1 sh"
 else
@@ -40,6 +46,6 @@ if [ ! -x "$VENV/bin/python" ]; then
 else
   echo "venv already exists: $VENV"
 fi
-run "'$UV' pip install --python '$VENV/bin/python' '$REPO'"
+run "'$UV' pip install --python '$VENV/bin/python' -e '$REPO'"
 run "'$VENV/bin/python' -c 'import skfem, numpy, scipy, datasets'"
 echo "ok: $VENV"

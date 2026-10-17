@@ -28,6 +28,9 @@ def test_beverin_dry_run(tmp_path):
     assert f"venv --python 3.12 '{tmp_path}/venv/beverin-mi300a'" in r.stdout
     assert "astral.sh/uv/install.sh" in r.stdout
     assert "import skfem, numpy, scipy, datasets" in r.stdout
+    assert f"UV_PYTHON_INSTALL_DIR={tmp_path}/tools/python" in r.stdout
+    assert f"UV_CACHE_DIR={tmp_path}/tools/uv-cache" in r.stdout
+    assert f"-e '{DS.parent}'" in r.stdout
     assert not (tmp_path / "venv" / "beverin-mi300a").exists()
 
 
