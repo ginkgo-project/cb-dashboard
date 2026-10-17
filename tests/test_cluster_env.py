@@ -28,8 +28,13 @@ def test_beverin_dry_run(tmp_path):
     assert f"venv --python 3.12 '{tmp_path}/venv/beverin-mi300a'" in r.stdout
     assert "astral.sh/uv/install.sh" in r.stdout
     assert "import skfem, numpy, scipy, datasets" in r.stdout
-    assert f"UV_PYTHON_INSTALL_DIR={tmp_path}/tools/python" in r.stdout
-    assert f"UV_CACHE_DIR={tmp_path}/tools/uv-cache" in r.stdout
+    tools = f"{tmp_path}/tools/x86_64"
+    assert f"UV={tools}/bin/uv" in r.stdout
+    assert f"UV_INSTALL_DIR='{tools}/bin'" in r.stdout
+    assert f"UV_PYTHON_INSTALL_DIR={tools}/python" in r.stdout
+    assert f"UV_CACHE_DIR={tools}/uv-cache" in r.stdout
+    assert f"'{tools}/bin/uv' venv --python 3.12" in r.stdout
+    assert f"{tmp_path}/tools/bin" not in r.stdout
     assert f"-e '{DS.parent}'" in r.stdout
     assert not (tmp_path / "venv" / "beverin-mi300a").exists()
 
@@ -48,3 +53,17 @@ def test_unknown_machine(tmp_path):
 
 def test_webgraph_cmd_default():
     assert "{basename}" in DEFAULT_WEBGRAPH_CMD and "{out}" in DEFAULT_WEBGRAPH_CMD
+
+
+def test_webgraph_dry_run_per_arch(tmp_path):
+    r = run("setup_webgraph.sh", env={"CB_ROOT": str(tmp_path), "CB_DRY_RUN": "1"})
+    assert r.returncode == 0, r.stderr
+    tools = f"{tmp_path}/tools/{os.uname().machine}"
+    assert f"mkdir -p '{tools}/rustup' '{tools}/cargo'" in r.stdout
+    assert f"'{tools}/cargo/bin/cargo' install webgraph-cli" in r.stdout
+    assert not (tmp_path / "tools").exists()
+
+
+def test_build_sbatch_path_per_arch():
+    t = (DS / "build.sbatch").read_text()
+    assert 'export PATH="$ROOT/tools/$(uname -m)/cargo/bin:$PATH"' in t

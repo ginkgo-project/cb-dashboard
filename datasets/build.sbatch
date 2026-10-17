@@ -11,6 +11,6 @@
 set -euo pipefail
 
 ROOT="${CB_ROOT:-/capstor/store/cscs/userlab/d131/cb}"
-export PATH="$ROOT/tools/cargo/bin:$PATH"
+export PATH="$ROOT/tools/$(uname -m)/cargo/bin:$PATH"  # webgraph (setup_webgraph.sh)
 cd "${SLURM_SUBMIT_DIR:-.}"
 "$ROOT/venv/daint-gh200/bin/python" -m datasets build --root "$ROOT" "$@"

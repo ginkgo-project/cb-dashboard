@@ -11,7 +11,7 @@ DEFAULT_MANIFEST = Path(__file__).with_name("manifest.json")
 # 0.5.0, docs.rs/webgraph-cli/latest/src/webgraph_cli/to/arcs.rs.html). The build
 # does not use a shell, so wrap in `sh -c` for the redirect. NOTE: confirm with
 # `webgraph to arcs --help` on the cluster; `webgraph` must be on PATH
-# ($ROOT/tools/cargo/bin, which build.sbatch adds).
+# ($ROOT/tools/<arch>/cargo/bin, which build.sbatch adds).
 DEFAULT_WEBGRAPH_CMD = 'sh -c "webgraph to arcs {basename} > {out}"'
 
 

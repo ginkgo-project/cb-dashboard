@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Usage: datasets/setup_env.sh <daint-gh200|beverin-mi300a>
 # Creates $CB_ROOT/venv/<machine> (one venv per machine: aarch64 vs x86_64).
+# uv, its CPython and its cache live in $CB_ROOT/tools/<arch>, also per CPU.
 # CB_DRY_RUN=1 only prints what would be done (the arch check always runs).
 set -euo pipefail
 
@@ -24,19 +25,20 @@ run() {
   if [ "${CB_DRY_RUN:-0}" = 1 ]; then echo "[dry-run] $*"; else eval "$@"; fi
 }
 
-TOOLS="$ROOT/tools/bin"
+TOOLS="$ROOT/tools/$HAVE"
 VENV="$ROOT/venv/$MACHINE"
-UV="$TOOLS/uv"
+UV="$TOOLS/bin/uv"
 
 # Keep uv's managed CPython and cache on the shared root, not in one user's home.
-export UV_PYTHON_INSTALL_DIR="$ROOT/tools/python"
-export UV_CACHE_DIR="$ROOT/tools/uv-cache"
+export UV_PYTHON_INSTALL_DIR="$TOOLS/python"
+export UV_CACHE_DIR="$TOOLS/uv-cache"
+echo "UV=$UV"
 echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR"
 echo "UV_CACHE_DIR=$UV_CACHE_DIR"
 
-run "mkdir -p '$TOOLS' '$ROOT/venv' '$UV_PYTHON_INSTALL_DIR' '$UV_CACHE_DIR'"
+run "mkdir -p '$TOOLS/bin' '$ROOT/venv' '$UV_PYTHON_INSTALL_DIR' '$UV_CACHE_DIR'"
 if [ ! -x "$UV" ]; then
-  run "curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR='$TOOLS' UV_NO_MODIFY_PATH=1 sh"
+  run "curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR='$TOOLS/bin' UV_NO_MODIFY_PATH=1 sh"
 else
   echo "uv already installed: $UV"
 fi

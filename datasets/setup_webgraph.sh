@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Installs the Rust WebGraph CLI (crate webgraph-cli, binary `webgraph`) into
-# $CB_ROOT/tools. Binary ends up in $CB_ROOT/tools/cargo/bin/webgraph.
+# $CB_ROOT/tools/<arch> (aarch64 on Daint, x86_64 on Beverin). The binary ends
+# up in $CB_ROOT/tools/<arch>/cargo/bin/webgraph. The dataset build runs on
+# Daint, so run this there. CB_DRY_RUN=1 only prints what would be done.
 set -euo pipefail
 
 ROOT="${CB_ROOT:-/capstor/store/cscs/userlab/d131/cb}"
-export RUSTUP_HOME="$ROOT/tools/rustup"
-export CARGO_HOME="$ROOT/tools/cargo"
+TOOLS="$ROOT/tools/$(uname -m)"
+export RUSTUP_HOME="$TOOLS/rustup"
+export CARGO_HOME="$TOOLS/cargo"
 
 run() {
   if [ "${CB_DRY_RUN:-0}" = 1 ]; then echo "[dry-run] $*"; else eval "$@"; fi

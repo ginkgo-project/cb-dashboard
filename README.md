@@ -19,12 +19,19 @@ come from this checkout.
     datasets/setup_env.sh daint-gh200      # on Daint (refuses unless aarch64)
     datasets/setup_env.sh beverin-mi300a   # on Beverin (refuses unless x86_64)
 
-Reruns reuse `uv` and the venv. `CB_DRY_RUN=1` only prints the steps.
+`uv`, its CPython and its cache go to `$CB_ROOT/tools/<arch>/` (`aarch64` or
+`x86_64`), so the two machines never share a binary. Reruns reuse `uv` and the
+venv. `CB_DRY_RUN=1` only prints the steps.
 
 ### 2. WebGraph (twitter-2010 and the other LAW graphs)
 
+On Daint, where the dataset build runs:
+
     datasets/setup_webgraph.sh
-    $CB_ROOT/tools/cargo/bin/webgraph to arcs --help
+    $CB_ROOT/tools/aarch64/cargo/bin/webgraph to arcs --help
+
+Rust and the binary go to `$CB_ROOT/tools/$(uname -m)/{rustup,cargo}`, and
+`datasets/build.sbatch` puts `$CB_ROOT/tools/$(uname -m)/cargo/bin` on `PATH`.
 
 The default `--webgraph-cmd` is `sh -c "webgraph to arcs {basename} > {out}"`
 (crate `webgraph-cli`; `to arcs` writes TAB-separated arcs to stdout, per
