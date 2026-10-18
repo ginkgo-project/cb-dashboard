@@ -5,6 +5,7 @@
   "matrices": [
     {
       "name": "ecology2",
+      "entry_sha256": "5bdbd14efc1281c92df3ac635253c6c13a59414af71d2b0de54d99771545210e",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -38,6 +39,7 @@
     },
     {
       "name": "TSOPF_RS_b2383_c1",
+      "entry_sha256": "19f4e2f353a4a23ae15965e18c22af157596de65a2490918ca90dd39c6bd23d3",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -71,6 +73,7 @@
     },
     {
       "name": "audikw1",
+      "entry_sha256": "c246806380dc078e767b2001ccfec1ab8b1ad6c211c2671da16eb9e53f319ec7",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -104,6 +107,7 @@
     },
     {
       "name": "USA-road-d.USA",
+      "entry_sha256": "e51937608e39f2ae8de35494c50e597dab83b5f999fd58e5c64af53b01213f6b",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -137,6 +141,7 @@
     },
     {
       "name": "soc-LiveJournal1",
+      "entry_sha256": "f996d8dad424eb5b1cb201fc299b7fd24156de4ec393b2e3109861912bdd1472",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -170,6 +175,7 @@
     },
     {
       "name": "cage15",
+      "entry_sha256": "b1e90c8fc514737183f6fc369cfa02ab5d56126542dac800fe930d2870f85d6b",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -203,6 +209,7 @@
     },
     {
       "name": "kron_g500-logn21",
+      "entry_sha256": "36e4a34d5ab3657dcf6689780463db5681bbde567f8b5549924cb28ecaf17e35",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -236,6 +243,7 @@
     },
     {
       "name": "com-Orkut",
+      "entry_sha256": "1dd8b79bbab031cec875c8e84311652232328240c0624549f93a7ebdb43ef9ee",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -269,6 +277,7 @@
     },
     {
       "name": "nlpkkt240",
+      "entry_sha256": "e7c58ed0f8e30f63b3e6aadfe40b0478512ee88cda18daca3b0b820a8f53cd97",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -302,6 +311,7 @@
     },
     {
       "name": "twitter-2010",
+      "entry_sha256": "3b81cdf7bac353f814042208a9eda6fedbada19cb89efbb34629a45f4f05707c",
       "set": "spmv",
       "roles": [],
       "spd": null,
@@ -337,6 +347,7 @@
     },
     {
       "name": "porous_pressure",
+      "entry_sha256": "9e5fe6276198ffdc33ba5dcffacf032ea9fe4239fa06ac39fa7fcc3d290977ae",
       "set": "fem",
       "roles": [
         "precond"
@@ -370,6 +381,7 @@
     },
     {
       "name": "anisotropic_heat",
+      "entry_sha256": "5a467d974fd4efa09954a90871acac4aa6a30499b7d15ed81e6e73d78c227ffa",
       "set": "fem",
       "roles": [
         "precond"
@@ -403,6 +415,7 @@
     },
     {
       "name": "elasticity_p2",
+      "entry_sha256": "45074666033f3ccbff648200a3535be758b9205d3f468be8a996c8a5e42522f2",
       "set": "fem",
       "roles": [
         "precond"
@@ -436,6 +449,7 @@
     },
     {
       "name": "convection_diffusion",
+      "entry_sha256": "67c45e41e81b7272cc39b455140f1d38b405235d3b0d2d1bc468f36648225c53",
       "set": "fem",
       "roles": [
         "precond"
@@ -469,6 +483,7 @@
     },
     {
       "name": "curl_curl",
+      "entry_sha256": "838ee19578202f74d66287e4058fef0ca6c592a2ba16846a1240e0f5c26864d1",
       "set": "fem",
       "roles": [
         "precond"
@@ -502,6 +517,7 @@
     },
     {
       "name": "poisson_p1",
+      "entry_sha256": "1ea271c516070cc71cbb9b9af8d72438c964d345aa947fbcab6b548863b0838a",
       "set": "fem",
       "roles": [
         "spgemm"
@@ -535,6 +551,7 @@
     },
     {
       "name": "elasticity_p2_graded",
+      "entry_sha256": "00f64a1ac924b4145bc1ede4e24f9dab23b8bbc0d0ce3026a727974438fb37cb",
       "set": "fem",
       "roles": [
         "spgemm"
