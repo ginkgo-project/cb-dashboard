@@ -7,7 +7,7 @@ fp64_peak = 34.0e12       # FP64 vector, H100 in GH200
 largest_cache = 50e6      # H100 L2
 cache_name = "L2"
 citations = [
-  "https://www.nvidia.com/en-us/data-center/grace-hopper-superchip/",
+  "https://dam-cdn.nvd.orangelogic.com/AssetLink/tkno03fa645gb7f33w60rf200d330420.pdf",
   "https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/",
 ]
 
