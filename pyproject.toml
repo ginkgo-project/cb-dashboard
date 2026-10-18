@@ -16,7 +16,7 @@ dependencies = [
 dev = ["pytest"]
 
 [tool.setuptools]
-packages = ["datasets", "bench"]
+packages = ["datasets", "bench", "dashboard"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -24,3 +24,4 @@ testpaths = ["tests"]
 [tool.setuptools.package-data]
 datasets = ["catalog.toml"]
 bench = ["machines/*.toml"]
+dashboard = ["machines.toml", "frozen.json"]
