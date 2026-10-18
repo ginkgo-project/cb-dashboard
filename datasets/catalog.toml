@@ -124,9 +124,9 @@ expected_rows = 41652230
 expected_nnz = 1468365182
 nnz_check = "exact"
 
-# FEM entries are generated (Task 4). The sizes are placeholders, the test
-# sizes of tests/test_fem.py (about 1e4 rows); the real sizes are tuned in
-# Task 7.
+# FEM entries are generated (Task 4). Each size aims at about 50M nonzeros (the
+# range is 20-100M), from the growth table in datasets/fem.py. porous_pressure
+# is a multiple of 8, so its 8 layers follow the cell faces.
 
 [[entry]]
 name = "porous_pressure"
@@ -138,7 +138,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "porous_pressure", size = 22}
+fem = {problem = "porous_pressure", size = 152}
 
 [[entry]]
 name = "anisotropic_heat"
@@ -150,7 +150,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "anisotropic_heat", size = 101}
+fem = {problem = "anisotropic_heat", size = 2700}
 
 [[entry]]
 name = "elasticity_p2"
@@ -162,7 +162,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "elasticity_p2", size = 7}
+fem = {problem = "elasticity_p2", size = 29}
 
 [[entry]]
 name = "convection_diffusion"
@@ -174,7 +174,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = false
-fem = {problem = "convection_diffusion", size = 101}
+fem = {problem = "convection_diffusion", size = 2700}
 
 [[entry]]
 name = "curl_curl"
@@ -186,7 +186,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["precond"]
 spd = true
-fem = {problem = "curl_curl", size = 12}
+fem = {problem = "curl_curl", size = 77}
 
 [[entry]]
 name = "poisson_p1"
@@ -198,7 +198,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["spgemm"]
 spd = true
-fem = {problem = "poisson_p1", size = 22}
+fem = {problem = "poisson_p1", size = 152}
 
 [[entry]]
 name = "elasticity_p2_graded"
@@ -210,4 +210,4 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["spgemm"]
 spd = true
-fem = {problem = "elasticity_p2_graded", size = 8}
+fem = {problem = "elasticity_p2_graded", size = 28}
