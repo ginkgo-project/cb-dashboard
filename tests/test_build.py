@@ -61,7 +61,7 @@ def server():
     srv.server_close()
 
 
-def write_catalog(tmp_path, url, version="1", nnz=6):
+def write_catalog(tmp_path, url, version="1", nnz=6, fem_size=3):
     p = tmp_path / "catalog.toml"
     p.write_text(f'''version = "{version}"
 seed = 7
@@ -88,7 +88,7 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["spgemm"]
 spd = true
-fem = {{problem = "poisson_p1", size = 3}}
+fem = {{problem = "poisson_p1", size = {fem_size}}}
 ''')
     return p
 
@@ -121,13 +121,37 @@ def test_build_writes_manifest(tmp_path, server):
     assert abs(v).max() > 1.0 or (v == v.round()).any()
 
 
+def test_manifest_records_entry_hashes(tmp_path, server):
+    m, _ = run(tmp_path, server)
+    cat = load_catalog(tmp_path / "catalog.toml")
+    assert [e["entry_sha256"] for e in m["matrices"]] == [e.sha256 for e in cat.entries]
+    assert all(len(e.sha256) == 64 for e in cat.entries)
+
+
+def age(root):
+    """Set every binary's mtime to 1000; return {name: path}."""
+    paths = {p.stem: p for p in (root / "matrices").glob("*/*.bin")}
+    for p in paths.values():
+        os.utime(p, (1000, 1000))
+    return paths
+
+
+def rebuilt(paths):
+    return sorted(name for name, p in paths.items() if p.stat().st_mtime != 1000)
+
+
+def strip_entry_hashes(manifest):
+    m = json.loads(manifest.read_text())
+    for e in m["matrices"]:
+        del e["entry_sha256"]
+    manifest.write_text(json.dumps(m))
+
+
 def test_skip_when_sha_matches(tmp_path, server):
     _, root = run(tmp_path, server)
-    paths = [root / "matrices/spmv/tiny.bin", root / "matrices/fem/fem1.bin"]
-    for p in paths:
-        os.utime(p, (1000, 1000))
+    paths = age(root)
     run(tmp_path, server)
-    assert all(p.stat().st_mtime == 1000 for p in paths)
+    assert rebuilt(paths) == []
 
 
 def test_skip_rebuilds_corrupt_bin(tmp_path, server):
@@ -153,10 +177,39 @@ def test_version_guard(tmp_path, server):
                      "--manifest", str(tmp_path / "manifest.json")]) == 2
 
 
-def test_new_version_rebuilds(tmp_path, server):
-    run(tmp_path, server)
-    m, _ = run(tmp_path, server, version="2", nnz=6)
-    assert m["version"] == "2" and len(m["matrices"]) == 2
+def test_new_version_rebuilds_only_changed_entries(tmp_path, server):
+    m1, root = run(tmp_path, server)
+    paths = age(root)
+    m2, _ = run(tmp_path, server, version="2", fem_size=4)
+    assert m2["version"] == "2" and [e["name"] for e in m2["matrices"]] == ["tiny", "fem1"]
+    assert rebuilt(paths) == ["fem1"]
+    assert m2["matrices"][0] == m1["matrices"][0]  # kept as built, converter_version too
+    assert m2["matrices"][1]["rows"] != m1["matrices"][1]["rows"]
+
+
+def test_new_version_rebuilds_a_kept_entry_without_its_bin(tmp_path, server):
+    _, root = run(tmp_path, server)
+    (root / "matrices/spmv/tiny.bin").unlink()
+    m, _ = run(tmp_path, server, version="2")
+    assert read_binary(root / "matrices/spmv/tiny.bin")[0] == (3, 3)
+    assert [e["name"] for e in m["matrices"]] == ["tiny", "fem1"]
+
+
+def test_new_version_rebuilds_entries_without_a_hash(tmp_path, server):
+    _, root = run(tmp_path, server)
+    strip_entry_hashes(tmp_path / "manifest.json")
+    paths = age(root)
+    run(tmp_path, server, version="2")
+    assert rebuilt(paths) == ["fem1", "tiny"]
+
+
+def test_same_version_fills_in_entry_hashes(tmp_path, server):
+    m1, root = run(tmp_path, server)
+    strip_entry_hashes(tmp_path / "manifest.json")
+    paths = age(root)
+    m2, _ = run(tmp_path, server)
+    assert rebuilt(paths) == [] and m2 == m1
+    assert json.loads((tmp_path / "manifest.json").read_text()) == m1
 
 
 def test_nnz_check_fails_loudly(tmp_path, server):

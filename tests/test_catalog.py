@@ -1,3 +1,4 @@
+import re
 import shutil
 from pathlib import Path
 
@@ -45,3 +46,22 @@ def test_tsopf_gets_its_diagonal():
     (e,) = [e for e in load_catalog().entries if e.name == "TSOPF_RS_b2383_c1"]
     assert e.add_diagonal is True and e.nnz_check == "plus_diagonal"
     assert e.expected_nnz == 16171169
+
+
+def test_entry_sha256_follows_only_its_table_and_the_seed(tmp_path):
+    p = tmp_path / "catalog.toml"
+    text = DEFAULT.read_text()
+
+    def hashes(t):
+        p.write_text(t)
+        return {e.name: e.sha256 for e in load_catalog(p).entries}
+
+    a = hashes(text)
+    assert a == {e.name: e.sha256 for e in load_catalog().entries}
+    assert len(set(a.values())) == len(a)
+    assert hashes("# new\n" + re.sub(r'^version = ".*"', 'version = "x"', text, flags=re.M)) == a
+    assert text.count("size = 19}") == 1
+    b = hashes(text.replace("size = 19}", "size = 20}"))
+    assert [n for n in a if a[n] != b[n]] == ["elasticity_p2_graded"]
+    c = hashes(text.replace("seed = 20261017", "seed = 1"))
+    assert all(a[n] != c[n] for n in a)

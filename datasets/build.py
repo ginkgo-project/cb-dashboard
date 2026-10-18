@@ -190,7 +190,8 @@ def _build_entry(entry: Entry, catalog: Catalog, root: Path,
     del rows, cols, vals
     gc.collect()
     return {
-        "name": entry.name, "set": entry.set, "roles": list(entry.roles),
+        "name": entry.name, "entry_sha256": entry.sha256, "set": entry.set,
+        "roles": list(entry.roles),
         "spd": entry.spd, "source": entry.source, "url": entry.url,
         "download_sha256": shas,
         "path": f"matrices/{entry.set}/{entry.name}.bin", "binary_sha256": digest,
@@ -216,6 +217,8 @@ def build(catalog: Catalog, root: Path, manifest_path: Path,
           only: list[str] | None, webgraph_cmd: str | None) -> dict:
     root, manifest_path = Path(root), Path(manifest_path)
     done: dict[str, dict] = {}
+    same_version = False
+    hashes = {e.name: e.sha256 for e in catalog.entries}
     if manifest_path.exists():
         old = json.loads(manifest_path.read_text())
         if old.get("version") == catalog.version:
@@ -223,7 +226,16 @@ def build(catalog: Catalog, root: Path, manifest_path: Path,
                 raise VersionError(
                     f"catalog changed but version is still {catalog.version!r}; "
                     "bump `version` in catalog.toml")
+            same_version = True
             done = {m["name"]: m for m in old["matrices"]}
+            for name, m in done.items():  # manifests from before entry_sha256 existed
+                if name in hashes:
+                    m["entry_sha256"] = hashes[name]
+        else:
+            # A new version keeps the entries whose catalog table is unchanged; their
+            # binaries are still checked below. To rebuild one anyway, delete its .bin.
+            done = {m["name"]: m for m in old.get("matrices", [])
+                    if m["name"] in hashes and m.get("entry_sha256") == hashes[m["name"]]}
     names = {e.name for e in catalog.entries}
     if only:
         unknown = sorted(set(only) - names)
@@ -253,7 +265,7 @@ def build(catalog: Catalog, root: Path, manifest_path: Path,
         except Exception as e:  # keep going; report all failures at the end
             failures.append(f"{entry.name}: {e}")
         else:
-            if prev and new["binary_sha256"] != prev["binary_sha256"]:
+            if same_version and prev and new["binary_sha256"] != prev["binary_sha256"]:
                 # The manifest on disk keeps the old entry until the version is bumped.
                 raise VersionError(
                     f"{entry.name}: the rebuilt binary differs from the one in the "

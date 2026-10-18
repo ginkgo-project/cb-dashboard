@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +27,17 @@ class Entry:
     fem: dict | None  # {"problem": str, "size": int}
     index_base: int = 0  # smallest vertex id in an edge-list file
     compact_ids: bool = False  # renumber an edge list's ids, dropping unused ones
+    sha256: str = ""  # of the entry's table and the catalog seed, see entry_sha256
+
+
+def entry_sha256(table: dict, seed: int) -> str:
+    """Hash of one parsed [[entry]] table and the seed, which sets the random values.
+
+    Comments and the other entries don't change it, so a new catalog version can
+    keep the entries whose hash is the same.
+    """
+    doc = json.dumps({"entry": table, "seed": seed}, sort_keys=True)
+    return hashlib.sha256(doc.encode("utf-8")).hexdigest()
 
 
 @dataclass
@@ -56,6 +68,7 @@ def load_catalog(path: Path = DEFAULT) -> Catalog:
             fem=e.get("fem"),
             index_base=e.get("index_base", 0),
             compact_ids=e.get("compact_ids", False),
+            sha256=entry_sha256(e, doc["seed"]),
         )
         for e in doc["entry"]
     ]
