@@ -1,11 +1,12 @@
 // Renders the benchmark dashboard from site/data/*.json. All text goes
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
-import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens } from "./logic.js";
+import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
-const state = { meta: null, tabs: {}, route: { tab: "basic", params: {} } };
+const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
 const tokens = renderTokens();
+const boxTokens = renderTokens(); // one click box fill at a time
 const TAB_FILES = ["basic", "solvers", "preconditioners"];
 
 function el(tag, attrs = {}, ...children) {
@@ -127,7 +128,118 @@ function renderModels(root, data) {
 }
 
 // Tasks 11 to 14 fill these in
-function renderHeatmap(root, data, tab) {}
+async function loadRun(machine, dir) {
+  const path = `data/runs/${machine}/${dir}.json`;
+  if (!state.runs[path]) state.runs[path] = await loadJson(path);
+  return state.runs[path];
+}
+
+const watts = (joules, seconds) => (joules != null && seconds ? ` · ${(joules / seconds).toFixed(0)} W` : "");
+
+function runBlock(machine, dir, run, key) {
+  const nodeStats = state.meta.machines[machine]?.nodes?.[run.node];
+  const info = run.cases?.[key];
+  const inv = info ? run.invocations?.[info.invocation] : null;
+  const joules = inv?.energy_j?.accel0_energy;
+  const triad = run.triad == null ? "triad not measured"
+    : `triad ${(run.triad / 1e9).toFixed(0)} GB/s${nodeStats
+      ? ` (node range ${(nodeStats.triad_min / 1e9).toFixed(0)} to ${(nodeStats.triad_max / 1e9).toFixed(0)} GB/s over ${nodeStats.runs} runs)` : ""}`;
+  return el("li", {},
+    el("strong", {}, dir), ` · node ${run.node ?? "unknown"} · ${triad}`,
+    el("br"), `commit ${shortSha(run.ginkgo?.commit)} on ${run.ginkgo?.ref ?? "unknown ref"}`,
+    el("br"), joules == null ? "no energy recorded"
+      : `energy ${Math.round(joules)} J${watts(joules, inv.seconds)} (whole benchmark run, including loading)`);
+}
+
+function levelsTable(levels) {
+  const short = (name) => String(name ?? "").replace(/^gko::(solver|preconditioner)::/, "").replace(/<.*$/, "");
+  return el("div", { class: "scroll" }, el("table", { class: "levels" },
+    el("thead", {}, el("tr", {}, ["level", "rows", "coarse rows", "coarse nonzeros", "smoother", "smoother solver"].map((h) => el("th", { scope: "col" }, h)))),
+    el("tbody", {}, levels.map((lv, i) => el("tr", {},
+      el("td", { class: "number" }, i), el("td", { class: "number" }, lv.fine_rows), el("td", { class: "number" }, lv.coarse_rows),
+      el("td", { class: "number" }, lv.coarse_nonzeros), el("td", {}, short(lv.pre_smoother)), el("td", {}, short(lv.pre_smoother_solver)))))));
+}
+
+async function fillBox(box, data, tab, machine, key, col) {
+  const token = boxTokens.next();
+  const c = data.cases.find((x) => x.key === key);
+  const columns = data.machines[machine]?.columns ?? [];
+  const cell = data.machines[machine]?.cells?.[key]?.[col];
+  box.replaceChildren();
+  if (!c || !cell) {
+    box.append(el("p", { class: "none" }, "No data for the selected cell."));
+    return;
+  }
+  const values = [
+    ["state", cell.state.replaceAll("_", " ")],
+    ["time", cell.time == null ? null : `${formatValue(cell.time, "time")}${tab === "solvers" ? " per iteration" : ""}`],
+    ["bandwidth", cell.gbs == null ? null : formatValue(cell.gbs, "gbs")],
+    ["flop rate", cell.gflops == null ? null : formatValue(cell.gflops, "gflops")],
+    ["of node bandwidth", cell.pct == null ? null : formatValue(cell.pct, "pct")],
+    ["change", cell.change == null ? null : `${formatChange(cell.change)}, band ±${((cell.band ?? 0) * 100).toFixed(1)}%`],
+    ["iterations", cell.iterations == null ? null : `${cell.iterations}${cell.iterations_prev == null ? "" : ` (previously ${cell.iterations_prev})`}`],
+    ["residual", cell.residual == null ? null : cell.residual.toExponential(2)],
+    ["error", cell.error],
+  ].filter(([, v]) => v != null);
+  const prev = columns[col - 1];
+  box.append(
+    el("h3", {}, `${caseLabel(c)} · ${machineLabel(machine)} · ${columns[col]?.date ?? ""} at ${shortSha(columns[col]?.commit)}`),
+    el("dl", { class: "values" }, values.map(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
+    cell.params_changed ? el("p", { class: "banner warning" }, "Parameters changed since the previous column.") : null,
+    el("p", {}, prev ? `Compared with the previous column at commit ${shortSha(prev.commit)} (${prev.date}).` : "First column, nothing to compare with."));
+  const runsList = el("ul", { class: "runs-list" }, el("li", { class: "none" }, "Loading the runs ..."));
+  const command = el("p", { class: "none" }, "Loading the command ...");
+  box.append(el("h3", {}, "Runs"), runsList, el("h3", {}, "Command to reproduce"), command);
+  const dirs = cell.runs ?? columns[col]?.runs ?? [];
+  const runs = await Promise.allSettled(dirs.map((dir) => loadRun(machine, dir)));
+  if (!boxTokens.isLatest(token)) return; // another cell was selected meanwhile
+  runsList.replaceChildren(...runs.map((r, i) => r.status === "fulfilled"
+    ? runBlock(machine, dirs[i], r.value, key)
+    : el("li", { class: "none" }, `${dirs[i]}: could not be loaded (${r.reason.message})`)));
+  const loaded = runs.filter((r) => r.status === "fulfilled").map((r) => r.value);
+  const withCommand = loaded.find((run) => run.cases?.[key]?.command);
+  command.replaceWith(withCommand ? el("pre", { class: "command" }, el("code", {}, withCommand.cases[key].command))
+    : el("p", { class: "none" }, "No command recorded."));
+  const levels = loaded.map((run) => run.cases?.[key]?.levels).find((lv) => lv?.length);
+  if (levels) box.append(el("h3", {}, "AMG levels"), levelsTable(levels));
+}
+
+function renderHeatmap(root, data, tab) {
+  const params = state.route.params;
+  const ids = Object.keys(data.machines);
+  const machine = ids.includes(params.machine) ? params.machine : ids[0];
+  root.append(el("h2", {}, "Changes by commit"));
+  if (ids.length > 1) {
+    root.append(el("p", { class: "machines" }, "Machine: ", ids.map((id) => el("a", {
+      href: formatHash(tab, { ...params, machine: id, cell: undefined }),
+      "aria-current": id === machine ? "true" : undefined,
+    }, machineLabel(id)))));
+  }
+  const model = heatmapModel(data, machine, params);
+  if (!model.rows.length || !model.columns.length) {
+    root.append(el("p", { class: "none" }, "No cases to show for this selection."));
+    return;
+  }
+  const [selKey, selCol] = (params.cell ?? "").split(/@(?=[^@]*$)/);
+  const box = el("section", { class: "clickbox", "aria-live": "polite" });
+  root.append(
+    el("p", { class: "legend" }, `Colour: change against the case's own history; ${model.legend}. A dot marks a changed iteration count.`),
+    el("div", { class: "scroll" }, el("table", { class: "heatmap" },
+      el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "case"),
+        model.columns.map((col) => el("th", { scope: "col", class: col.setup ? "setup" : undefined,
+          title: col.setup ? `Setup changed: ${col.setup}\n${col.title}` : col.title }, col.label)))),
+      el("tbody", {}, model.rows.map((row) => el("tr", {}, el("th", { scope: "row" }, row.label),
+        row.cells.map((cell) => el("td", {
+          class: `${cell.cls}${model.columns[cell.col].setup ? " setup" : ""}${row.key === selKey && String(cell.col) === selCol ? " selected" : ""}`,
+          title: cell.title, tabindex: cell.cls === "cell empty" ? undefined : "0",
+          onclick: () => { location.hash = formatHash(tab, { ...params, machine, cell: `${row.key}@${cell.col}` }); },
+          onkeydown: (e) => { if (e.key === "Enter") e.target.click(); },
+        }, cell.dot ? "•" : ""))))))),
+    box);
+  if (selKey && selCol !== undefined) fillBox(box, data, tab, machine, selKey, Number(selCol));
+  else box.append(el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
+}
+
 function renderCharts(root, data, tab) {}
 function renderTabTables(root, data, tab) {}
 
@@ -149,6 +261,7 @@ async function render() {
   const token = tokens.next();
   const { tab } = state.route;
   renderTabs();
+  const scrollY = window.scrollY;
   const root = document.getElementById("view");
   root.replaceChildren();
   if (tab === "machines") {
@@ -163,6 +276,7 @@ async function render() {
   }
   if (!tokens.isLatest(token)) return; // a newer render started while loading
   renderTab(root, tab, state.tabs[tab]);
+  window.scrollTo(0, scrollY);
 }
 
 function onHashChange() {

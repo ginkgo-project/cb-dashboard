@@ -85,3 +85,91 @@ test("renderTokens: only the latest token is current", () => {
   assert.ok(!tokens.isLatest(a));
   assert.ok(tokens.isLatest(b));
 });
+
+const spmv = (matrix, format = "csr", operation = "spmv") =>
+  ({ key: `${operation}/${format}/${matrix}`, group: operation === "spmv" ? "spmv" : "blas",
+     labels: { operation, format, matrix }, compare: { m1: "bandwidth" } });
+
+test("rowFilter defaults per tab", () => {
+  assert.ok(logic.rowFilter("basic", spmv("a"), {}));
+  assert.ok(!logic.rowFilter("basic", spmv("a", "coo"), {}));
+  assert.ok(logic.rowFilter("basic", spmv("a", "coo"), { format: "coo" }));
+  assert.ok(!logic.rowFilter("basic", spmv("a", "csr", "spgemm"), {}));
+  assert.ok(logic.rowFilter("basic", spmv("a", "csr", "spgemm"), { operation: "spgemm" }));
+  const dot = { key: "dot/1", group: "blas", labels: { operation: "dot", n: "1" } };
+  assert.ok(logic.rowFilter("basic", dot, { operation: "dot", format: "ell" }));
+  const pre = (stage) => ({ key: stage, group: "preconditioner", labels: { stage } });
+  assert.ok(logic.rowFilter("preconditioners", pre("apply"), {}));
+  assert.ok(!logic.rowFilter("preconditioners", pre("generate"), {}));
+  assert.ok(logic.rowFilter("preconditioners", pre("generate"), { stage: "generate" }));
+  assert.ok(logic.rowFilter("solvers", { key: "s", group: "solver", labels: {} }, { operation: "x" }));
+});
+
+test("cellClass", () => {
+  const slow = (change) => ({ state: "slower", change, band: 0.03 });
+  assert.equal(logic.cellClass(null), "cell empty");
+  assert.equal(logic.cellClass(slow(-0.05)), "cell slower s1");
+  assert.equal(logic.cellClass(slow(-0.09)), "cell slower s2");
+  assert.equal(logic.cellClass(slow(-0.2)), "cell slower s3");
+  assert.equal(logic.cellClass({ state: "faster", change: 0.05, band: 0.03 }), "cell faster s1");
+  assert.equal(logic.cellClass({ state: "faster", change: 0.2, band: 0.03 }), "cell faster s3");
+  assert.equal(logic.cellClass({ state: "same" }), "cell same");
+  assert.equal(logic.cellClass({ state: "history" }), "cell history");
+  assert.equal(logic.cellClass({ state: "failed" }), "cell failed");
+  assert.equal(logic.cellClass({ state: "not_available" }), "cell na");
+  assert.equal(logic.cellClass({ state: "disabled" }), "cell disabled");
+  assert.equal(logic.cellClass({ state: "missing" }), "cell empty");
+});
+
+const fixture = {
+  tab: "basic",
+  cases: [
+    { key: "spmv/csr/a", group: "spmv", labels: { operation: "spmv", format: "csr", matrix: "a" }, compare: { m1: "bandwidth" } },
+    { key: "spmv/csr/b", group: "spmv", labels: { operation: "spmv", format: "csr", matrix: "b" }, compare: { m1: "time" } },
+    { key: "spmv/coo/a", group: "spmv", labels: { operation: "spmv", format: "coo", matrix: "a" }, compare: { m1: "time" } },
+  ],
+  machines: { m1: {
+    columns: [
+      { commit: "aaaaaaaaaa", date: "2026-10-01", ref: "r1", runs: ["d1"], setup_changes: [] },
+      { commit: "bbbbbbbbbb", date: "2026-10-02", ref: "r2", runs: ["d2", "d3"], setup_changes: ["driver 1 to 2", "uenv x"] },
+      { commit: "cccccccccc", date: "2026-10-03", ref: "r3", runs: ["d4"], setup_changes: [] },
+    ],
+    cells: {
+      "spmv/csr/a": [{ state: "history", time: 1e-3, runs: ["d1"] }, { state: "same", time: 1e-3, change: 0, band: 0.03 },
+                      { state: "slower", time: 2e-3, change: -0.2, band: 0.03, iterations_prev: 10 }],
+      "spmv/csr/b": [null, { state: "failed" }, { state: "disabled" }],
+      "spmv/coo/a": [{ state: "history" }, { state: "history" }, { state: "history" }],
+    },
+  } },
+};
+
+test("heatmapModel", () => {
+  const model = logic.heatmapModel(fixture, "m1", {});
+  assert.deepEqual(model.columns.map((c) => c.label), ["2026-10-01", "2026-10-02 ·2", "2026-10-03"]);
+  assert.equal(model.columns[0].setup, null);
+  assert.equal(model.columns[1].setup, "driver 1 to 2; uenv x");
+  assert.ok(model.columns[1].title.includes("bbbbbbb") && model.columns[1].title.includes("r2") && model.columns[1].title.includes("d3"));
+  assert.deepEqual(model.rows.map((r) => r.key), ["spmv/csr/a", "spmv/csr/b"]);
+  assert.equal(model.rows[0].label, "SpMV csr · a");
+  const cells = model.rows[0].cells;
+  assert.deepEqual(cells.map((c) => c.cls), ["cell history", "cell same", "cell slower s3"]);
+  assert.deepEqual(cells.map((c) => c.dot), [false, false, true]);
+  assert.deepEqual(cells.map((c) => c.col), [0, 1, 2]);
+  assert.ok(cells[2].title.includes("SpMV csr · a") && cells[2].title.includes("slower"));
+  assert.equal(model.rows[1].cells[0].cls, "cell empty");
+  assert.equal(model.legend, "bandwidth-limited rows: % of node bandwidth; others: time");
+});
+
+test("heatmapModel legend for uniform rows, unknown machine", () => {
+  assert.equal(logic.heatmapModel(fixture, "m1", { format: "coo" }).legend, "time");
+  const only = { ...fixture, cases: [fixture.cases[0]] };
+  assert.equal(logic.heatmapModel(only, "m1", {}).legend, "% of node bandwidth");
+  const none = logic.heatmapModel(fixture, "zz", {});
+  assert.deepEqual(none.columns, []);
+});
+
+test("cellTitle", () => {
+  const c = fixture.cases[0];
+  const title = logic.cellTitle({ state: "slower", change: -0.2, band: 0.03, time: 2e-3 }, c);
+  assert.ok(title.includes("SpMV csr · a") && title.includes("slower") && title.includes("−20.0%") && title.includes("±3.0%") && title.includes("2.00 ms"));
+});
