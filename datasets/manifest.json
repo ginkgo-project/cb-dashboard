@@ -1,0 +1,570 @@
+{
+  "version": "1",
+  "catalog_sha256": "7e099ff3c2146d55ecec711f80df0170f0b51bc6019a424315bd685eb52e56ba",
+  "seed": 20261017,
+  "matrices": [
+    {
+      "name": "ecology2",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "DIMACS10",
+      "url": "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/ecology2.graph.bz2",
+      "download_sha256": {
+        "ecology2.graph.bz2": "87d03669a85a35fd3484fde41c3baefa28156719c3d4a933dcfe1f588cf02052"
+      },
+      "path": "matrices/spmv/ecology2.bin",
+      "binary_sha256": "428fea63aa435c9e1755b42f7030d0b9cabfabe4c92b3521558affcde58b3524",
+      "rows": 999999,
+      "cols": 999999,
+      "nonzeros": 4995991,
+      "row_length": {
+        "min": 3,
+        "max": 5,
+        "mean": 4.995995995995996,
+        "std": 0.06321370076130595,
+        "cv": 0.012652872582757893
+      },
+      "sellp_padding_ratio": 1.000418135260852,
+      "run_sellp": true,
+      "nnz_check": "plus_diagonal",
+      "expected_nnz": 4995991,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "TSOPF_RS_b2383_c1",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "Network Repository (SuiteSparse)",
+      "url": "https://nrvis.com/download/data/sc/sc-TSOPF-RS-b2383-c1.zip",
+      "download_sha256": {
+        "sc-TSOPF-RS-b2383-c1.zip": "3f17da9f1db6be93411695fd158e175daf74658b0a5a5466645aa7af3a062758"
+      },
+      "path": "matrices/spmv/TSOPF_RS_b2383_c1.bin",
+      "binary_sha256": "4045319a1d2ba96291f8ebe29bd9eb8fe917c492a27e5655d0f3d16c10f33a30",
+      "rows": 38120,
+      "cols": 38120,
+      "nonzeros": 16173498,
+      "row_length": {
+        "min": 3,
+        "max": 983,
+        "mean": 424.2785414480588,
+        "std": 484.1848593007084,
+        "cv": 1.1411957287497736
+      },
+      "sellp_padding_ratio": 1.0046736952018667,
+      "run_sellp": true,
+      "nnz_check": "plus_diagonal",
+      "expected_nnz": 16171169,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "audikw1",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "DIMACS10",
+      "url": "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/audikw1.graph.bz2",
+      "download_sha256": {
+        "audikw1.graph.bz2": "ca96ca0b4a95f3ac0ed89f81c55512ae899990e67353bca44e5019c18276e983"
+      },
+      "path": "matrices/spmv/audikw1.bin",
+      "binary_sha256": "5dccb25dfd746beb7aa52d5d58175fe451ddc826d5c5c8bb08208db0b3158ae9",
+      "rows": 943695,
+      "cols": 943695,
+      "nonzeros": 77651847,
+      "row_length": {
+        "min": 21,
+        "max": 345,
+        "mean": 82.28489819274236,
+        "std": 42.44525462107925,
+        "cv": 0.5158328630565527
+      },
+      "sellp_padding_ratio": 1.3503596379362361,
+      "run_sellp": true,
+      "nnz_check": "plus_diagonal",
+      "expected_nnz": 77651847,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "USA-road-d.USA",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "DIMACS9",
+      "url": "http://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz",
+      "download_sha256": {
+        "USA-road-d.USA.gr.gz": "2b220d87d32171032d6afe6120c5ee05a5f7f82e36fc192b5108c281cb10a694"
+      },
+      "path": "matrices/spmv/USA-road-d.USA.bin",
+      "binary_sha256": "1af811724e0debfa8711ce7a485e0a042446b8afd0bafd767428fc82a7f775a7",
+      "rows": 23947347,
+      "cols": 23947347,
+      "nonzeros": 57708624,
+      "row_length": {
+        "min": 1,
+        "max": 9,
+        "mean": 2.4098128281182882,
+        "std": 0.9289896904915926,
+        "cv": 0.38550284057413614
+      },
+      "sellp_padding_ratio": 1.6543080285539298,
+      "run_sellp": true,
+      "nnz_check": "exact",
+      "expected_nnz": 57708624,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "soc-LiveJournal1",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "SNAP",
+      "url": "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz",
+      "download_sha256": {
+        "soc-LiveJournal1.txt.gz": "d7bcd5a87b88c896c35fdb9611e804c3f4033c39b58c4c9ea3ba53c680d516d8"
+      },
+      "path": "matrices/spmv/soc-LiveJournal1.bin",
+      "binary_sha256": "42d999d50bef64a364d9f5d3ede8e74db10a0bf43e4ae478effd01553c67029a",
+      "rows": 4847571,
+      "cols": 4847571,
+      "nonzeros": 68993773,
+      "row_length": {
+        "min": 0,
+        "max": 20293,
+        "mean": 14.232648268586473,
+        "std": 36.08028043787823,
+        "cv": 2.5350363303442736
+      },
+      "sellp_padding_ratio": 5.488494389196544,
+      "run_sellp": false,
+      "nnz_check": "exact",
+      "expected_nnz": 68993773,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "cage15",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "DIMACS10",
+      "url": "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/cage15.graph.bz2",
+      "download_sha256": {
+        "cage15.graph.bz2": "6425d0d343e9236702b0801821f0f2113a5ede7940b89f0467663d41af3c097f"
+      },
+      "path": "matrices/spmv/cage15.bin",
+      "binary_sha256": "7426116015fe056fbd6132e9aeec0ae184fc78e3141907e9ba8b08988126f07c",
+      "rows": 5154859,
+      "cols": 5154859,
+      "nonzeros": 99199551,
+      "row_length": {
+        "min": 3,
+        "max": 47,
+        "mean": 19.24389221897243,
+        "std": 5.73671936869018,
+        "cv": 0.29810598102572955
+      },
+      "sellp_padding_ratio": 1.0601009272713342,
+      "run_sellp": true,
+      "nnz_check": "at_least",
+      "expected_nnz": 99199551,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "kron_g500-logn21",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "DIMACS10",
+      "url": "https://sites.cc.gatech.edu/dimacs10/archive/data/kronecker/kron_g500-logn21.graph.bz2",
+      "download_sha256": {
+        "kron_g500-logn21.graph.bz2": "8269ec838e77019524522a35304f31325a529cba29aa9e7115e5608184257729"
+      },
+      "path": "matrices/spmv/kron_g500-logn21.bin",
+      "binary_sha256": "913d879c7b7be3bd845149eb0e4cc883fbf757eadbd1e9d0175dd7984c1ad85e",
+      "rows": 2097152,
+      "cols": 2097152,
+      "nonzeros": 182073160,
+      "row_length": {
+        "min": 0,
+        "max": 213905,
+        "mean": 86.81924819946289,
+        "std": 755.6410181862449,
+        "cv": 8.70361162826701
+      },
+      "sellp_padding_ratio": 31.9196648204491,
+      "run_sellp": false,
+      "nnz_check": "none",
+      "expected_nnz": 182082942,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "com-Orkut",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "SNAP",
+      "url": "https://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz",
+      "download_sha256": {
+        "com-orkut.ungraph.txt.gz": "f73e33fb685f411a10c952f2ba3ea788380b91a17bc636e38da1a23f6c6b2bc6"
+      },
+      "path": "matrices/spmv/com-Orkut.bin",
+      "binary_sha256": "59a49a37d22e6205fdee058b51e827e565a2e47f1d6b8d3ab41809337b361be0",
+      "rows": 3072441,
+      "cols": 3072441,
+      "nonzeros": 234370166,
+      "row_length": {
+        "min": 1,
+        "max": 33313,
+        "mean": 76.28142118921079,
+        "std": 154.78127294195133,
+        "cv": 2.029082187103293
+      },
+      "sellp_padding_ratio": 5.28534793118677,
+      "run_sellp": false,
+      "nnz_check": "exact",
+      "expected_nnz": 234370166,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "nlpkkt240",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "DIMACS10",
+      "url": "https://sites.cc.gatech.edu/dimacs10/archive/data/matrix/nlpkkt240.graph.bz2",
+      "download_sha256": {
+        "nlpkkt240.graph.bz2": "fa0798c2779737dc925a391bacea5d6ae5f5f2f28a1d87761056ea74e8c32fba"
+      },
+      "path": "matrices/spmv/nlpkkt240.bin",
+      "binary_sha256": "94fa772d0228aa0c05fb306564de5ac561221c1f8e3658dfa7fd2ef6f43c082c",
+      "rows": 27993600,
+      "cols": 27993600,
+      "nonzeros": 774472352,
+      "row_length": {
+        "min": 5,
+        "max": 28,
+        "mean": 27.666050525834475,
+        "std": 2.2180893499044467,
+        "cv": 0.08017368969355426
+      },
+      "sellp_padding_ratio": 1.0044663182501834,
+      "run_sellp": true,
+      "nnz_check": "plus_diagonal",
+      "expected_nnz": 760648352,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "twitter-2010",
+      "set": "spmv",
+      "roles": [],
+      "spd": null,
+      "source": "LAW",
+      "url": "http://data.law.di.unimi.it/webdata/twitter-2010/twitter-2010",
+      "download_sha256": {
+        "twitter-2010.graph": "e29ef53ba00f9dd441e142454745f4bb1c4274d19815b2983b5d7e640f9e58bb",
+        "twitter-2010.properties": "79fa8752cc95cc1e9ae7aec455c0076d490d5e9f9b883262fa7d357e0076543c"
+      },
+      "path": "matrices/spmv/twitter-2010.bin",
+      "binary_sha256": "45ed24a829a0820e57ed9c0b1d580c507f46d582d478396e35e3b8fba41ab335",
+      "rows": 41652230,
+      "cols": 41652230,
+      "nonzeros": 1468365182,
+      "row_length": {
+        "min": 0,
+        "max": 2997469,
+        "mean": 35.25297882010159,
+        "std": 2419.7429825750996,
+        "cv": 68.63939058662864
+      },
+      "sellp_padding_ratio": 7.292805383340941,
+      "run_sellp": false,
+      "nnz_check": "exact",
+      "expected_nnz": 1468365182,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2",
+        "webgraph-cli": "webgraph 0.5.0"
+      }
+    },
+    {
+      "name": "porous_pressure",
+      "set": "fem",
+      "roles": [
+        "precond"
+      ],
+      "spd": true,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/porous_pressure.bin",
+      "binary_sha256": "f666691504e4a82ac41ad2d7b28eb60b63dbdf1bf826c7a0b51f968657e25146",
+      "rows": 3442951,
+      "cols": 3442951,
+      "nonzeros": 51098851,
+      "row_length": {
+        "min": 5,
+        "max": 15,
+        "mean": 14.84158531445844,
+        "std": 0.7874676962266031,
+        "cv": 0.0530581928777827
+      },
+      "sellp_padding_ratio": 1.0042802723685509,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "anisotropic_heat",
+      "set": "fem",
+      "roles": [
+        "precond"
+      ],
+      "spd": true,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/anisotropic_heat.bin",
+      "binary_sha256": "636ab294163c19265477cf1db8d3552415f059b8bd2a30d210a1e5f503c88060",
+      "rows": 7284601,
+      "cols": 7284601,
+      "nonzeros": 50970617,
+      "row_length": {
+        "min": 3,
+        "max": 7,
+        "mean": 6.997036213788511,
+        "std": 0.07695328754245942,
+        "cv": 0.010997983316252331
+      },
+      "sellp_padding_ratio": 1.000213593647493,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "elasticity_p2",
+      "set": "fem",
+      "roles": [
+        "precond"
+      ],
+      "spd": true,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/elasticity_p2.bin",
+      "binary_sha256": "9f05f6fe95254da6f03ea8c5c434228cca3f0a764ce67e5ca02122bdff4bbdee",
+      "rows": 605694,
+      "cols": 605694,
+      "nonzeros": 49960456,
+      "row_length": {
+        "min": 12,
+        "max": 195,
+        "mean": 82.48464736318999,
+        "std": 41.247145892087886,
+        "cv": 0.5000584619156054
+      },
+      "sellp_padding_ratio": 1.1326128808752265,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "convection_diffusion",
+      "set": "fem",
+      "roles": [
+        "precond"
+      ],
+      "spd": false,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/convection_diffusion.bin",
+      "binary_sha256": "69761cf1d1ce947f0d770641f79834868931c3201d02e611bf2b26128918d1e4",
+      "rows": 7284601,
+      "cols": 7284601,
+      "nonzeros": 50970617,
+      "row_length": {
+        "min": 3,
+        "max": 7,
+        "mean": 6.997036213788511,
+        "std": 0.07695328754245942,
+        "cv": 0.010997983316252331
+      },
+      "sellp_padding_ratio": 1.000213593647493,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "curl_curl",
+      "set": "fem",
+      "roles": [
+        "precond"
+      ],
+      "spd": true,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/curl_curl.bin",
+      "binary_sha256": "cc604f7c6f63df3c54b55d35355970ceb4988c20db72c3007f114278ef82af4c",
+      "rows": 3142601,
+      "cols": 3142601,
+      "nonzeros": 50968793,
+      "row_length": {
+        "min": 7,
+        "max": 19,
+        "mean": 16.21866504847418,
+        "std": 3.05786844512307,
+        "cv": 0.1885400824287168
+      },
+      "sellp_padding_ratio": 1.165696507664994,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "poisson_p1",
+      "set": "fem",
+      "roles": [
+        "spgemm"
+      ],
+      "spd": true,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/poisson_p1.bin",
+      "binary_sha256": "e9276d54152bd1901ceb4132acadb22a8a6811312a31f160d953c9c04cc1b196",
+      "rows": 3442951,
+      "cols": 3442951,
+      "nonzeros": 51098851,
+      "row_length": {
+        "min": 5,
+        "max": 15,
+        "mean": 14.84158531445844,
+        "std": 0.7874676962266031,
+        "cv": 0.0530581928777827
+      },
+      "sellp_padding_ratio": 1.0042802723685509,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    },
+    {
+      "name": "elasticity_p2_graded",
+      "set": "fem",
+      "roles": [
+        "spgemm"
+      ],
+      "spd": true,
+      "source": "generated",
+      "url": null,
+      "download_sha256": {},
+      "path": "matrices/fem/elasticity_p2_graded.bin",
+      "binary_sha256": "392c0d3a39fb63b4eb05489ae63906b8d604bc0af6f78fac0d052086ec6ef899",
+      "rows": 598287,
+      "cols": 598287,
+      "nonzeros": 49195707,
+      "row_length": {
+        "min": 12,
+        "max": 426,
+        "mean": 82.2276048117375,
+        "std": 42.97649194923509,
+        "cv": 0.5226528493397201
+      },
+      "sellp_padding_ratio": 1.1997378551750462,
+      "run_sellp": true,
+      "nnz_check": "none",
+      "expected_nnz": null,
+      "converter_version": {
+        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-fem": "12.0.2"
+      }
+    }
+  ]
+}
