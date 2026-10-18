@@ -72,3 +72,16 @@ test("app.js never uses innerHTML", () => {
   const source = readFileSync(new URL("../../site/app.js", import.meta.url), "utf8");
   assert.ok(!source.includes("innerHTML"));
 });
+
+test("parseHash keeps a malformed escape as typed", () => {
+  assert.deepEqual(logic.parseHash("#basic?machine=%E0"), { tab: "basic", params: { machine: "%E0" } });
+});
+
+test("renderTokens: only the latest token is current", () => {
+  const tokens = logic.renderTokens();
+  const a = tokens.next();
+  assert.ok(tokens.isLatest(a));
+  const b = tokens.next();
+  assert.ok(!tokens.isLatest(a));
+  assert.ok(tokens.isLatest(b));
+});

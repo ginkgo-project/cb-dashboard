@@ -4,6 +4,11 @@
 export const TABS = ["basic", "solvers", "preconditioners", "machines"];
 export const PARAMS = ["machine", "operation", "format", "stage", "matrix", "values", "x", "cell"];
 
+// a malformed escape such as %E0 stays as typed instead of throwing
+function safeDecode(text) {
+  try { return decodeURIComponent(text); } catch { return text; }
+}
+
 // "#solvers?machine=m&cell=k%402" -> {tab: "solvers", params: {machine: "m", cell: "k@2"}}
 export function parseHash(hash) {
   const text = (hash || "").replace(/^#/, "");
@@ -13,8 +18,8 @@ export function parseHash(hash) {
   for (const part of query.split("&")) {
     if (!part) continue;
     const at = part.indexOf("=");
-    const key = decodeURIComponent(at < 0 ? part : part.slice(0, at));
-    const value = at < 0 ? "" : decodeURIComponent(part.slice(at + 1).replace(/\+/g, " "));
+    const key = safeDecode(at < 0 ? part : part.slice(0, at));
+    const value = at < 0 ? "" : safeDecode(part.slice(at + 1).replace(/\+/g, " "));
     if (PARAMS.includes(key) && value !== "") params[key] = value;
   }
   return { tab, params };
@@ -89,4 +94,11 @@ export function flagText(flag, c, machineLabel) {
     ? "new failure"
     : `${formatChange(flag.change)}${flag.band === undefined || flag.band === null ? "" : ` (noise ±${(flag.band * 100).toFixed(1)}%)`}`;
   return [what, caseLabel(c), machineLabel].join(DOT);
+}
+
+// One render at a time: each render takes a token, and after any await it
+// may touch the page only while its token is still the latest.
+export function renderTokens() {
+  let latest = 0;
+  return { next: () => ++latest, isLatest: (token) => token === latest };
 }

@@ -1,10 +1,11 @@
 // Renders the benchmark dashboard from site/data/*.json. All text goes
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
-import { TABS, parseHash, formatHash, caseLabel, flagText } from "./logic.js";
+import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, route: { tab: "basic", params: {} } };
+const tokens = renderTokens();
 const TAB_FILES = ["basic", "solvers", "preconditioners"];
 
 function el(tag, attrs = {}, ...children) {
@@ -145,6 +146,7 @@ function renderTab(root, tab, data) {
 }
 
 async function render() {
+  const token = tokens.next();
   const { tab } = state.route;
   renderTabs();
   const root = document.getElementById("view");
@@ -159,7 +161,7 @@ async function render() {
     showBanner("error", `Could not load the ${tab} data: ${error.message}`);
     return;
   }
-  if (state.route.tab !== tab) return; // another tab was picked while loading
+  if (!tokens.isLatest(token)) return; // a newer render started while loading
   renderTab(root, tab, state.tabs[tab]);
 }
 
