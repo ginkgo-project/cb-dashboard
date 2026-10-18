@@ -23,7 +23,7 @@ def test_load_daint():
     assert m.needs_gcc_root is False
     assert m.sbatch == "--partition=normal --nodes=1 --exclusive --time=04:00:00 --account=d131".split()
     assert m.srun == ("--ntasks=1 --gpus-per-task=1 --cpus-per-task=72 --cpu-bind=cores "
-                      "--export=ALL,OMP_NUM_THREADS=72").split()
+                      "--export=ALL,OMP_NUM_THREADS=64").split()
     assert m.cmake_flags == COMMON + (
         "-DGINKGO_BUILD_CUDA=ON -DGINKGO_CUDA_ARCHITECTURES=90 -DGINKGO_BUILD_HIP=OFF "
         "-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CUDA_HOST_COMPILER=g++"
@@ -40,7 +40,8 @@ def test_beverin_has_gcc_placeholder():
     assert m.arch == "x86_64"
     assert m.uenv == "prgenv-gnu/25.07-6.3.3:v12"
     assert m.sbatch[0] == "--partition=mi300"
-    assert "--cpus-per-task=24" in m.srun
+    assert m.srun == ("--ntasks=1 --gpus-per-task=1 --cpus-per-task=24 --hint=nomultithread "
+                      "--export=ALL,OMP_NUM_THREADS=20").split()
     assert m.cmake_flags[: len(COMMON)] == COMMON
     assert "-DCMAKE_C_COMPILER={gcc_root}/bin/gcc" in m.cmake_flags
     assert "-DCMAKE_HIP_FLAGS=--gcc-toolchain={gcc_root}" in m.cmake_flags
@@ -60,7 +61,10 @@ def test_missing_scratch():
 
 
 @pytest.mark.parametrize("name", ["daint-gh200", "beverin-mi300a"])
-def test_omp_threads_match_cpus_per_task(name):
+def test_omp_threads_fit_in_cpus_per_task(name):
+    """Fewer threads than cores leaves a few for the runtime daemons (CSCS GROMACS docs)."""
     srun = load_machine(name, env={"SCRATCH": "/s"}).srun
-    cpus = next(a.split("=", 1)[1] for a in srun if a.startswith("--cpus-per-task="))
-    assert f"--export=ALL,OMP_NUM_THREADS={cpus}" in srun
+    cpus = int(next(a.split("=", 1)[1] for a in srun if a.startswith("--cpus-per-task=")))
+    export = next(a for a in srun if a.startswith("--export="))
+    threads = int(export.split("OMP_NUM_THREADS=", 1)[1].split(",")[0])
+    assert export.startswith("--export=ALL,") and 0 < threads < cpus

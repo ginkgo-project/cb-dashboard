@@ -4,8 +4,10 @@ uenv = "prgenv-gnu/26.3:v1"
 arch = "aarch64"
 needs_gcc_root = false
 sbatch = ["--partition=normal", "--nodes=1", "--exclusive", "--time=04:00:00", "--account=d131"]
+# A few of Grace's 72 cores run daemons; CSCS (GROMACS docs) advises at most 64
+# OpenMP threads per CPU. The task keeps all 72 so threads avoid the busy ones.
 srun = ["--ntasks=1", "--gpus-per-task=1", "--cpus-per-task=72", "--cpu-bind=cores",
-        "--export=ALL,OMP_NUM_THREADS=72"]
+        "--export=ALL,OMP_NUM_THREADS=64"]
 cmake_flags = [
     "-DGINKGO_BUILD_CUDA=ON",
     "-DGINKGO_CUDA_ARCHITECTURES=90",
