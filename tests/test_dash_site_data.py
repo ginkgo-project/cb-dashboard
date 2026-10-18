@@ -1,4 +1,6 @@
 import json
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -10,6 +12,7 @@ from dashboard.site_data import TABS, build_site
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
+REAL_RUNS = "2026-10-18_9cb13ee6ab"  # a fixed set: later runs don't change it
 DAINT, BEV = "daint-gh200", "beverin-mi300a"
 COMMITS = [("c1" * 20, "2026-10-01"), ("c2" * 20, "2026-10-08"),
            ("c3" * 20, "2026-10-15")]
@@ -211,10 +214,29 @@ def test_cli_build_without_runs(tmp_path):
                  "--out", str(tmp_path / "out")]) == 1
 
 
+def _committed_runs(tmp):
+    """A copy of the committed REAL_RUNS directories, outside any git repo."""
+    try:
+        listed = subprocess.run(
+            ["git", "-C", str(RESULTS), "ls-files", "-z", "--",
+             f"*/{REAL_RUNS}*/run.json"], capture_output=True)
+    except OSError:
+        pytest.skip("no git to list the committed runs")
+    if listed.returncode != 0:
+        pytest.skip("git cannot list the committed runs")
+    out = tmp / "results"
+    for f in listed.stdout.decode().split("\0"):
+        if f:
+            run = Path(f).parent
+            shutil.copytree(RESULTS / run, out / run,
+                            ignore=shutil.ignore_patterns("logs"))
+    return out
+
+
 @pytest.mark.skipif(not RESULTS.is_dir(), reason="no results/")
 def test_real_results_build(tmp_path):
     out = tmp_path / "out"
-    assert main(["build", "--results", str(RESULTS),
+    assert main(["build", "--results", str(_committed_runs(tmp_path)),
                  "--manifest", str(ROOT / "datasets" / "manifest.json"),
                  "--catalog", str(ROOT / "datasets" / "catalog.toml"),
                  "--frozen", str(ROOT / "dashboard" / "frozen.json"),
