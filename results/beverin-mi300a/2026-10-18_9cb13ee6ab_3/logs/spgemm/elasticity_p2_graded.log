@@ -1,0 +1,4 @@
+terminate called after throwing an instance of 'gko::HipError'
+  what():  /capstor/store/cscs/userlab/d131/cb/worktrees/beverin-mi300a/hip/base/device.hip.cpp:38: get_device_name: hipErrorNoDevice: no ROCm-capable device is detected
+srun: error: nid002678: task 0: Aborted (core dumped)
+srun: Terminating StepId=686160.20

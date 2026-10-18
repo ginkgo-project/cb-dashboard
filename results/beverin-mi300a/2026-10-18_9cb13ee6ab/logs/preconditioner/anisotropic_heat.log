@@ -1,0 +1,21 @@
+This is Ginkgo 2.0.0 (develop)
+    running with core module 2.0.0 (develop)
+    the reference module is  2.0.0 (develop)
+    the OpenMP    module is  2.0.0 (develop)
+    the CUDA      module is  not compiled
+    the HIP       module is  2.0.0 (develop)
+    the DPCPP     module is  not compiled
+Running on HipExecutor on device 0 (AMD Instinct MI300A) with host OmpExecutor (20 threads)
+Running with 1 warm iterations and 5 running iterations
+The random seed for right hand sides is 42
+Running with preconditioners: jacobi,ilu,ilu-syncfree,ic,ic-syncfree,spd-isai,mg-pgm,mg-pmis,mg-uniform
+Running test case /capstor/store/cscs/userlab/d131/cb/matrices/fem/anisotropic_heat.bin
+Matrix is of size (7284601, 7284601), 50970617
+	Running preconditioner: jacobi-32-0,0
+	Running preconditioner: ilu
+	Running preconditioner: ilu-syncfree
+srun: forcing job termination
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+[2026-10-18T19:50:06.292] error: *** STEP 686070.22 ON nid002714 CANCELLED AT 2026-10-18T19:50:06 DUE to SIGNAL Killed ***
+srun: error: nid002714: task 0: Killed
+srun: Terminating StepId=686070.22

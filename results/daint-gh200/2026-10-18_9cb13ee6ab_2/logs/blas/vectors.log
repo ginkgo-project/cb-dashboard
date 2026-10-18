@@ -1,0 +1,26 @@
+This is Ginkgo 2.0.0 (develop)
+    running with core module 2.0.0 (develop)
+    the reference module is  2.0.0 (develop)
+    the OpenMP    module is  2.0.0 (develop)
+    the CUDA      module is  2.0.0 (develop)
+    the HIP       module is  not compiled
+    the DPCPP     module is  not compiled
+Running on CudaExecutor on device 0 (NVIDIA GH200 120GB) with host OmpExecutor (64 threads)
+Running with 3 warm iterations and 5 running iterations
+The random seed for right hand sides is 42
+The operations are copy,dot,norm,axpy
+Running test case n = 1048576 
+	Running blas: copy
+	Running blas: dot
+	Running blas: norm
+	Running blas: axpy
+Running test case n = 16777216 
+	Running blas: copy
+	Running blas: dot
+	Running blas: norm
+	Running blas: axpy
+Running test case n = 134217728 
+	Running blas: copy
+	Running blas: dot
+	Running blas: norm
+	Running blas: axpy

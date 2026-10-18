@@ -1,0 +1,25 @@
+This is Ginkgo 2.0.0 (develop)
+    running with core module 2.0.0 (develop)
+    the reference module is  2.0.0 (develop)
+    the OpenMP    module is  2.0.0 (develop)
+    the CUDA      module is  2.0.0 (develop)
+    the HIP       module is  not compiled
+    the DPCPP     module is  not compiled
+Running on CudaExecutor on device 0 (NVIDIA GH200 120GB) with host OmpExecutor (64 threads)
+Running with 1 warm iterations and 5 running iterations
+The random seed for right hand sides is 42
+Running with preconditioners: jacobi,ilu,ilu-syncfree,ic,ic-syncfree,spd-isai,mg-pgm,mg-pmis,mg-uniform
+Running test case /capstor/store/cscs/userlab/d131/cb/matrices/fem/porous_pressure.bin
+Matrix is of size (3442951, 3442951), 51098851
+	Running preconditioner: jacobi-32-0,0
+	Running preconditioner: ilu
+	Running preconditioner: ilu-syncfree
+	Running preconditioner: ic
+	Running preconditioner: ic-syncfree
+	Running preconditioner: spd-isai-1
+	Running preconditioner: mg-pgm
+	Running preconditioner: mg-pmis
+Error when processing test case
+/capstor/store/cscs/userlab/d131/cb/matrices/fem/porous_pressure.bin
+what(): /capstor/store/cscs/userlab/d131/cb/worktrees/daint-gh200/common/cuda_hip/matrix/sparsity_csr_kernels.cpp:149: transpose is not implemented
+	Running preconditioner: mg-uniform
