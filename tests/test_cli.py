@@ -240,6 +240,29 @@ def test_sigterm_during_build(tmp_path, monkeypatch, manifest):
                for g in cli.GROUPS)
 
 
+def test_children_start_with_sigchld_unblocked(tmp_path, monkeypatch, manifest):
+    """A job can start with SIGCHLD blocked; CMake inherits the mask and hangs."""
+    m = fake_machine(tmp_path)
+    patch_common(monkeypatch, m, COMMIT)
+    seen = []
+
+    def build(m, src):
+        status = subprocess.run(["grep", "SigBlk", "/proc/self/status"],
+                                capture_output=True, text=True, check=True).stdout
+        seen.append(int(status.split()[1], 16) & (1 << (signal.SIGCHLD - 1)))
+        return {"configured": True, "seconds": 1.0, "cmake_cache": {}}
+    monkeypatch.setattr(cli, "build", build)
+    monkeypatch.setattr(cli, "run_group", lambda *a, **k:
+                        {"status": "ok", "seconds": 0.0, "invocations": []})
+    before = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGCHLD})
+    try:
+        assert cli.main(["run", "daint-gh200", "--manifest", str(manifest),
+                         "--groups", "blas"]) == 0
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, before)
+    assert seen == [0]
+
+
 def test_groups_in_any_order_are_a_full_run(tmp_path, monkeypatch, manifest):
     m, rc, order = full_run(tmp_path, monkeypatch, manifest,
                             ["--groups", "preconditioner,solver,spgemm,spmv,blas,spmv"])

@@ -69,6 +69,9 @@ def cmd_run(args) -> int:
     if platform.machine() != m.arch:
         print(f"error: {m.name} needs {m.arch} but this host is {platform.machine()}", file=sys.stderr)
         return 2
+    # Slurm jobs on Alps start with SIGCHLD blocked. Children inherit the mask, and
+    # CMake (libuv) then never sees its own children exit and hangs in configure.
+    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGCHLD})
     clone = m.root / "ginkgo"
     worktree = m.root / "worktrees" / m.name
     state = m.root / "state" / m.name
