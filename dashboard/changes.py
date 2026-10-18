@@ -72,6 +72,10 @@ def _column_cell(col: Column, key: str, points) -> tuple[Cell | None, dict | Non
     if not pts:
         return None, None
     runs = [p.run.dir for p in pts]
+    # Disabling is a machine setting: the column's newest run decides.
+    newest = points.get(col.runs[-1].dir, {}).get(key)
+    if newest is not None and newest.m.status == "disabled":
+        return Cell("disabled", runs=runs, error=newest.m.error), None
     ok = [p for p in pts if _is_ok(p)]
     if not ok:
         for state in NOT_OK_ORDER:

@@ -242,3 +242,15 @@ def test_solver_gbs_uses_whole_solve_time():
                          extra={"iterations": 4}))]])[0]
     assert cell.gbs == pytest.approx(8e9 / 2.0)
     assert cell.time == pytest.approx(0.5)
+
+
+def test_disabled_in_latest_run_wins():
+    a, b = run("a"), run("b")
+    cell = build([[(a, pt(a, 1e-3)),
+                   (b, pt(b, None, status="disabled", error="off"))]])[0]
+    assert cell.state == "disabled" and cell.error == "off"
+    assert (cell.time, cell.gbs, cell.gflops, cell.pct) == (None,) * 4
+    assert cell.runs == ["a", "b"]
+    # the other way round, the newer run measured it: its value is shown
+    later = build([[(a, pt(a, None, status="disabled")), (b, pt(b, 1e-3))]])[0]
+    assert later.state == "history" and later.time == 1e-3

@@ -1,6 +1,4 @@
 import json
-import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -213,27 +211,10 @@ def test_cli_build_without_runs(tmp_path):
                  "--out", str(tmp_path / "out")]) == 1
 
 
-def _committed_results(tmp):
-    """A copy of the runs git tracks; local debugging runs stay out."""
-    try:
-        listed = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-z",
-                                 "results"], capture_output=True, check=True)
-    except (OSError, subprocess.CalledProcessError):
-        return RESULTS
-    files = [f for f in listed.stdout.decode().split("\0")
-             if f and "/logs/" not in f]
-    if not files:
-        return RESULTS
-    for f in files:
-        (tmp / f).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / f, tmp / f)
-    return tmp / "results"
-
-
 @pytest.mark.skipif(not RESULTS.is_dir(), reason="no results/")
 def test_real_results_build(tmp_path):
     out = tmp_path / "out"
-    assert main(["build", "--results", str(_committed_results(tmp_path)),
+    assert main(["build", "--results", str(RESULTS),
                  "--manifest", str(ROOT / "datasets" / "manifest.json"),
                  "--catalog", str(ROOT / "datasets" / "catalog.toml"),
                  "--frozen", str(ROOT / "dashboard" / "frozen.json"),
@@ -244,13 +225,8 @@ def test_real_results_build(tmp_path):
         cols = pre["machines"][machine]["columns"]
         assert len(cols) == 1 and len(cols[0]["runs"]) == 3
     cells = {m: pre["machines"][m]["cells"] for m in (DAINT, BEV)}
-    # Disabled on Beverin from the _3 run on; the two runs before it ran
-    # ilu-syncfree, so the column has their values (median of the ok runs).
-    run3 = _read(out, f"runs/{BEV}/2026-10-18_9cb13ee6ab_3.json")
-    assert run3["invocations"]["preconditioner:porous_pressure/ilu-syncfree"][
-        "status"] == "disabled"
     ilu = cells[BEV]["preconditioner/apply/ilu-syncfree/porous_pressure"][-1]
-    assert ilu["state"] == "history" and len(ilu["runs"]) == 3
+    assert ilu["state"] == "disabled" and len(ilu["runs"]) == 3
     for machine in (DAINT, BEV):
         pmis = cells[machine]["preconditioner/apply/mg-pmis/curl_curl"][-1]
         assert pmis["state"] == "not_available"

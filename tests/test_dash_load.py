@@ -1,3 +1,7 @@
+import shutil
+import subprocess
+
+import pytest
 from dash_fakes import write_run
 
 from dashboard.load import columns, load_runs
@@ -42,3 +46,19 @@ def test_triad_absent_or_failed(tmp_path):
     assert by_dir["none"].triad is None
     assert by_dir["err"].triad is None
     assert by_dir["ok"].triad == 3.0e12
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="no git")
+def test_load_runs_keeps_only_tracked_runs_in_a_repository(tmp_path):
+    results = tmp_path / "results"
+    kw = dict(commit="c", date="2026-10-11", started="2026-10-11T10:00")
+    write_run(results, "m", "tracked", **kw)
+    write_run(results, "m", "local", **kw)
+    # outside a repository every run is kept
+    assert sorted(r.dir for r in load_runs(results)) == ["local", "tracked"]
+    git = ["git", "-C", str(tmp_path), "-c", "user.name=t",
+           "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+    subprocess.run(git + ["init", "-q"], check=True)
+    subprocess.run(git + ["add", "results/m/tracked/run.json"], check=True)
+    subprocess.run(git + ["commit", "-q", "-m", "runs"], check=True)
+    assert [r.dir for r in load_runs(results)] == ["tracked"]

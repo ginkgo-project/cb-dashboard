@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -59,14 +60,36 @@ def _read_json(path: Path):
         return None
 
 
+def _tracked(results: Path) -> set[str] | None:
+    """<machine>/<dir> of every run.json git tracks; None outside a work tree."""
+    try:
+        listed = subprocess.run(
+            ["git", "-C", str(results), "ls-files", "-z", "--", "*/run.json"],
+            capture_output=True)
+    except OSError:
+        return None
+    if listed.returncode != 0:
+        return None
+    return {f.removesuffix("/run.json")
+            for f in listed.stdout.decode().split("\0") if f}
+
+
 def load_runs(results: Path) -> list[Run]:
-    """Every results/<machine>/<dir>/run.json, sorted for display."""
+    """Every results/<machine>/<dir>/run.json, sorted for display.
+
+    What's committed is what's shown: inside a git work tree, only the runs
+    whose run.json git tracks are read.
+    """
+    results = Path(results)
+    tracked = _tracked(results) if results.is_dir() else None
     runs = []
     for run_json in results.glob("*/*/run.json"):
+        d = run_json.parent
+        if tracked is not None and f"{d.parent.name}/{d.name}" not in tracked:
+            continue
         record = _read_json(run_json)
         if not isinstance(record, dict):
             continue
-        d = run_json.parent
         data = {g: _read_json(d / f"{g}.json") for g in GROUPS}
         runs.append(Run(d.parent.name, d.name, record, data))
     runs.sort(key=lambda r: (r.machine, r.commit_date, r.started, r.dir))
