@@ -114,8 +114,10 @@ def test_common_flags_everywhere(m):
     assert len(invs) == 1 + 2 + 1 + 3 + 2
     for i in invs:
         j = " ".join(i.args)
-        assert "-warmup 1 -repetitions 5 -gpu_timer" in j
+        warmup = 3 if i.group == "blas" else 1
+        assert f"-warmup {warmup} -repetitions 5 -gpu_timer" in j
         assert j.startswith(f"-executor {m.executor} ")
         assert flag(i, "-repetition_growth_factor") == "1"
+        assert flag(i, "-timer_method") == "median"
         assert flag(i, "-seed") == "42"
         assert i.args.count("-seed") == 1 and i.args.count("-repetition_growth_factor") == 1

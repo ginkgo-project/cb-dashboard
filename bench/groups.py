@@ -22,6 +22,9 @@ SOLVER_SETTINGS = [
     "-rel_res_goal", "1e-10", "-max_iters", "1000",
     "-rhs_generation", "sinus", "-initial_guess_generation", "0",
 ]
+# The 8 MB vectors take about 10 us per operation, and after one warm-up their
+# first timed repetition was still up to 1.7x slower than the others.
+BLAS_WARMUP = 3
 MIN = 60
 TIMEOUTS = {"blas": 15 * MIN, "spmv": 20 * MIN, "spgemm": 20 * MIN,
             "solver": 60 * MIN, "preconditioner": 30 * MIN}
@@ -38,11 +41,13 @@ class Invocation:
     missing_input: Path | None = None
 
 
-def _base(m: Machine) -> list[str]:
+def _base(m: Machine, warmup: int = 1) -> list[str]:
     # A growth factor above 1 (Ginkgo's default is 1.5) times the repetitions in
     # growing batches, even with a fixed count; at 1 each one is timed alone.
-    return ["-executor", m.executor, "-warmup", "1", "-repetitions", "5", "-gpu_timer",
-            "-repetition_growth_factor", "1", "-seed", "42"]
+    # "time" is the median, which one slow repetition doesn't move; all of them
+    # are still in "repetition_times".
+    return ["-executor", m.executor, "-warmup", str(warmup), "-repetitions", "5", "-gpu_timer",
+            "-repetition_growth_factor", "1", "-timer_method", "median", "-seed", "42"]
 
 
 def _matrix(m: Machine, entry: dict) -> tuple[list[str], Path | None]:
@@ -59,7 +64,7 @@ def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS) -> list[
         t = TIMEOUTS[g]
         if g == "blas":
             out.append(Invocation(g, "vectors", exe(m, "blas"),
-                                  _base(m) + ["-operations", "copy,dot,norm,axpy"],
+                                  _base(m, BLAS_WARMUP) + ["-operations", "copy,dot,norm,axpy"],
                                   json.dumps([{"n": n} for n in VECTOR_LENGTHS]), t))
         elif g == "solver":
             for label, ortho, solvers in (("mgs", "mgs", "cg,bicgstab,gmres,ir"),
