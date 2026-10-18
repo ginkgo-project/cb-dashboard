@@ -1,4 +1,5 @@
-# Per-machine peaks used for the % of peak comparisons. Datasheet values.
+# Per-machine peaks used for the % of peak comparisons. Vendor-published
+# peaks, checked against the cited pages on 2026-10-19.
 
 [daint-gh200]
 label = "Daint GH200"
@@ -7,8 +8,7 @@ largest_cache = 50e6      # H100 L2
 cache_name = "L2"
 citations = [
   "https://www.nvidia.com/en-us/data-center/grace-hopper-superchip/",
-  "https://resources.nvidia.com/en-us-grace-cpu/grace-hopper-superchip",
-  "https://resources.nvidia.com/en-us-tensor-core/nvidia-tensor-core-gpu-datasheet",
+  "https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/",
 ]
 
 [beverin-mi300a]
