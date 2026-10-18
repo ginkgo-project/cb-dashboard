@@ -4,3 +4,4 @@ __pycache__/
 *.tmp
 *.egg-info/
 .pytest_cache/
+site/data/
