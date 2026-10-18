@@ -125,3 +125,14 @@ td.number { text-align: right; white-space: nowrap; }
 .clickbox dd { margin: 0; }
 .runs-list { margin: 4px 0; padding-left: 20px; }
 .command { margin: 4px 0; padding: 8px; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+
+.chart { width: 100%; max-width: 760px; height: auto; display: block; margin: 8px 0 16px; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .tick, .chart .axis { fill: var(--muted); font-size: 11px; }
+.chart .dot { stroke: var(--bg); stroke-width: 1; }
+.chart .dot.m0 { fill: var(--accent); }
+.chart .dot.m1 { fill: var(--run); }
+.chart .dot.faint { opacity: 0.35; }
+.chart .ceiling { stroke-width: 2; }
+.chart .ceiling.m0 { stroke: var(--accent); }
+.chart .ceiling.m1 { stroke: var(--run); }

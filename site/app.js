@@ -1,7 +1,8 @@
 // Renders the benchmark dashboard from site/data/*.json. All text goes
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
-import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange } from "./logic.js";
+import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
+  rowFilter, scatterProps, scatterModel, rooflineModel } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
@@ -240,7 +241,79 @@ function renderHeatmap(root, data, tab) {
   else box.append(el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
 }
 
-function renderCharts(root, data, tab) {}
+function select(label, name, options, current, tab, params) {
+  return el("label", {}, label, el("select", {
+    onchange: (e) => { location.hash = formatHash(tab, { ...params, [name]: e.target.value }); },
+  }, options.map(([value, text]) => el("option", { value, selected: value === current }, text))));
+}
+
+const SERIES = ["circle", "square"]; // one marker shape per machine
+
+function chartFrame(model, title, xLabel, yLabel, width, height) {
+  const { plot } = model;
+  return svg("svg", { class: "chart", viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": title },
+    svg("title", {}, title),
+    model.yTicks.map((t) => [
+      svg("line", { class: "grid", x1: plot.x0, x2: plot.x1, y1: t.pos, y2: t.pos }),
+      svg("text", { class: "tick", x: plot.x0 - 6, y: t.pos + 4, "text-anchor": "end" }, t.label)]),
+    model.xTicks.map((t) => [
+      svg("line", { class: "grid", x1: t.pos, x2: t.pos, y1: plot.y1, y2: plot.y0 }),
+      svg("text", { class: "tick", x: t.pos, y: plot.y0 + 16, "text-anchor": "middle" }, t.label)]),
+    svg("text", { class: "axis", x: (plot.x0 + plot.x1) / 2, y: height - 4, "text-anchor": "middle" }, xLabel),
+    svg("text", { class: "axis", x: 12, y: (plot.y0 + plot.y1) / 2, "text-anchor": "middle",
+      transform: `rotate(-90 12 ${(plot.y0 + plot.y1) / 2})` }, yLabel));
+}
+
+function marker(shape, cx, cy, machineIndex, title, extra = {}) {
+  const cls = `dot m${machineIndex}${extra.faint ? " faint" : ""}`;
+  return shape === "square"
+    ? svg("rect", { class: cls, x: cx - 4, y: cy - 4, width: 8, height: 8 }, svg("title", {}, title))
+    : svg("circle", { class: cls, cx, cy, r: 4.5 }, svg("title", {}, title));
+}
+
+function renderCharts(root, data, tab) {
+  const params = state.route.params;
+  const ids = Object.keys(data.machines);
+  const machine = ids.includes(params.machine) ? params.machine : ids[0];
+  const shown = data.cases.filter((c) => rowFilter(tab, c, params));
+  const props = scatterProps(shown);
+  const x = props.keys.includes(params.x) ? params.x : props.default;
+  const hasPct = shown.some((c) => c.compare?.[machine] === "bandwidth");
+  const y = params.values === "time" || !hasPct ? "time" : "pct";
+  const yOptions = [...(hasPct ? [["pct", "% of node bandwidth"]] : []), ["time", "time"]];
+
+  root.append(el("h2", {}, "This week, against a matrix property"));
+  const points = (data.latest?.[machine]?.points ?? []).filter((p) => shown.some((c) => c.key === p.key));
+  const model = x ? scatterModel(points, shown, { x, y }) : null;
+  if (!model || !model.dots.length) {
+    root.append(el("p", { class: "none" }, "No cases with a matrix property and a result this week for this selection."));
+  } else {
+    const frame = chartFrame(model, "This week, against a matrix property", x, model.yLabel, 640, 320);
+    frame.append(svg("g", {}, model.dots.map((d) => marker("circle", d.cx, d.cy, 0, d.title, { faint: d.faint }))));
+    root.append(
+      el("div", { class: "filters" }, select("x axis", "x", props.keys.map((k) => [k, k]), x, tab, params),
+        select("y axis", "values", yOptions, y, tab, params)),
+      el("p", { class: "legend" }, `${machineLabel(machine)}, this week; faint dots: the previous column. The x axis is logarithmic.`),
+      frame);
+  }
+
+  root.append(el("h2", {}, "Roofline, this week"));
+  const rf = rooflineModel(data.latest, state.meta.machines, data.cases);
+  if (!rf.dots.length) {
+    root.append(el("p", { class: "none" }, "No results with a known flops-per-byte this week."));
+    return;
+  }
+  const order = Object.keys(state.meta.machines);
+  const frame = chartFrame(rf, "Roofline, this week", "intensity (flop per byte)", "GFLOP/s", 640, 360);
+  frame.append(svg("g", {},
+    rf.ceilings.map((c) => svg("polyline", { class: `ceiling m${order.indexOf(c.machine)}`, points: c.points, fill: "none" },
+      svg("title", {}, `${machineLabel(c.machine)} ceiling`))),
+    rf.dots.map((d) => marker(SERIES[order.indexOf(d.machine)] ?? "circle", d.cx, d.cy, order.indexOf(d.machine), d.title))));
+  root.append(
+    el("p", { class: "legend" }, order.map((id, i) => `${i === 0 ? "circles" : "squares"}: ${machineLabel(id)}`).join("; ")
+      + ". Lines: measured triad bandwidth times intensity, up to the fp64 peak."),
+    frame);
+}
 function renderTabTables(root, data, tab) {}
 
 function renderMachines(root) {

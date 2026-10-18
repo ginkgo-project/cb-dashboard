@@ -161,3 +161,134 @@ export function heatmapModel(tabData, machine, params = {}) {
     : kinds.has(true) ? "% of node bandwidth" : "time";
   return { columns, rows, legend };
 }
+
+// ---- charts: pure models, coordinates in the svg's own units ----
+
+// log10 mapping: d0 -> r0, d1 -> r1
+export function logScale(d0, d1, r0, r1) {
+  const a = Math.log10(d0);
+  const b = Math.log10(d1);
+  return (v) => (b === a ? (r0 + r1) / 2 : r0 + ((Math.log10(v) - a) / (b - a)) * (r1 - r0));
+}
+
+const MARGIN = { left: 60, right: 14, top: 12, bottom: 38 };
+const SUPERSCRIPT = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+const tenPower = (e) => `10${String(e).replace(/./g, (ch) => SUPERSCRIPT[ch])}`;
+
+// whole decades covering [lo, hi]; at least one decade wide
+function decadeDomain(lo, hi) {
+  let a = Math.floor(Math.log10(lo) + 1e-9);
+  let b = Math.ceil(Math.log10(hi) - 1e-9);
+  if (b <= a) b = a + 1;
+  return [a, b];
+}
+
+function decadeTicks(e0, e1, scale) {
+  const ticks = [];
+  for (let e = e0; e <= e1; e++) ticks.push({ value: 10 ** e, pos: scale(10 ** e), label: tenPower(e) });
+  return ticks;
+}
+
+function linearTicks(lo, hi, scale, format) {
+  const step0 = (hi - lo) / 5;
+  const mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= step0);
+  const ticks = [];
+  for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + step * 1e-9; v += step) {
+    const value = Math.round(v / step) * step;
+    ticks.push({ value, pos: scale(value), label: format(value) });
+  }
+  return ticks;
+}
+
+const Y_KINDS = {
+  pct: { name: "% of node bandwidth", format: (v) => `${Math.round(v * 100)}%`, kind: "pct" },
+  time: { name: "time", format: (v) => formatValue(v, "time"), kind: "time" },
+};
+
+// The shown cases' props that can be plotted, and the default x.
+export function scatterProps(cases) {
+  const keys = new Set();
+  for (const c of cases) for (const [k, v] of Object.entries(c.props ?? {})) if (Number.isFinite(v)) keys.add(k);
+  const list = [...keys].sort();
+  return { keys: list, default: ["row_length_cv", "nnz_per_row", "n"].find((k) => keys.has(k)) ?? list[0] };
+}
+
+// points: latest[machine].points. x is a case property (log axis), y is
+// "pct" or "time" of the point; each prev adds a faint dot.
+export function scatterModel(points, cases, { x = "row_length_cv", y = "pct", width = 640, height = 320 } = {}) {
+  const byKey = new Map(cases.map((c) => [c.key, c]));
+  const yk = Y_KINDS[y] ?? Y_KINDS.pct;
+  const raw = [];
+  for (const p of points ?? []) {
+    const c = byKey.get(p.key);
+    const xv = c?.props?.[x];
+    if (!(xv > 0) || !Number.isFinite(xv)) continue; // log axis
+    const label = c ? caseLabel(c) : p.key;
+    if (Number.isFinite(p[y])) raw.push({ key: p.key, xv, yv: p[y], faint: false, title: `${label}${DOT}${x} ${xv}${DOT}${yk.format(p[y])}` });
+    if (p.prev && Number.isFinite(p.prev[y])) raw.push({ key: p.key, xv, yv: p.prev[y], faint: true, title: `${label}${DOT}previous column${DOT}${yk.format(p.prev[y])}` });
+  }
+  const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
+  if (!raw.length) return { dots: [], xTicks: [], yTicks: [], plot, xLabel: x, yLabel: yk.name };
+  const [e0, e1] = decadeDomain(Math.min(...raw.map((d) => d.xv)), Math.max(...raw.map((d) => d.xv)));
+  const sx = logScale(10 ** e0, 10 ** e1, plot.x0, plot.x1);
+  const yHi = Math.max(...raw.map((d) => d.yv));
+  const yMax = y === "pct" ? Math.max(1, yHi) : yHi * 1.05 || 1;
+  const sy = (v) => plot.y0 + (v / yMax) * (plot.y1 - plot.y0);
+  return {
+    dots: raw.map((d) => ({ cx: sx(d.xv), cy: sy(d.yv), key: d.key, title: d.title, faint: d.faint })),
+    xTicks: decadeTicks(e0, e1, sx),
+    yTicks: linearTicks(0, yMax, sy, yk.format),
+    plot, xLabel: x, yLabel: yk.name,
+  };
+}
+
+// machines: {id: {label, fp64_peak}}; latest: tabData.latest. x is the
+// intensity (flops/byte), y GFLOP/s, both log. The ceiling of a machine is
+// min(triad * I, peak); without a triad only the flat peak line is drawn.
+export function rooflineModel(latest, machines, cases, { width = 640, height = 360 } = {}) {
+  const byKey = new Map(cases.map((c) => [c.key, c]));
+  const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
+  const raw = [];
+  const ceil = [];
+  for (const [id, info] of Object.entries(machines ?? {})) {
+    const data = latest?.[id];
+    if (!data) continue;
+    for (const p of data.points ?? []) {
+      if (!(p.intensity > 0) || !(p.gflops > 0)) continue;
+      const c = byKey.get(p.key);
+      raw.push({ machine: id, key: p.key, i: p.intensity, g: p.gflops / 1e9,
+        title: `${c ? caseLabel(c) : p.key}${DOT}${info.label ?? id}${DOT}${p.intensity.toPrecision(2)} flop/byte${DOT}${formatValue(p.gflops, "gflops")}` });
+    }
+    const peak = info.fp64_peak > 0 ? info.fp64_peak / 1e9 : null;
+    const triad = data.triad > 0 ? data.triad / 1e9 : null;
+    if (peak) ceil.push({ machine: id, peak, triad, knee: triad ? peak / triad : null });
+  }
+  const xs = [...raw.map((d) => d.i), ...ceil.filter((c) => c.knee).map((c) => c.knee)];
+  const ys = [...raw.map((d) => d.g), ...ceil.map((c) => c.peak)];
+  if (!xs.length || !ys.length) return { dots: [], ceilings: [], xTicks: [], yTicks: [], plot };
+  const [x0e, x1e] = decadeDomain(Math.min(...xs), Math.max(...xs));
+  const [y0e, y1e] = decadeDomain(Math.min(...ys), Math.max(...ys));
+  const sx = logScale(10 ** x0e, 10 ** x1e, plot.x0, plot.x1);
+  const sy = logScale(10 ** y0e, 10 ** y1e, plot.y0, plot.y1);
+  const xlo = 10 ** x0e;
+  const xhi = 10 ** x1e;
+  const ceilings = ceil.map((c) => {
+    const pts = [];
+    if (c.triad) {
+      pts.push([xlo, Math.min(c.triad * xlo, c.peak)]);
+      if (c.knee > xlo && c.knee < xhi) pts.push([c.knee, c.peak]);
+      pts.push([xhi, Math.min(c.triad * xhi, c.peak)]);
+    } else {
+      pts.push([xlo, c.peak], [xhi, c.peak]);
+    }
+    return { machine: c.machine, knee: c.knee, points: pts.map(([i, g]) => `${sx(i)},${sy(g)}`).join(" ") };
+  });
+  return {
+    dots: raw.map((d) => ({ cx: sx(d.i), cy: sy(d.g), machine: d.machine, key: d.key, title: d.title })),
+    ceilings,
+    xTicks: decadeTicks(x0e, x1e, sx),
+    yTicks: decadeTicks(y0e, y1e, sy),
+    plot,
+  };
+}

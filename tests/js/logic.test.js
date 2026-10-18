@@ -173,3 +173,60 @@ test("cellTitle", () => {
   const title = logic.cellTitle({ state: "slower", change: -0.2, band: 0.03, time: 2e-3 }, c);
   assert.ok(title.includes("SpMV csr · a") && title.includes("slower") && title.includes("−20.0%") && title.includes("±3.0%") && title.includes("2.00 ms"));
 });
+
+test("logScale maps the endpoints and the log midpoint", () => {
+  const s = logic.logScale(1, 100, 0, 200);
+  assert.equal(s(10), 100);
+  assert.equal(s(1), 0);
+  assert.equal(s(100), 200);
+});
+
+const scatterCases = [
+  { key: "a", group: "spmv", labels: { format: "csr", matrix: "a" }, props: { row_length_cv: 0.1, n: 10 } },
+  { key: "b", group: "spmv", labels: { format: "csr", matrix: "b" }, props: { row_length_cv: 1.5 } },
+  { key: "c", group: "spmv", labels: { format: "csr", matrix: "c" }, props: {} },
+];
+
+test("scatterModel: a previous column adds a faint dot", () => {
+  const points = [
+    { key: "a", time: 1e-3, pct: 0.5, prev: { time: 1e-3, pct: 0.4 } },
+    { key: "b", time: 1e-3, pct: 0.8 },
+    { key: "c", time: 1e-3, pct: 0.9 },
+  ];
+  const model = logic.scatterModel(points, scatterCases, { x: "row_length_cv", y: "pct" });
+  assert.equal(model.dots.length, 3);
+  assert.equal(model.dots.filter((d) => d.faint).length, 1);
+  assert.ok(model.dots.every((d) => Number.isFinite(d.cx) && Number.isFinite(d.cy) && d.title));
+  assert.ok(model.xTicks.length > 0 && model.yTicks.length > 0);
+  const [a, b] = ["a", "b"].map((k) => model.dots.find((d) => d.key === k && !d.faint));
+  assert.ok(b.cx > a.cx); // larger x to the right
+  assert.ok(b.cy < a.cy); // larger y up
+});
+
+test("scatterModel skips points missing x or y", () => {
+  const points = [{ key: "b", time: 1e-3 }, { key: "a", time: 1e-3, pct: 0.5 }];
+  const model = logic.scatterModel(points, scatterCases, { x: "n", y: "pct" });
+  assert.equal(model.dots.length, 1);
+  assert.equal(logic.scatterModel([], scatterCases, {}).dots.length, 0);
+});
+
+test("rooflineModel: the knee is at intensity 10", () => {
+  const latest = { m1: { triad: 3e12, points: [{ key: "a", time: 1, gflops: 1e12, intensity: 0.5 }, { key: "b", time: 1, gflops: 2e13, intensity: 20 }] } };
+  const model = logic.rooflineModel(latest, { m1: { fp64_peak: 3e13 } }, scatterCases);
+  assert.equal(model.dots.length, 2);
+  const pts = model.ceilings[0].points.split(" ").map((p) => p.split(",").map(Number));
+  assert.equal(pts.length, 3);
+  assert.equal(model.ceilings[0].knee, 10);
+  assert.ok(pts.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)));
+  assert.equal(pts[1][1], pts[2][1]); // flat after the knee
+  assert.ok(pts[0][1] > pts[1][1]); // rising before it
+  assert.ok(model.dots[0].cx < pts[1][0] && model.dots[1].cx > pts[1][0]);
+});
+
+test("test_roofline_without_triad", () => {
+  const latest = { m1: { points: [{ key: "a", time: 1, gflops: 1e12, intensity: 0.5 }] } };
+  const model = logic.rooflineModel(latest, { m1: { fp64_peak: 3e13 } }, scatterCases);
+  const pts = model.ceilings[0].points.split(" ").map((p) => p.split(",").map(Number));
+  assert.equal(pts.length, 2);
+  assert.equal(pts[0][1], pts[1][1]);
+});
