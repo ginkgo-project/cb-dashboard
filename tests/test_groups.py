@@ -94,11 +94,23 @@ def test_solver_cases_name_the_optimal_format(m):
             assert isinstance(case["optimal"]["spmv"], str) and case["optimal"]["spmv"] == "csr"
 
 
-def test_precond_lists_by_spd(m):
-    a, b = by_group(m, "preconditioner")
-    assert (a.label, flag(a, "-preconditioners")) == ("lap", SPD)
-    assert (b.label, flag(b, "-preconditioners")) == ("conv", NONSPD)
-    assert "-detailed=false" in a.args and flag(a, "-formats") == "csr" and a.timeout_s == 1800
+def test_one_invocation_per_preconditioner(m):
+    invs = by_group(m, "preconditioner")
+    expected = ([("lap", p) for p in SPD.split(",")] +
+                [("conv", p) for p in NONSPD.split(",")])
+    assert [i.label for i in invs] == [f"{name}/{p}" for name, p in expected]
+    for i, (name, p) in zip(invs, expected):
+        assert flag(i, "-preconditioners") == p
+        assert flag(i, "-input_matrix") == str(m.root / f"matrices/fem/{name}.bin")
+        assert "-detailed=false" in i.args and flag(i, "-formats") == "csr"
+        assert i.exe == exe(m, "preconditioner") and i.timeout_s == 15 * 60
+        assert i.stdin is None and i.missing_input is None
+
+
+def test_missing_precond_matrix_flags_each_preconditioner(m):
+    (m.root / "matrices/fem/lap.bin").unlink()
+    invs = by_group(m, "preconditioner")
+    assert [i.missing_input is not None for i in invs] == [True] * 9 + [False] * 7
 
 
 def test_missing_matrix_flagged(m):
@@ -111,7 +123,7 @@ def test_missing_matrix_flagged(m):
 
 def test_common_flags_everywhere(m):
     invs = G.invocations(m, MANIFEST)
-    assert len(invs) == 1 + 2 + 1 + 3 + 2
+    assert len(invs) == 1 + 2 + 1 + 3 + 9 + 7
     for i in invs:
         j = " ".join(i.args)
         warmup = 3 if i.group == "blas" else 1

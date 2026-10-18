@@ -26,8 +26,10 @@ SOLVER_SETTINGS = [
 # first timed repetition was still up to 1.7x slower than the others.
 BLAS_WARMUP = 3
 MIN = 60
+# The preconditioner's is for one preconditioner on one matrix. On the MI300A,
+# ic-syncfree on porous_pressure took 12 min (7 generates of 99 s).
 TIMEOUTS = {"blas": 15 * MIN, "spmv": 20 * MIN, "spgemm": 20 * MIN,
-            "solver": 60 * MIN, "preconditioner": 30 * MIN}
+            "solver": 60 * MIN, "preconditioner": 15 * MIN}
 
 
 @dataclass
@@ -83,10 +85,15 @@ def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS) -> list[
                     args = _base(m) + ["-operations", "spgemm", "-spgemm_mode", "normal"] + inp
                     target = "sparse_blas"
                 elif g == "preconditioner" and "precond" in e["roles"]:
+                    # One invocation per preconditioner, so one that hangs or crashes
+                    # loses only its own result. Its log is <matrix>/<preconditioner>.log.
                     lst = PRECOND_SPD if e.get("spd") else PRECOND_GENERAL
-                    args = _base(m) + ["-detailed=false", "-formats", "csr",
-                                       "-preconditioners", lst] + inp
-                    target = "preconditioner"
+                    for p in lst.split(","):
+                        args = _base(m) + ["-detailed=false", "-formats", "csr",
+                                           "-preconditioners", p] + inp
+                        out.append(Invocation(g, f"{e['name']}/{p}", exe(m, "preconditioner"),
+                                              args, None, t, missing))
+                    continue
                 else:
                     continue
                 out.append(Invocation(g, e["name"], exe(m, target), args, None, t, missing))

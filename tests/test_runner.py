@@ -48,6 +48,14 @@ def test_crash_is_partial(tmp_path):
     assert json.loads((out / "g.json").read_text()) == [{"a": 1}]
 
 
+def test_label_with_a_slash_nests_the_log(tmp_path):
+    a = fake(tmp_path, "a", 'sys.stderr.write("hi\\n"); print("[]")')
+    out = tmp_path / "out"
+    r = run_group("g", [inv(a, "mat/ilu")], [], out)
+    assert r["invocations"][0]["label"] == "mat/ilu"
+    assert (out / "logs/g/mat/ilu.log").read_text() == "hi\n"
+
+
 def test_truncated_json_is_failed(tmp_path):
     t = fake(tmp_path, "t", 'sys.stdout.write(\'[{"a":1},{"b"\')')
     out = tmp_path / "out"
