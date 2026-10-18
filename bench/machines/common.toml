@@ -2,7 +2,7 @@ cmake_flags = [
     "-G", "Ninja",
     "-DCMAKE_BUILD_TYPE=Release",
     "-DGINKGO_BUILD_REFERENCE=ON",
-    "-DGINKGO_BUILD_OMP=OFF",
+    "-DGINKGO_BUILD_OMP=ON",
     "-DGINKGO_BUILD_MPI=OFF",
     "-DGINKGO_BUILD_SYCL=OFF",
     "-DGINKGO_BUILD_TESTS=OFF",
