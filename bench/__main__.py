@@ -14,6 +14,7 @@ from pathlib import Path
 from bench.build import build
 from bench.checkout import (DEVELOP, ensure_clone, prepare_worktree, read_last, resolve,
                             should_run, write_last)
+from bench.energy import snapshot as pm_counters
 from bench.groups import GROUPS, invocations
 from bench.machine import load_machine
 from bench.record import gpu_info, results_dir_name, run_record, toolchain_info
@@ -83,6 +84,7 @@ def cmd_run(args) -> int:
         return 0
     started = _now()
     gpu, toolchain = gpu_info(m), toolchain_info(m)
+    counters = pm_counters()  # which energy counters this node has
     prepare_worktree(clone, worktree, commit.sha)
     out = _make_results_dir(m.results_dir, commit)
 
@@ -96,6 +98,7 @@ def cmd_run(args) -> int:
         rec = run_record(m, commit, args.ref, {"cmake_cache": info.get("cmake_cache", {})},
                          manifest, results, started, finished, gpu=gpu, toolchain=toolchain)
         rec["build"] = info
+        rec["pm_counters"] = counters
         if stream_info is not None:
             rec["stream"] = stream_info
         _write_json(out / "run.json", rec)

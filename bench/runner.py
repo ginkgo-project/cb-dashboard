@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from typing import Callable, Mapping
 
+from bench.energy import read as read_energy, used as used_energy
 from bench.groups import Invocation
 
 # On a timeout, srun gets SIGTERM (which it forwards to the step) and this long
@@ -154,11 +155,14 @@ def _aggregate(records: list[dict]) -> str:
 
 
 def run_group(group: str, invs: list[Invocation], srun: list[str], out_dir: Path,
-              deadline: float | None = None) -> dict:
+              deadline: float | None = None,
+              energy: Callable[[], dict[str, int]] = read_energy) -> dict:
     """Run the invocations of one group.
 
     `deadline` is the job's end as a Unix time, or None if unknown. An
-    invocation whose timeout doesn't fit before it is skipped.
+    invocation whose timeout doesn't fit before it is skipped. `energy` reads the
+    node's counters; each invocation that ran gets the joules used in "energy_j",
+    if the node has any.
     """
     for inv in invs:
         if inv.group != group:
@@ -179,12 +183,16 @@ def run_group(group: str, invs: list[Invocation], srun: list[str], out_dir: Path
                     data, st = [], {"status": "skipped", "exit_code": None,
                                     "reason": "not enough job time"}
                 else:
+                    before = energy()
                     try:
                         data, st = _run_one(inv, prefix,
                                             out_dir / "logs" / inv.group / f"{inv.label}.log")
                     except OSError as e:
                         data, st = [], {"status": "failed", "exit_code": None,
                                         "reason": f"cannot start: {e}"}
+                    joules = used_energy(before, energy())
+                    if joules:
+                        st["energy_j"] = joules
             except Killed as k:
                 records.append({"label": inv.label, "args": list(inv.args), "status": "killed",
                                 "exit_code": None, "reason": "job killed (SIGTERM)",

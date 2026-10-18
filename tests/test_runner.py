@@ -299,3 +299,22 @@ def test_job_deadline_sources():
     def broken(cmd, **kw):
         raise OSError("no squeue")
     assert runner.job_deadline({"SLURM_JOB_ID": "42"}, run=broken) is None
+
+
+def test_energy_used_by_each_invocation_that_ran(tmp_path):
+    readings = iter([{"energy": 100, "accel0_energy": 10}, {"energy": 160, "accel0_energy": 40},
+                     {"energy": 200, "accel0_energy": 50}, {"energy": 205, "accel0_energy": 51}])
+    a = fake(tmp_path, "a", 'print("[]")')
+    b = fake(tmp_path, "b", 'sys.exit(1)')
+    r = run_group("g", [inv(a, "a"), inv(a, "gone", missing=tmp_path / "x.bin"), inv(b, "b")], [],
+                  tmp_path / "out", energy=lambda: next(readings))
+    first, gone, failed = r["invocations"]
+    assert first["energy_j"] == {"energy": 60, "accel0_energy": 30}
+    assert "energy_j" not in gone
+    assert failed["status"] == "failed" and failed["energy_j"] == {"energy": 5, "accel0_energy": 1}
+
+
+def test_no_energy_without_counters(tmp_path):
+    a = fake(tmp_path, "a", 'print("[]")')
+    r = run_group("g", [inv(a)], [], tmp_path / "out", energy=dict)
+    assert "energy_j" not in r["invocations"][0]
