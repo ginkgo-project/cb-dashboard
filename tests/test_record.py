@@ -5,8 +5,8 @@ from pathlib import Path
 from bench.checkout import Commit
 from bench.machine import Machine
 from bench.record import (
-    gpu_info, parse_nvidia_smi, parse_rocm_smi, results_dir_name,
-    run_record, toolchain_info,
+    gpu_info, gpu_state, parse_nvidia_smi, parse_rocm_smi, parse_smi_query,
+    results_dir_name, run_record, toolchain_info,
 )
 
 DATA = Path(__file__).parent / "data"
@@ -195,3 +195,57 @@ def test_probes_use_srun_binary_with_real_machine(tmp_path):
     gpu_info(m, run=run)
     toolchain_info(m, run=run)
     assert calls and all(c[0] == "srun" and "--gpus-per-task=1" in c for c in calls)
+
+
+SMI_Q = """
+==============NVSMI LOG==============
+
+Timestamp                                 : Sun Oct 18 18:46:55 2026
+Driver Version                            : 595.91.07
+
+Attached GPUs                             : 1
+GPU 00000009:01:00.0
+    Clocks
+        Graphics                          : 1980 MHz
+        Memory                            : 2619 MHz
+    Clocks Event Reasons
+        Idle                              : Active
+        SW Power Cap                      : Not Active
+    Temperature
+        GPU Current Temp                  : 41 C
+"""
+
+
+def test_parse_smi_query_nests_sections():
+    assert parse_smi_query(SMI_Q) == {
+        "Timestamp": "Sun Oct 18 18:46:55 2026",
+        "Driver Version": "595.91.07",
+        "Attached GPUs": "1",
+        "GPU 00000009:01:00.0": {
+            "Clocks": {"Graphics": "1980 MHz", "Memory": "2619 MHz"},
+            "Clocks Event Reasons": {"Idle": "Active", "SW Power Cap": "Not Active"},
+            "Temperature": {"GPU Current Temp": "41 C"},
+        },
+    }
+
+
+def test_gpu_state_cuda():
+    calls = []
+
+    def run(cmd, **kw):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, SMI_Q, "")
+    s = gpu_state(machine(), run=run)
+    assert s["nvidia-smi"]["Driver Version"] == "595.91.07"
+    assert calls == [["srun", "-n1", "nvidia-smi", "-q", "-i", "0", "-d",
+                      "CLOCK,POWER,TEMPERATURE,PERFORMANCE,ECC"]]
+
+
+def test_gpu_state_hip_records_a_failed_query():
+    def run(cmd, **kw):
+        if "--showcomputepartition" in cmd:
+            raise subprocess.CalledProcessError(2, cmd)
+        return subprocess.CompletedProcess(cmd, 0, '{"card0": {"Temperature (Sensor edge) (C)": "40"}}', "")
+    s = gpu_state(machine("hip"), run=run)
+    assert s["rocm-smi"] == {"card0": {"Temperature (Sensor edge) (C)": "40"}}
+    assert s["partition"]["error"].startswith("CalledProcessError")

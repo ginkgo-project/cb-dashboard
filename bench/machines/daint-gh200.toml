@@ -16,3 +16,11 @@ cmake_flags = [
     "-DCMAKE_CXX_COMPILER=g++",
     "-DCMAKE_CUDA_HOST_COMPILER=g++",
 ]
+# BabelStream (bench/stream.py), built with the same compilers as Ginkgo.
+stream_cmake_flags = [
+    "-DMODEL=cuda",
+    "-DCUDA_ARCH=sm_90",
+    "-DCMAKE_CUDA_COMPILER=nvcc",
+    "-DCMAKE_CXX_COMPILER=g++",
+    "-DCMAKE_CUDA_HOST_COMPILER=g++",
+]

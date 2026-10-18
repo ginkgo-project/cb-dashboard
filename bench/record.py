@@ -115,6 +115,54 @@ def gpu_info(m: Machine, run: Callable = subprocess.run) -> dict:
     return info
 
 
+def parse_smi_query(text: str) -> dict:
+    """`nvidia-smi -q`'s indented `key : value` lines as nested dicts.
+
+    A line without " : " (e.g. "GPU 00000009:01:00.0" or "Clocks") opens a section.
+    """
+    root: dict = {}
+    stack: list[tuple[int, dict]] = [(-1, root)]
+    for line in text.splitlines():
+        item = line.strip()
+        if not item or item.startswith("="):
+            continue
+        indent = len(line) - len(line.lstrip())
+        while stack[-1][0] >= indent:
+            stack.pop()
+        parent = stack[-1][1]
+        kv = re.match(r"(.*?)\s+:\s*(.*)$", item)
+        if kv:
+            parent[kv.group(1)] = kv.group(2)
+        else:
+            stack.append((indent, parent.setdefault(item, {})))
+    return root
+
+
+def gpu_state(m: Machine, run: Callable = subprocess.run) -> dict:
+    """Clocks, power, temperature and settings of GPU 0, as the smi tools report them.
+
+    Read after the stream run (bench/stream.py), to explain a node that is slower.
+    Each query that fails gets an "error" instead.
+    """
+    if m.executor == "cuda":
+        queries = {"nvidia-smi": (["nvidia-smi", "-q", "-i", "0", "-d",
+                                   "CLOCK,POWER,TEMPERATURE,PERFORMANCE,ECC"], parse_smi_query)}
+    else:
+        queries = {
+            "rocm-smi": (["rocm-smi", "-d", "0", "--showclocks", "--showpower",
+                          "--showmaxpower", "--showtemp", "--json"], json.loads),
+            "partition": (["rocm-smi", "-d", "0", "--showcomputepartition",
+                           "--showmemorypartition", "--json"], json.loads),
+        }
+    state: dict = {}
+    for key, (cmd, parse) in queries.items():
+        try:
+            state[key] = parse(_out(run, [*_prefix(m), *cmd]))
+        except ERRORS as e:
+            state[key] = {"error": f"{type(e).__name__}: {e}"}
+    return state
+
+
 def toolchain_info(m: Machine, run: Callable = subprocess.run) -> dict:
     def first_last(cmd, idx):
         return _out(run, [*_prefix(m), *cmd]).strip().splitlines()[idx]

@@ -18,3 +18,10 @@ cmake_flags = [
     "-DCMAKE_HIP_COMPILER=/user-environment/env/default/bin/clang++",
     "-DCMAKE_HIP_FLAGS=--gcc-toolchain={gcc_root}",
 ]
+# BabelStream (bench/stream.py). Its HIP model is plain C++ compiled by hipcc,
+# not CMake's HIP language, so the architecture and GCC go in its extra flags.
+stream_cmake_flags = [
+    "-DMODEL=hip",
+    "-DCMAKE_CXX_COMPILER=/user-environment/env/default/bin/hipcc",
+    "-DCXX_EXTRA_FLAGS=--offload-arch=gfx942;--gcc-toolchain={gcc_root}",
+]

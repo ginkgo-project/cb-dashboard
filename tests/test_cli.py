@@ -69,8 +69,10 @@ def patch_common(monkeypatch, m, commit):
     monkeypatch.setattr(cli, "gpu_info", lambda m: {"gpu": "g"})
     monkeypatch.setattr(cli, "toolchain_info", lambda m: {"g++": "x"})
     monkeypatch.setattr(cli, "job_deadline", lambda: None)
+    monkeypatch.setattr(cli, "measure_stream", lambda m, out: STREAM)
 
 
+STREAM = {"commit": "c", "results": {"triad": {"bandwidth": 3.0e12}}}
 COMMIT = Commit("a" * 40, "2026-10-16", "b" * 40)
 
 
@@ -88,7 +90,8 @@ def test_nothing_to_do_exits_zero(tmp_path, monkeypatch, manifest, capsys):
 def test_dry_run_lists_invocations(tmp_path, monkeypatch, manifest, capsys):
     m = fake_machine(tmp_path, arch="nonsense")
     monkeypatch.setattr(cli, "load_machine", lambda name, **kw: m)
-    for n in ("ensure_clone", "resolve", "build", "run_group", "prepare_worktree"):
+    for n in ("ensure_clone", "resolve", "build", "run_group", "prepare_worktree",
+              "measure_stream"):
         monkeypatch.setattr(cli, n, lambda *a, **k: pytest.fail("ran"))
     assert cli.main(["run", "daint-gh200", "--dry-run", "--manifest", str(manifest),
                      "--groups", "blas,spmv"]) == 0
@@ -163,6 +166,7 @@ def test_build_failure(tmp_path, monkeypatch, manifest):
     assert "error" in rec["build"] and rec["finished"] is not None
     assert rec["groups"] == {g: {"status": "skipped", "reason": "build failed"}
                              for g in cli.GROUPS}
+    assert "stream" not in rec
     assert not (m.root / "state" / m.name / "last_commit").exists()
 
 
@@ -181,6 +185,7 @@ def test_record_written_after_build_and_each_group(tmp_path, monkeypatch, manife
     assert rc == 0
     first = seen["blas"]
     assert first["finished"] is None and first["build"]["configured"] is True
+    assert first["stream"] == STREAM  # measured before the first group
     assert first["groups"]["blas"] == {"status": "running"}
     assert all(first["groups"][g] == {"status": "pending"} for g in cli.GROUPS[1:])
     later = seen["solver"]

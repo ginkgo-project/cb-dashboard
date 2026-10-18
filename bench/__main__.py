@@ -18,6 +18,7 @@ from bench.groups import GROUPS, invocations
 from bench.machine import load_machine
 from bench.record import gpu_info, results_dir_name, run_record, toolchain_info
 from bench.runner import Killed, job_deadline, run_group
+from bench.stream import measure as measure_stream
 
 GINKGO_URL = "https://github.com/ginkgo-project/ginkgo.git"
 DEFAULT_MANIFEST = Path(__file__).resolve().parent.parent / "datasets" / "manifest.json"
@@ -88,12 +89,15 @@ def cmd_run(args) -> int:
     results = {g: {"status": "pending"} if g in groups else
                {"status": "skipped", "reason": "not requested"} for g in GROUPS}
     build_info: dict | None = None
+    stream_info: dict | None = None
 
     def record(finished=None):
         info = build_info if build_info is not None else {}
         rec = run_record(m, commit, args.ref, {"cmake_cache": info.get("cmake_cache", {})},
                          manifest, results, started, finished, gpu=gpu, toolchain=toolchain)
         rec["build"] = info
+        if stream_info is not None:
+            rec["stream"] = stream_info
         _write_json(out / "run.json", rec)
 
     def skip_pending(reason):
@@ -119,6 +123,8 @@ def cmd_run(args) -> int:
             record(_now())
             print(f"error: build failed: {e}", file=sys.stderr)
             return 1
+        record()
+        stream_info = measure_stream(m, out)  # the node's bandwidth, before the groups
         record()
         deadline = job_deadline()
         for g in groups:
