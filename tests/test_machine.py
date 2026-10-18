@@ -22,7 +22,8 @@ def test_load_daint():
     assert m.arch == "aarch64"
     assert m.needs_gcc_root is False
     assert m.sbatch == "--partition=normal --nodes=1 --exclusive --time=04:00:00 --account=d131".split()
-    assert m.srun == "--ntasks=1 --gpus-per-task=1 --cpus-per-task=72 --cpu-bind=cores".split()
+    assert m.srun == ("--ntasks=1 --gpus-per-task=1 --cpus-per-task=72 --cpu-bind=cores "
+                      "--export=ALL,OMP_NUM_THREADS=72").split()
     assert m.cmake_flags == COMMON + (
         "-DGINKGO_BUILD_CUDA=ON -DGINKGO_CUDA_ARCHITECTURES=90 -DGINKGO_BUILD_HIP=OFF "
         "-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CUDA_HOST_COMPILER=g++"
@@ -56,3 +57,10 @@ def test_unknown_machine():
 def test_missing_scratch():
     with pytest.raises(KeyError, match="SCRATCH"):
         load_machine("daint-gh200", env={})
+
+
+@pytest.mark.parametrize("name", ["daint-gh200", "beverin-mi300a"])
+def test_omp_threads_match_cpus_per_task(name):
+    srun = load_machine(name, env={"SCRATCH": "/s"}).srun
+    cpus = next(a.split("=", 1)[1] for a in srun if a.startswith("--cpus-per-task="))
+    assert f"--export=ALL,OMP_NUM_THREADS={cpus}" in srun
