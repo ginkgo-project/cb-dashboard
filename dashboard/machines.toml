@@ -17,6 +17,5 @@ fp64_peak = 61.3e12       # FP64 vector
 largest_cache = 256e6     # Infinity Cache
 cache_name = "Infinity Cache"
 citations = [
-  "https://www.amd.com/en/products/accelerators/instinct/mi300/mi300a.html",
   "https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/data-sheets/amd-instinct-mi300a-data-sheet.pdf",
 ]
