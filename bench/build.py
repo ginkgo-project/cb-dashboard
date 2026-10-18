@@ -16,6 +16,12 @@ from bench.machine import Machine
 TARGETS = ["blas", "spmv", "sparse_blas", "solver", "preconditioner", "matrix_statistics",
            "mtx_to_binary"]
 FINGERPRINT = "cb-config.json"
+# CMake takes compilers and flags from these when they are set. sbatch passes on
+# the submit shell's environment, so e.g. a CC from another uenv must not override
+# the machine file (and the fingerprint, which only sees the compilers on PATH).
+_COMPILER_ENV = ("CC", "CXX", "CUDACXX", "CUDAHOSTCXX", "HIPCXX", "FC", "CFLAGS",
+                 "CXXFLAGS", "CUDAFLAGS", "HIPFLAGS", "FFLAGS", "LDFLAGS",
+                 "CMAKE_TOOLCHAIN_FILE")
 
 UENV_PREFIX = Path("/user-environment")
 _CACHE_KEY = re.compile(r"^(CMAKE_BUILD_TYPE|CMAKE_\w*_COMPILER|CMAKE_\w*_FLAGS\w*|GINKGO_\w+)$")
@@ -88,6 +94,10 @@ def compiler_versions(run: Callable = subprocess.run) -> dict[str, str | None]:
     return out
 
 
+def _cmake_env() -> dict[str, str]:
+    return {k: v for k, v in os.environ.items() if k not in _COMPILER_ENV}
+
+
 def _read_json(path: Path):
     try:
         return json.loads(path.read_text())
@@ -114,13 +124,14 @@ def build(m: Machine, src: Path, jobs: int = 64) -> dict:
     if configured:
         m.build_dir.mkdir(parents=True, exist_ok=True)
         fp_path.unlink(missing_ok=True)  # a failed configure must not leave a match
-        subprocess.run([args[0], "--fresh", *args[1:]] if fresh else args, check=True)
+        subprocess.run([args[0], "--fresh", *args[1:]] if fresh else args, check=True,
+                       env=_cmake_env())
         tmp = fp_path.with_name(fp_path.name + ".tmp")
         tmp.write_text(json.dumps(fingerprint, indent=2))
         os.replace(tmp, fp_path)
     subprocess.run(
         ["cmake", "--build", str(m.build_dir), "--parallel", str(jobs), "--target", *TARGETS],
-        check=True,
+        check=True, env=_cmake_env(),
     )
     return {
         "configured": configured,

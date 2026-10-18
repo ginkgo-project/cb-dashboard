@@ -25,7 +25,7 @@ def test_load_daint():
     assert m.srun == "--ntasks=1 --gpus-per-task=1 --cpus-per-task=72 --cpu-bind=cores".split()
     assert m.cmake_flags == COMMON + (
         "-DGINKGO_BUILD_CUDA=ON -DGINKGO_CUDA_ARCHITECTURES=90 -DGINKGO_BUILD_HIP=OFF "
-        "-DCMAKE_CXX_COMPILER=g++ -DCMAKE_CUDA_HOST_COMPILER=g++"
+        "-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CUDA_HOST_COMPILER=g++"
     ).split()
     assert m.root == Path("/capstor/store/cscs/userlab/d131/cb")
     assert m.build_dir == Path("/s/cb/build/daint-gh200")

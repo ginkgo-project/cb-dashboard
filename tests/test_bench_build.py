@@ -47,6 +47,7 @@ def test_configure_args_daint(tmp_path):
     assert args == ["cmake", "-S", "/src", "-B", str(m.build_dir), *m.cmake_flags]
     assert args[5:7] == ["-G", "Ninja"]
     assert "-DGINKGO_CUDA_ARCHITECTURES=90" in args
+    assert "-DCMAKE_C_COMPILER=gcc" in args
 
 
 def test_configure_args_beverin_fills_gcc_root(tmp_path):
@@ -74,6 +75,17 @@ def test_fresh_configure_when_no_ninja_file(tmp_path, fakes):
     )
     assert r["configured"] is True
     assert r["seconds"] >= 0
+
+
+def test_compilers_and_flags_in_the_environment_are_dropped(tmp_path, fakes, monkeypatch):
+    """A CC left in the submit shell (e.g. from another uenv) must not reach CMake."""
+    (tmp_path / "bin" / "cmake").write_text(
+        f'#!/bin/sh\necho "CC=${{CC-unset}} CXXFLAGS=${{CXXFLAGS-unset}} HOME=${{HOME:+set}}" >> "{fakes}"\n')
+    monkeypatch.setenv("CC", "/old-uenv/bin/gcc")
+    monkeypatch.setenv("CXXFLAGS", "-O0")
+    monkeypatch.setenv("HOME", "/home/u")
+    B.build(machine("daint-gh200", tmp_path), Path("/src"))
+    assert fakes.read_text().splitlines() == ["CC=unset CXXFLAGS=unset HOME=set"] * 2
 
 
 def test_fresh_configure_when_build_dir_missing(tmp_path, fakes):
