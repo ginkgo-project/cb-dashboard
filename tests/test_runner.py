@@ -318,3 +318,21 @@ def test_no_energy_without_counters(tmp_path):
     a = fake(tmp_path, "a", 'print("[]")')
     r = run_group("g", [inv(a)], [], tmp_path / "out", energy=dict)
     assert "energy_j" not in r["invocations"][0]
+
+
+def test_disabled_invocation_is_not_run_and_does_not_count(tmp_path):
+    marker = tmp_path / "started"
+    ok = fake(tmp_path, "ok", 'print(\'[{"a":1}]\')')
+    off = fake(tmp_path, "off", f'open({str(marker)!r}, "w")')
+    d = Invocation("g", "off", off, [], None, 30, disabled="disabled on m")
+    r = run_group("g", [inv(ok, "ok"), d], [], tmp_path / "out", energy=lambda: {"energy": 1})
+    assert r["status"] == "ok"
+    rec = r["invocations"][1]
+    assert (rec["status"], rec["reason"], rec["exit_code"]) == ("disabled", "disabled on m", None)
+    assert "energy_j" not in rec and not marker.exists()
+    assert not (tmp_path / "out/logs/g/off.log").exists()
+
+
+def test_group_of_only_disabled_invocations_is_skipped(tmp_path):
+    d = Invocation("g", "off", tmp_path / "none", [], None, 30, disabled="disabled on m")
+    assert run_group("g", [d], [], tmp_path / "out")["status"] == "skipped"

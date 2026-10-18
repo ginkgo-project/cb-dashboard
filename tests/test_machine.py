@@ -31,11 +31,13 @@ def test_load_daint():
     assert m.root == Path("/capstor/store/cscs/userlab/d131/cb")
     assert m.build_dir == Path("/s/cb/build/daint-gh200")
     assert m.results_dir == Path("/s/cb/results/daint-gh200")
+    assert m.disabled_preconditioners == []
 
 
 def test_beverin_has_gcc_placeholder():
     m = load_machine("beverin-mi300a", env={"SCRATCH": "/s"})
     assert m.needs_gcc_root is True
+    assert m.disabled_preconditioners == ["ilu-syncfree", "ic-syncfree"]
     assert m.executor == "hip"
     assert m.arch == "x86_64"
     assert m.uenv == "prgenv-gnu/25.07-6.3.3:v12"

@@ -41,6 +41,7 @@ class Invocation:
     stdin: str | None
     timeout_s: int
     missing_input: Path | None = None
+    disabled: str | None = None  # why it isn't run on this machine
 
 
 def _base(m: Machine, warmup: int = 1) -> list[str]:
@@ -59,6 +60,10 @@ def _matrix(m: Machine, entry: dict) -> tuple[list[str], Path | None]:
 
 def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS) -> list[Invocation]:
     mats = manifest["matrices"]
+    known = set(PRECOND_SPD.split(",")) | set(PRECOND_GENERAL.split(","))
+    unknown = sorted(set(m.disabled_preconditioners) - known)
+    if unknown:
+        raise ValueError(f"{m.name}: unknown disabled_preconditioners {unknown}")
     out: list[Invocation] = []
     for g in GROUPS:
         if g not in groups:
@@ -87,12 +92,15 @@ def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS) -> list[
                 elif g == "preconditioner" and "precond" in e["roles"]:
                     # One invocation per preconditioner, so one that hangs or crashes
                     # loses only its own result. Its log is <matrix>/<preconditioner>.log.
+                    # A disabled one is still listed, so run.json says it wasn't run.
                     lst = PRECOND_SPD if e.get("spd") else PRECOND_GENERAL
                     for p in lst.split(","):
                         args = _base(m) + ["-detailed=false", "-formats", "csr",
                                            "-preconditioners", p] + inp
+                        off = (f"disabled on {m.name}" if p in m.disabled_preconditioners
+                               else None)
                         out.append(Invocation(g, f"{e['name']}/{p}", exe(m, "preconditioner"),
-                                              args, None, t, missing))
+                                              args, None, t, missing, off))
                     continue
                 else:
                     continue

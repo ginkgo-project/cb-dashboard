@@ -25,6 +25,7 @@ class Machine:
     build_dir: Path
     results_dir: Path
     stream_cmake_flags: list[str] = field(default_factory=list)
+    disabled_preconditioners: list[str] = field(default_factory=list)
 
 
 def _known(machines_dir: Path) -> list[str]:
@@ -62,4 +63,5 @@ def load_machine(
         build_dir=scratch / "cb" / "build" / name,
         results_dir=scratch / "cb" / "results" / name,
         stream_cmake_flags=list(data.get("stream_cmake_flags", [])),
+        disabled_preconditioners=list(data.get("disabled_preconditioners", [])),
     )

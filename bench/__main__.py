@@ -68,7 +68,8 @@ def cmd_run(args) -> int:
         print(f"machine: {m.name}")
         print(f"ref: {args.ref}")
         for inv in invocations(m, manifest, groups):
-            print(f"{inv.group} {inv.label} {inv.exe} {' '.join(inv.args)}")
+            note = f"  # {inv.disabled}" if inv.disabled else ""
+            print(f"{inv.group} {inv.label} {inv.exe} {' '.join(inv.args)}{note}")
         return 0
     if platform.machine() != m.arch:
         print(f"error: {m.name} needs {m.arch} but this host is {platform.machine()}", file=sys.stderr)

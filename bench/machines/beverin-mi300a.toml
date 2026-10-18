@@ -25,3 +25,7 @@ stream_cmake_flags = [
     "-DCMAKE_CXX_COMPILER=/user-environment/env/default/bin/hipcc",
     "-DCXX_EXTRA_FLAGS=--offload-arch=gfx942;--gcc-toolchain={gcc_root}",
 ]
+# Ginkgo's syncfree ILU and IC factorizations are 155-310x slower here than on the
+# GH200 (87 s against 0.28 s per generate on porous_pressure, 2026-10-18) and time
+# out on the 7.3M-row matrices. Back on once that is fixed in Ginkgo.
+disabled_preconditioners = ["ilu-syncfree", "ic-syncfree"]

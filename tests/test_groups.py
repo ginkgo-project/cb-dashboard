@@ -133,3 +133,19 @@ def test_common_flags_everywhere(m):
         assert flag(i, "-timer_method") == "median"
         assert flag(i, "-seed") == "42"
         assert i.args.count("-seed") == 1 and i.args.count("-repetition_growth_factor") == 1
+
+
+def test_disabled_preconditioners_are_listed_but_marked(m):
+    m.disabled_preconditioners = ["ilu-syncfree", "ic-syncfree"]
+    invs = by_group(m, "preconditioner")
+    assert len(invs) == 9 + 7
+    off = {i.label: i.disabled for i in invs if i.disabled}
+    assert off == {"lap/ilu-syncfree": "disabled on daint-gh200",
+                   "lap/ic-syncfree": "disabled on daint-gh200",
+                   "conv/ilu-syncfree": "disabled on daint-gh200"}
+
+
+def test_unknown_disabled_preconditioner_is_an_error(m):
+    m.disabled_preconditioners = ["ilu-sncfree"]
+    with pytest.raises(ValueError, match="unknown disabled_preconditioners"):
+        G.invocations(m, MANIFEST)

@@ -144,7 +144,10 @@ def _run_one(inv: Invocation, prefix: list[str], log: Path) -> tuple[list, dict]
 
 
 def _aggregate(records: list[dict]) -> str:
-    statuses = [r["status"] for r in records]
+    """The group's status; disabled invocations don't count."""
+    statuses = [r["status"] for r in records if r["status"] != "disabled"]
+    if not statuses:
+        return "skipped"
     if all(s == "ok" for s in statuses):
         return "ok"
     if all(s == "skipped" for s in statuses):
@@ -177,7 +180,9 @@ def run_group(group: str, invs: list[Invocation], srun: list[str], out_dir: Path
             t = time.monotonic()
             prefix = ["srun", *srun, f"--time={srun_time_minutes(inv.timeout_s)}"] if srun else []
             try:
-                if inv.missing_input is not None:
+                if inv.disabled is not None:
+                    data, st = [], {"status": "disabled", "exit_code": None, "reason": inv.disabled}
+                elif inv.missing_input is not None:
                     data, st = [], {"status": "failed", "exit_code": None, "reason": "missing input"}
                 elif deadline is not None and deadline - time.time() < inv.timeout_s:
                     data, st = [], {"status": "skipped", "exit_code": None,
