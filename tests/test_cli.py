@@ -71,6 +71,8 @@ def patch_common(monkeypatch, m, commit):
     monkeypatch.setattr(cli, "job_deadline", lambda: None)
     monkeypatch.setattr(cli, "measure_stream", lambda m, out: STREAM)
     monkeypatch.setattr(cli, "pm_counters", lambda: {"energy": "1 J"})
+    versions = iter(["v1", "v2"])  # HEAD moves if the repository is synced mid-run
+    monkeypatch.setattr(cli, "script_version", lambda run, repo: next(versions))
 
 
 STREAM = {"commit": "c", "results": {"triad": {"bandwidth": 3.0e12}}}
@@ -139,6 +141,7 @@ def test_full_run_writes_record_and_last(tmp_path, monkeypatch, manifest):
     rec = json.loads((d / "run.json").read_text())
     assert rec["gpu"] == {"gpu": "g"} and rec["toolchain"] == {"g++": "x"}
     assert rec["pm_counters"] == {"energy": "1 J"}
+    assert rec["script_version"] == "v1"
     assert set(rec["groups"]) == set(order[1:])
     assert (m.root / "state" / m.name / "last_commit").read_text().strip() == COMMIT.sha
 

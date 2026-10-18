@@ -194,8 +194,10 @@ def script_version(run: Callable, repo: Path) -> str | dict:
 def run_record(m: Machine, commit: Commit, ref: str, build: dict, manifest: dict,
                groups: dict, started: str, finished: str | None,
                run: Callable = subprocess.run, repo: Path = REPO,
-               gpu: dict | None = None, toolchain: dict | None = None) -> dict:
-    script = script_version(run, repo)
+               gpu: dict | None = None, toolchain: dict | None = None,
+               script: str | dict | None = None) -> dict:
+    if script is None:
+        script = script_version(run, repo)
     return {
         "machine": m.name,
         "node": socket.gethostname(),

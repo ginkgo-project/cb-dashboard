@@ -6,6 +6,7 @@ import json
 import os
 import platform
 import signal
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -17,7 +18,8 @@ from bench.checkout import (DEVELOP, ensure_clone, prepare_worktree, read_last, 
 from bench.energy import snapshot as pm_counters
 from bench.groups import GROUPS, invocations
 from bench.machine import load_machine
-from bench.record import gpu_info, results_dir_name, run_record, toolchain_info
+from bench.record import (REPO, gpu_info, results_dir_name, run_record, script_version,
+                          toolchain_info)
 from bench.runner import Killed, job_deadline, run_group
 from bench.stream import measure as measure_stream
 
@@ -85,6 +87,8 @@ def cmd_run(args) -> int:
     started = _now()
     gpu, toolchain = gpu_info(m), toolchain_info(m)
     counters = pm_counters()  # which energy counters this node has
+    # Once: a sync of this repository during the run changes HEAD, not the code running.
+    script = script_version(subprocess.run, REPO)
     prepare_worktree(clone, worktree, commit.sha)
     out = _make_results_dir(m.results_dir, commit)
 
@@ -96,7 +100,8 @@ def cmd_run(args) -> int:
     def record(finished=None):
         info = build_info if build_info is not None else {}
         rec = run_record(m, commit, args.ref, {"cmake_cache": info.get("cmake_cache", {})},
-                         manifest, results, started, finished, gpu=gpu, toolchain=toolchain)
+                         manifest, results, started, finished, gpu=gpu, toolchain=toolchain,
+                         script=script)
         rec["build"] = info
         rec["pm_counters"] = counters
         if stream_info is not None:
