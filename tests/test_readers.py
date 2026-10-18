@@ -4,8 +4,10 @@ import zipfile
 
 import numpy as np
 
+import pytest
+
 from datasets.readers import (read_dimacs9, read_edge_list, read_metis,
-                              read_mtx, read_webgraph_arcs)
+                              read_mtx, read_webgraph_arcs, webgraph_nodes)
 
 
 def entries(p):
@@ -61,7 +63,32 @@ def test_edge_list_gap_and_one_based(tmp_path):
     assert entries(p) == [(0, 2), (2, 4)]
     p0 = read_edge_list(f)
     assert p0.shape == (6, 6)
-    assert read_webgraph_arcs(f, min_id=1).shape == (5, 5)
+
+
+def test_edge_list_compact_ids(tmp_path):
+    f = tmp_path / "e.txt"
+    f.write_text("# c\n1\t3\n3 5\n")
+    p = read_edge_list(f, min_id=1, compact=True)
+    assert p.shape == (3, 3)
+    assert entries(p) == [(0, 1), (1, 2)]
+
+
+def test_webgraph_rows_from_node_count(tmp_path):
+    f = tmp_path / "g.arcs"
+    f.write_text("0\t2\n2\t4\n")
+    # The last nodes of a BV graph have no arcs here, but they are still rows.
+    assert read_webgraph_arcs(f, 7).shape == (7, 7)
+    with pytest.raises(ValueError, match="4 nodes"):
+        read_webgraph_arcs(f, 4)
+
+
+def test_webgraph_nodes(tmp_path):
+    f = tmp_path / "g.properties"
+    f.write_text("#BVGraph properties\nversion=0\nnodes = 41652230\narcs=1468365182\n")
+    assert webgraph_nodes(f) == 41652230
+    f.write_text("arcs=3\n")
+    with pytest.raises(ValueError, match="nodes"):
+        webgraph_nodes(f)
 
 
 def test_mtx_zip_symmetric(tmp_path):

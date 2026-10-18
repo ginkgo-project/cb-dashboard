@@ -48,7 +48,8 @@ class _H(http.server.BaseHTTPRequestHandler):
 def server():
     _H.files = {"/tiny.graph": TRIANGLE, "/e.txt": EDGES,
                 "/m.zip": _zip("m.mtx", MTX),
-                "/tw.graph": b"g", "/tw.properties": b"p", "/tw.offsets": b"o"}
+                "/tw.graph": b"g", "/tw.properties": b"nodes=4\narcs=3\n",
+                "/gaps.txt": b"1 3\n3 5\n5 1\n"}
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _H)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{srv.server_port}"
@@ -208,6 +209,26 @@ nnz_check = "exact"
     assert m["matrices"][1]["nonzeros"] == 3
 
 
+def test_edgelist_compact_ids(tmp_path, server):
+    cat = extra_catalog(tmp_path, server, '''
+[[entry]]
+name = "gaps"
+set = "spmv"
+source = "t"
+url = "URL/gaps.txt"
+format = "edgelist"
+index_base = 1
+compact_ids = true
+symmetric = false
+add_diagonal = false
+expected_rows = 3
+expected_nnz = 3
+nnz_check = "exact"
+''')
+    m = build(cat, tmp_path / "root", tmp_path / "manifest.json", None, None)
+    assert m["matrices"][0]["rows"] == 3 and m["matrices"][0]["nonzeros"] == 3
+
+
 WEB = '''
 [[entry]]
 name = "web"
@@ -217,7 +238,7 @@ url = "URL/tw"
 format = "webgraph"
 symmetric = false
 add_diagonal = false
-expected_rows = 3
+expected_rows = 4
 expected_nnz = 3
 nnz_check = "exact"
 '''
@@ -229,7 +250,9 @@ def test_webgraph_with_fake_command(tmp_path, server):
     cmd = "python3 -c \"import sys; open(sys.argv[2],'w').write('0 1\\n1 2\\n2 0\\n')\" {basename} {out}"
     m = build(cat, root, tmp_path / "manifest.json", None, cmd)
     e = m["matrices"][0]
-    assert e["nonzeros"] == 3 and set(e["download_sha256"]) == {"tw.graph", "tw.properties", "tw.offsets"}
+    # 4 rows: the .properties has 4 nodes, the last one without arcs.
+    assert e["rows"] == 4 and e["nonzeros"] == 3
+    assert set(e["download_sha256"]) == {"tw.graph", "tw.properties"}
     assert (root / "raw/tw.graph").exists() and (root / "raw/web.arcs").exists()
 
 

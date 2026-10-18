@@ -178,10 +178,12 @@ def read_dimacs9(path, _chunk_bytes: int = CHUNK_BYTES) -> Pattern:
 
 # --------------------------------------------------------------- edge lists
 
-def read_edge_list(path, min_id: int = 0, _chunk_bytes: int = CHUNK_BYTES) -> Pattern:
+def read_edge_list(path, min_id: int = 0, compact: bool = False,
+                   _chunk_bytes: int = CHUNK_BYTES) -> Pattern:
     """Read `u v` lines (`#` comments). `min_id` is the smallest id the file
     uses (1 for 1-based files); ids are shifted by it. n = max_id + 1, so gaps
-    in the ids still count as rows."""
+    in the ids still count as rows, unless `compact`: then the ids that occur
+    are renumbered 0..n-1 in increasing order and the gaps disappear."""
     rows_parts, cols_parts = [], []
     for chunk in _chunks(path, _chunk_bytes):
         buf = _strip_comments(_writable(chunk), ord("#"))
@@ -192,12 +194,32 @@ def read_edge_list(path, min_id: int = 0, _chunk_bytes: int = CHUNK_BYTES) -> Pa
         rows_parts.append(vals[:, 0] - min_id)
         cols_parts.append(vals[:, 1] - min_id)
     p = _pattern((0, 0), rows_parts, cols_parts)
+    if compact:
+        ids = np.unique(np.concatenate([p.rows, p.cols]))
+        return Pattern((ids.size, ids.size), np.searchsorted(ids, p.rows),
+                       np.searchsorted(ids, p.cols))
     n = int(max(p.rows.max(), p.cols.max())) + 1 if p.rows.size else 0
     return Pattern((n, n), p.rows, p.cols)
 
 
-def read_webgraph_arcs(path, min_id: int = 0, _chunk_bytes: int = CHUNK_BYTES) -> Pattern:
-    return read_edge_list(path, min_id, _chunk_bytes)
+def webgraph_nodes(properties) -> int:
+    """The node count (`nodes=`) of a BV graph's .properties file."""
+    for line in Path(properties).read_text().splitlines():
+        key, sep, value = line.partition("=")
+        if sep and key.strip() == "nodes":
+            return int(value)
+    raise ValueError(f"{properties}: no nodes= line")
+
+
+def read_webgraph_arcs(path, n_nodes: int, min_id: int = 0,
+                       _chunk_bytes: int = CHUNK_BYTES) -> Pattern:
+    """Arcs from `webgraph to arcs`. The graph has n_nodes rows, also when its
+    last nodes have no arcs (unlike a plain edge list, n isn't max_id + 1)."""
+    p = read_edge_list(path, min_id, _chunk_bytes=_chunk_bytes)
+    if p.shape[0] > n_nodes:
+        raise ValueError(f"{path}: arc to node {p.shape[0] - 1}, but the graph has "
+                         f"{n_nodes} nodes")
+    return Pattern((n_nodes, n_nodes), p.rows, p.cols)
 
 
 # ------------------------------------------------------------- Matrix Market

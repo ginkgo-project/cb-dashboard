@@ -35,6 +35,12 @@ def test_sha_changes_with_content(tmp_path):
     assert load_catalog(p).sha256 != a
 
 
+def test_only_com_orkut_compacts_ids():
+    # SNAP's com-Orkut file skips 185 ids; SuiteSparse's com-Orkut has 3072441 rows.
+    cat = load_catalog()
+    assert [e.name for e in cat.entries if e.compact_ids] == ["com-Orkut"]
+
+
 def test_tsopf_gets_its_diagonal():
     (e,) = [e for e in load_catalog().entries if e.name == "TSOPF_RS_b2383_c1"]
     assert e.add_diagonal is True and e.nnz_check == "plus_diagonal"

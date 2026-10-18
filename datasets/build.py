@@ -134,7 +134,8 @@ def _pattern_for(entry: Entry, raw: Path, webgraph_cmd: str | None):
                                       out=shlex.quote(str(tmp)))
             subprocess.run(shlex.split(cmd), check=True)
             os.replace(tmp, arcs)
-        return readers.read_webgraph_arcs(arcs, min_id=entry.index_base), \
+        n = readers.webgraph_nodes(base.with_name(base.name + ".properties"))
+        return readers.read_webgraph_arcs(arcs, n, min_id=entry.index_base), \
             entry.symmetric, shas
     fname = entry.url.rsplit("/", 1)[-1]
     shas = {fname: download(entry.url, raw / fname)}
@@ -144,8 +145,8 @@ def _pattern_for(entry: Entry, raw: Path, webgraph_cmd: str | None):
     if fmt == "dimacs9":
         return readers.read_dimacs9(path), entry.symmetric, shas
     if fmt == "edgelist":
-        return readers.read_edge_list(path, min_id=entry.index_base), \
-            entry.symmetric, shas
+        return readers.read_edge_list(path, min_id=entry.index_base,
+                                      compact=entry.compact_ids), entry.symmetric, shas
     if fmt == "mtx-zip":
         mtx, is_sym = _mtx_from_zip(path, raw / (entry.name + ".mtx"))
         return readers.read_mtx(mtx), is_sym, shas

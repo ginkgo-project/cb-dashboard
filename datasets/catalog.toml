@@ -91,6 +91,9 @@ nnz_check = "none"
 name = "com-Orkut"
 set = "spmv"
 index_base = 1
+# The file's ids run to 3072626 with 185 of them unused; SuiteSparse's com-Orkut
+# drops them (3072441 rows, the node count SNAP gives).
+compact_ids = true
 source = "SNAP"
 url = "https://snap.stanford.edu/data/bigdata/communities/com-orkut.ungraph.txt.gz"
 format = "edgelist"

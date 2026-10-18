@@ -25,6 +25,7 @@ class Entry:
     spd: bool | None
     fem: dict | None  # {"problem": str, "size": int}
     index_base: int = 0  # smallest vertex id in an edge-list file
+    compact_ids: bool = False  # renumber an edge list's ids, dropping unused ones
 
 
 @dataclass
@@ -54,6 +55,7 @@ def load_catalog(path: Path = DEFAULT) -> Catalog:
             spd=e.get("spd"),
             fem=e.get("fem"),
             index_base=e.get("index_base", 0),
+            compact_ids=e.get("compact_ids", False),
         )
         for e in doc["entry"]
     ]

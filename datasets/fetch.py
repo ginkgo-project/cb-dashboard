@@ -6,7 +6,9 @@ import urllib.request
 from pathlib import Path
 
 CHUNK = 1 << 20
-WEBGRAPH_EXTENSIONS = ("graph", "properties", "offsets")
+# LAW doesn't serve twitter-2010.offsets (404). `webgraph to arcs` loads the graph
+# with BvGraphSeq, which reads only the .graph and the .properties.
+WEBGRAPH_EXTENSIONS = ("graph", "properties")
 # Seconds a connect or a single read may stall, so a dead server fails the
 # entry instead of holding a 6-hour job.
 TIMEOUT_S = 60
@@ -64,7 +66,7 @@ def download(url: str, dest: Path) -> str:
 
 
 def fetch_webgraph(basename_url: str, dest_dir: Path) -> dict[str, str]:
-    """Download <basename>.{graph,properties,offsets}; return sha256 per extension."""
+    """Download <basename>.{graph,properties}; return sha256 per extension."""
     dest_dir = Path(dest_dir)
     base = basename_url.rsplit("/", 1)[-1]
     return {

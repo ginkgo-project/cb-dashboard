@@ -118,9 +118,9 @@ def test_error_leaves_no_dest(server, tmp_path):
 
 def test_fetch_webgraph(server, tmp_path):
     base, h = server
-    h.files = {f"/g/web.{e}": e.encode() * 10 for e in ("graph", "properties", "offsets")}
+    h.files = {f"/g/web.{e}": e.encode() * 10 for e in ("graph", "properties")}
     out = fetch_webgraph(base + "/g/web", tmp_path / "d")
-    assert set(out) == {"graph", "properties", "offsets"}
+    assert set(out) == {"graph", "properties"}
     for e, s in out.items():
         assert (tmp_path / "d" / f"web.{e}").exists()
         assert s == sha(e.encode() * 10)
