@@ -1,0 +1,1244 @@
+{
+ "beverin-mi300a": {
+  "preconditioner/apply/jacobi/anisotropic_heat": {
+   "storage": 1893998056
+  },
+  "preconditioner/apply/jacobi/convection_diffusion": {
+   "storage": 1893998056
+  },
+  "preconditioner/apply/jacobi/curl_curl": {
+   "storage": 817090344
+  },
+  "preconditioner/apply/jacobi/elasticity_p2": {
+   "storage": 165820412
+  },
+  "preconditioner/apply/jacobi/porous_pressure": {
+   "storage": 895181856
+  },
+  "preconditioner/apply/mg-pgm/anisotropic_heat": {
+   "levels": [
+    {
+     "coarse_nonzeros": 23165254,
+     "coarse_rows": 3311422,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 10636038,
+     "coarse_rows": 1520988,
+     "fine_rows": 3311422
+    },
+    {
+     "coarse_nonzeros": 4865659,
+     "coarse_rows": 696297,
+     "fine_rows": 1520988
+    },
+    {
+     "coarse_nonzeros": 2195802,
+     "coarse_rows": 314630,
+     "fine_rows": 696297
+    },
+    {
+     "coarse_nonzeros": 986495,
+     "coarse_rows": 141643,
+     "fine_rows": 314630
+    },
+    {
+     "coarse_nonzeros": 447762,
+     "coarse_rows": 64492,
+     "fine_rows": 141643
+    },
+    {
+     "coarse_nonzeros": 202703,
+     "coarse_rows": 29331,
+     "fine_rows": 64492
+    },
+    {
+     "coarse_nonzeros": 91707,
+     "coarse_rows": 13363,
+     "fine_rows": 29331
+    },
+    {
+     "coarse_nonzeros": 41392,
+     "coarse_rows": 6098,
+     "fine_rows": 13363
+    },
+    {
+     "coarse_nonzeros": 18531,
+     "coarse_rows": 2773,
+     "fine_rows": 6098
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/convection_diffusion": {
+   "levels": [
+    {
+     "coarse_nonzeros": 23321588,
+     "coarse_rows": 3333508,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 10655332,
+     "coarse_rows": 1523446,
+     "fine_rows": 3333508
+    },
+    {
+     "coarse_nonzeros": 4864547,
+     "coarse_rows": 695761,
+     "fine_rows": 1523446
+    },
+    {
+     "coarse_nonzeros": 2217799,
+     "coarse_rows": 317387,
+     "fine_rows": 695761
+    },
+    {
+     "coarse_nonzeros": 1011525,
+     "coarse_rows": 144873,
+     "fine_rows": 317387
+    },
+    {
+     "coarse_nonzeros": 460663,
+     "coarse_rows": 66061,
+     "fine_rows": 144873
+    },
+    {
+     "coarse_nonzeros": 209592,
+     "coarse_rows": 30112,
+     "fine_rows": 66061
+    },
+    {
+     "coarse_nonzeros": 95368,
+     "coarse_rows": 13740,
+     "fine_rows": 30112
+    },
+    {
+     "coarse_nonzeros": 43450,
+     "coarse_rows": 6284,
+     "fine_rows": 13740
+    },
+    {
+     "coarse_nonzeros": 19577,
+     "coarse_rows": 2849,
+     "fine_rows": 6284
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/curl_curl": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25613177,
+     "coarse_rows": 1481013,
+     "fine_rows": 3142601
+    },
+    {
+     "coarse_nonzeros": 13080330,
+     "coarse_rows": 695420,
+     "fine_rows": 1481013
+    },
+    {
+     "coarse_nonzeros": 6773360,
+     "coarse_rows": 333368,
+     "fine_rows": 695420
+    },
+    {
+     "coarse_nonzeros": 3542379,
+     "coarse_rows": 160167,
+     "fine_rows": 333368
+    },
+    {
+     "coarse_nonzeros": 1830155,
+     "coarse_rows": 77017,
+     "fine_rows": 160167
+    },
+    {
+     "coarse_nonzeros": 916452,
+     "coarse_rows": 37108,
+     "fine_rows": 77017
+    },
+    {
+     "coarse_nonzeros": 430003,
+     "coarse_rows": 17523,
+     "fine_rows": 37108
+    },
+    {
+     "coarse_nonzeros": 195138,
+     "coarse_rows": 8304,
+     "fine_rows": 17523
+    },
+    {
+     "coarse_nonzeros": 87465,
+     "coarse_rows": 3957,
+     "fine_rows": 8304
+    },
+    {
+     "coarse_nonzeros": 38341,
+     "coarse_rows": 1883,
+     "fine_rows": 3957
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/elasticity_p2": {
+   "levels": [
+    {
+     "coarse_nonzeros": 22402343,
+     "coarse_rows": 288145,
+     "fine_rows": 605694
+    },
+    {
+     "coarse_nonzeros": 11266769,
+     "coarse_rows": 139271,
+     "fine_rows": 288145
+    },
+    {
+     "coarse_nonzeros": 5112057,
+     "coarse_rows": 67169,
+     "fine_rows": 139271
+    },
+    {
+     "coarse_nonzeros": 2367852,
+     "coarse_rows": 32574,
+     "fine_rows": 67169
+    },
+    {
+     "coarse_nonzeros": 1114248,
+     "coarse_rows": 15814,
+     "fine_rows": 32574
+    },
+    {
+     "coarse_nonzeros": 525456,
+     "coarse_rows": 7688,
+     "fine_rows": 15814
+    },
+    {
+     "coarse_nonzeros": 242824,
+     "coarse_rows": 3720,
+     "fine_rows": 7688
+    },
+    {
+     "coarse_nonzeros": 110162,
+     "coarse_rows": 1798,
+     "fine_rows": 3720
+    },
+    {
+     "coarse_nonzeros": 48717,
+     "coarse_rows": 869,
+     "fine_rows": 1798
+    },
+    {
+     "coarse_nonzeros": 20380,
+     "coarse_rows": 418,
+     "fine_rows": 869
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/porous_pressure": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25506918,
+     "coarse_rows": 1636758,
+     "fine_rows": 3442951
+    },
+    {
+     "coarse_nonzeros": 12570947,
+     "coarse_rows": 776583,
+     "fine_rows": 1636758
+    },
+    {
+     "coarse_nonzeros": 6122491,
+     "coarse_rows": 368889,
+     "fine_rows": 776583
+    },
+    {
+     "coarse_nonzeros": 2966926,
+     "coarse_rows": 175388,
+     "fine_rows": 368889
+    },
+    {
+     "coarse_nonzeros": 1425453,
+     "coarse_rows": 83427,
+     "fine_rows": 175388
+    },
+    {
+     "coarse_nonzeros": 679732,
+     "coarse_rows": 39668,
+     "fine_rows": 83427
+    },
+    {
+     "coarse_nonzeros": 321821,
+     "coarse_rows": 18841,
+     "fine_rows": 39668
+    },
+    {
+     "coarse_nonzeros": 152100,
+     "coarse_rows": 8964,
+     "fine_rows": 18841
+    },
+    {
+     "coarse_nonzeros": 71213,
+     "coarse_rows": 4255,
+     "fine_rows": 8964
+    },
+    {
+     "coarse_nonzeros": 33309,
+     "coarse_rows": 2025,
+     "fine_rows": 4255
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/anisotropic_heat": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25488007,
+     "coarse_rows": 3642301,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 12744007,
+     "coarse_rows": 1821151,
+     "fine_rows": 3642301
+    },
+    {
+     "coarse_nonzeros": 6372004,
+     "coarse_rows": 910576,
+     "fine_rows": 1821151
+    },
+    {
+     "coarse_nonzeros": 3186002,
+     "coarse_rows": 455288,
+     "fine_rows": 910576
+    },
+    {
+     "coarse_nonzeros": 1593000,
+     "coarse_rows": 227644,
+     "fine_rows": 455288
+    },
+    {
+     "coarse_nonzeros": 796498,
+     "coarse_rows": 113822,
+     "fine_rows": 227644
+    },
+    {
+     "coarse_nonzeros": 398247,
+     "coarse_rows": 56911,
+     "fine_rows": 113822
+    },
+    {
+     "coarse_nonzeros": 199126,
+     "coarse_rows": 28456,
+     "fine_rows": 56911
+    },
+    {
+     "coarse_nonzeros": 99562,
+     "coarse_rows": 14228,
+     "fine_rows": 28456
+    },
+    {
+     "coarse_nonzeros": 49782,
+     "coarse_rows": 7114,
+     "fine_rows": 14228
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/convection_diffusion": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25488007,
+     "coarse_rows": 3642301,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 12744007,
+     "coarse_rows": 1821151,
+     "fine_rows": 3642301
+    },
+    {
+     "coarse_nonzeros": 6372004,
+     "coarse_rows": 910576,
+     "fine_rows": 1821151
+    },
+    {
+     "coarse_nonzeros": 3186002,
+     "coarse_rows": 455288,
+     "fine_rows": 910576
+    },
+    {
+     "coarse_nonzeros": 1593000,
+     "coarse_rows": 227644,
+     "fine_rows": 455288
+    },
+    {
+     "coarse_nonzeros": 796498,
+     "coarse_rows": 113822,
+     "fine_rows": 227644
+    },
+    {
+     "coarse_nonzeros": 398247,
+     "coarse_rows": 56911,
+     "fine_rows": 113822
+    },
+    {
+     "coarse_nonzeros": 199126,
+     "coarse_rows": 28456,
+     "fine_rows": 56911
+    },
+    {
+     "coarse_nonzeros": 99562,
+     "coarse_rows": 14228,
+     "fine_rows": 28456
+    },
+    {
+     "coarse_nonzeros": 49782,
+     "coarse_rows": 7114,
+     "fine_rows": 14228
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/curl_curl": {
+   "levels": [
+    {
+     "coarse_nonzeros": 33478153,
+     "coarse_rows": 1571301,
+     "fine_rows": 3142601
+    },
+    {
+     "coarse_nonzeros": 16909165,
+     "coarse_rows": 785651,
+     "fine_rows": 1571301
+    },
+    {
+     "coarse_nonzeros": 7579408,
+     "coarse_rows": 392826,
+     "fine_rows": 785651
+    },
+    {
+     "coarse_nonzeros": 3243645,
+     "coarse_rows": 196413,
+     "fine_rows": 392826
+    },
+    {
+     "coarse_nonzeros": 1511499,
+     "coarse_rows": 98207,
+     "fine_rows": 196413
+    },
+    {
+     "coarse_nonzeros": 729000,
+     "coarse_rows": 49104,
+     "fine_rows": 98207
+    },
+    {
+     "coarse_nonzeros": 364600,
+     "coarse_rows": 24552,
+     "fine_rows": 49104
+    },
+    {
+     "coarse_nonzeros": 181670,
+     "coarse_rows": 12276,
+     "fine_rows": 24552
+    },
+    {
+     "coarse_nonzeros": 66598,
+     "coarse_rows": 6138,
+     "fine_rows": 12276
+    },
+    {
+     "coarse_nonzeros": 21377,
+     "coarse_rows": 3069,
+     "fine_rows": 6138
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/elasticity_p2": {
+   "levels": [
+    {
+     "coarse_nonzeros": 17957025,
+     "coarse_rows": 302847,
+     "fine_rows": 605694
+    },
+    {
+     "coarse_nonzeros": 7573142,
+     "coarse_rows": 151424,
+     "fine_rows": 302847
+    },
+    {
+     "coarse_nonzeros": 3209364,
+     "coarse_rows": 75712,
+     "fine_rows": 151424
+    },
+    {
+     "coarse_nonzeros": 1431122,
+     "coarse_rows": 37856,
+     "fine_rows": 75712
+    },
+    {
+     "coarse_nonzeros": 618520,
+     "coarse_rows": 18928,
+     "fine_rows": 37856
+    },
+    {
+     "coarse_nonzeros": 290228,
+     "coarse_rows": 9464,
+     "fine_rows": 18928
+    },
+    {
+     "coarse_nonzeros": 126278,
+     "coarse_rows": 4732,
+     "fine_rows": 9464
+    },
+    {
+     "coarse_nonzeros": 54840,
+     "coarse_rows": 2366,
+     "fine_rows": 4732
+    },
+    {
+     "coarse_nonzeros": 22005,
+     "coarse_rows": 1183,
+     "fine_rows": 2366
+    },
+    {
+     "coarse_nonzeros": 8858,
+     "coarse_rows": 592,
+     "fine_rows": 1183
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/porous_pressure": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25594876,
+     "coarse_rows": 1721476,
+     "fine_rows": 3442951
+    },
+    {
+     "coarse_nonzeros": 12797734,
+     "coarse_rows": 860738,
+     "fine_rows": 1721476
+    },
+    {
+     "coarse_nonzeros": 6399161,
+     "coarse_rows": 430369,
+     "fine_rows": 860738
+    },
+    {
+     "coarse_nonzeros": 3202677,
+     "coarse_rows": 215185,
+     "fine_rows": 430369
+    },
+    {
+     "coarse_nonzeros": 1601643,
+     "coarse_rows": 107593,
+     "fine_rows": 215185
+    },
+    {
+     "coarse_nonzeros": 801123,
+     "coarse_rows": 53797,
+     "fine_rows": 107593
+    },
+    {
+     "coarse_nonzeros": 294241,
+     "coarse_rows": 26899,
+     "fine_rows": 53797
+    },
+    {
+     "coarse_nonzeros": 93788,
+     "coarse_rows": 13450,
+     "fine_rows": 26899
+    },
+    {
+     "coarse_nonzeros": 46893,
+     "coarse_rows": 6725,
+     "fine_rows": 13450
+    },
+    {
+     "coarse_nonzeros": 23447,
+     "coarse_rows": 3363,
+     "fine_rows": 6725
+    }
+   ]
+  },
+  "spmv/hybrid/TSOPF_RS_b2383_c1": {
+   "coo_num_stored_elements": 16021450,
+   "ell_num_stored_elements_per_row": 4
+  },
+  "spmv/hybrid/USA-road-d.USA": {
+   "coo_num_stored_elements": 14575935,
+   "ell_num_stored_elements_per_row": 2
+  },
+  "spmv/hybrid/audikw1": {
+   "coo_num_stored_elements": 17391402,
+   "ell_num_stored_elements_per_row": 69
+  },
+  "spmv/hybrid/cage15": {
+   "coo_num_stored_elements": 21502837,
+   "ell_num_stored_elements_per_row": 16
+  },
+  "spmv/hybrid/com-Orkut": {
+   "coo_num_stored_elements": 165418930,
+   "ell_num_stored_elements_per_row": 27
+  },
+  "spmv/hybrid/ecology2": {
+   "coo_num_stored_elements": 0,
+   "ell_num_stored_elements_per_row": 5
+  },
+  "spmv/hybrid/kron_g500-logn21": {
+   "coo_num_stored_elements": 180530409,
+   "ell_num_stored_elements_per_row": 1
+  },
+  "spmv/hybrid/nlpkkt240": {
+   "coo_num_stored_elements": 0,
+   "ell_num_stored_elements_per_row": 28
+  },
+  "spmv/hybrid/soc-LiveJournal1": {
+   "coo_num_stored_elements": 61293004,
+   "ell_num_stored_elements_per_row": 2
+  },
+  "spmv/hybrid/twitter-2010": {
+   "coo_num_stored_elements": 1326057798,
+   "ell_num_stored_elements_per_row": 4
+  },
+  "spmv/sellp/TSOPF_RS_b2383_c1": {
+   "slice_size": 64,
+   "total_cols": 253892
+  },
+  "spmv/sellp/USA-road-d.USA": {
+   "slice_size": 64,
+   "total_cols": 1491685
+  },
+  "spmv/sellp/audikw1": {
+   "slice_size": 64,
+   "total_cols": 1638405
+  },
+  "spmv/sellp/cage15": {
+   "slice_size": 64,
+   "total_cols": 1643149
+  },
+  "spmv/sellp/ecology2": {
+   "slice_size": 64,
+   "total_cols": 78095
+  },
+  "spmv/sellp/nlpkkt240": {
+   "slice_size": 64,
+   "total_cols": 12155178
+  }
+ },
+ "daint-gh200": {
+  "preconditioner/apply/jacobi/anisotropic_heat": {
+   "storage": 1893998056
+  },
+  "preconditioner/apply/jacobi/convection_diffusion": {
+   "storage": 1893998056
+  },
+  "preconditioner/apply/jacobi/curl_curl": {
+   "storage": 817082152
+  },
+  "preconditioner/apply/jacobi/elasticity_p2": {
+   "storage": 165820412
+  },
+  "preconditioner/apply/jacobi/porous_pressure": {
+   "storage": 895173664
+  },
+  "preconditioner/apply/mg-pgm/anisotropic_heat": {
+   "levels": [
+    {
+     "coarse_nonzeros": 23165254,
+     "coarse_rows": 3311422,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 10636031,
+     "coarse_rows": 1520987,
+     "fine_rows": 3311422
+    },
+    {
+     "coarse_nonzeros": 4865610,
+     "coarse_rows": 696290,
+     "fine_rows": 1520987
+    },
+    {
+     "coarse_nonzeros": 2195809,
+     "coarse_rows": 314631,
+     "fine_rows": 696290
+    },
+    {
+     "coarse_nonzeros": 986509,
+     "coarse_rows": 141645,
+     "fine_rows": 314631
+    },
+    {
+     "coarse_nonzeros": 447787,
+     "coarse_rows": 64495,
+     "fine_rows": 141645
+    },
+    {
+     "coarse_nonzeros": 202736,
+     "coarse_rows": 29336,
+     "fine_rows": 64495
+    },
+    {
+     "coarse_nonzeros": 91733,
+     "coarse_rows": 13367,
+     "fine_rows": 29336
+    },
+    {
+     "coarse_nonzeros": 41285,
+     "coarse_rows": 6083,
+     "fine_rows": 13367
+    },
+    {
+     "coarse_nonzeros": 18466,
+     "coarse_rows": 2764,
+     "fine_rows": 6083
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/convection_diffusion": {
+   "levels": [
+    {
+     "coarse_nonzeros": 23321588,
+     "coarse_rows": 3333508,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 10655346,
+     "coarse_rows": 1523448,
+     "fine_rows": 3333508
+    },
+    {
+     "coarse_nonzeros": 4864610,
+     "coarse_rows": 695770,
+     "fine_rows": 1523448
+    },
+    {
+     "coarse_nonzeros": 2217785,
+     "coarse_rows": 317385,
+     "fine_rows": 695770
+    },
+    {
+     "coarse_nonzeros": 1011483,
+     "coarse_rows": 144867,
+     "fine_rows": 317385
+    },
+    {
+     "coarse_nonzeros": 460586,
+     "coarse_rows": 66050,
+     "fine_rows": 144867
+    },
+    {
+     "coarse_nonzeros": 209515,
+     "coarse_rows": 30101,
+     "fine_rows": 66050
+    },
+    {
+     "coarse_nonzeros": 95326,
+     "coarse_rows": 13734,
+     "fine_rows": 30101
+    },
+    {
+     "coarse_nonzeros": 43543,
+     "coarse_rows": 6297,
+     "fine_rows": 13734
+    },
+    {
+     "coarse_nonzeros": 19693,
+     "coarse_rows": 2865,
+     "fine_rows": 6297
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/curl_curl": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25613179,
+     "coarse_rows": 1481013,
+     "fine_rows": 3142601
+    },
+    {
+     "coarse_nonzeros": 13080297,
+     "coarse_rows": 695419,
+     "fine_rows": 1481013
+    },
+    {
+     "coarse_nonzeros": 6773345,
+     "coarse_rows": 333369,
+     "fine_rows": 695419
+    },
+    {
+     "coarse_nonzeros": 3542486,
+     "coarse_rows": 160170,
+     "fine_rows": 333369
+    },
+    {
+     "coarse_nonzeros": 1830360,
+     "coarse_rows": 77022,
+     "fine_rows": 160170
+    },
+    {
+     "coarse_nonzeros": 916519,
+     "coarse_rows": 37113,
+     "fine_rows": 77022
+    },
+    {
+     "coarse_nonzeros": 429459,
+     "coarse_rows": 17503,
+     "fine_rows": 37113
+    },
+    {
+     "coarse_nonzeros": 195133,
+     "coarse_rows": 8305,
+     "fine_rows": 17503
+    },
+    {
+     "coarse_nonzeros": 87685,
+     "coarse_rows": 3961,
+     "fine_rows": 8305
+    },
+    {
+     "coarse_nonzeros": 38624,
+     "coarse_rows": 1888,
+     "fine_rows": 3961
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/elasticity_p2": {
+   "levels": [
+    {
+     "coarse_nonzeros": 22402343,
+     "coarse_rows": 288145,
+     "fine_rows": 605694
+    },
+    {
+     "coarse_nonzeros": 11266705,
+     "coarse_rows": 139271,
+     "fine_rows": 288145
+    },
+    {
+     "coarse_nonzeros": 5111799,
+     "coarse_rows": 67167,
+     "fine_rows": 139271
+    },
+    {
+     "coarse_nonzeros": 2367554,
+     "coarse_rows": 32572,
+     "fine_rows": 67167
+    },
+    {
+     "coarse_nonzeros": 1113971,
+     "coarse_rows": 15813,
+     "fine_rows": 32572
+    },
+    {
+     "coarse_nonzeros": 524409,
+     "coarse_rows": 7681,
+     "fine_rows": 15813
+    },
+    {
+     "coarse_nonzeros": 242066,
+     "coarse_rows": 3716,
+     "fine_rows": 7681
+    },
+    {
+     "coarse_nonzeros": 109844,
+     "coarse_rows": 1798,
+     "fine_rows": 3716
+    },
+    {
+     "coarse_nonzeros": 48665,
+     "coarse_rows": 871,
+     "fine_rows": 1798
+    },
+    {
+     "coarse_nonzeros": 20087,
+     "coarse_rows": 413,
+     "fine_rows": 871
+    }
+   ]
+  },
+  "preconditioner/apply/mg-pgm/porous_pressure": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25506916,
+     "coarse_rows": 1636758,
+     "fine_rows": 3442951
+    },
+    {
+     "coarse_nonzeros": 12570951,
+     "coarse_rows": 776583,
+     "fine_rows": 1636758
+    },
+    {
+     "coarse_nonzeros": 6122510,
+     "coarse_rows": 368890,
+     "fine_rows": 776583
+    },
+    {
+     "coarse_nonzeros": 2966884,
+     "coarse_rows": 175386,
+     "fine_rows": 368890
+    },
+    {
+     "coarse_nonzeros": 1425396,
+     "coarse_rows": 83426,
+     "fine_rows": 175386
+    },
+    {
+     "coarse_nonzeros": 679691,
+     "coarse_rows": 39667,
+     "fine_rows": 83426
+    },
+    {
+     "coarse_nonzeros": 321797,
+     "coarse_rows": 18841,
+     "fine_rows": 39667
+    },
+    {
+     "coarse_nonzeros": 152103,
+     "coarse_rows": 8965,
+     "fine_rows": 18841
+    },
+    {
+     "coarse_nonzeros": 71231,
+     "coarse_rows": 4255,
+     "fine_rows": 8965
+    },
+    {
+     "coarse_nonzeros": 33249,
+     "coarse_rows": 2025,
+     "fine_rows": 4255
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/anisotropic_heat": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25488007,
+     "coarse_rows": 3642301,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 12744007,
+     "coarse_rows": 1821151,
+     "fine_rows": 3642301
+    },
+    {
+     "coarse_nonzeros": 6372004,
+     "coarse_rows": 910576,
+     "fine_rows": 1821151
+    },
+    {
+     "coarse_nonzeros": 3186002,
+     "coarse_rows": 455288,
+     "fine_rows": 910576
+    },
+    {
+     "coarse_nonzeros": 1593000,
+     "coarse_rows": 227644,
+     "fine_rows": 455288
+    },
+    {
+     "coarse_nonzeros": 796498,
+     "coarse_rows": 113822,
+     "fine_rows": 227644
+    },
+    {
+     "coarse_nonzeros": 398247,
+     "coarse_rows": 56911,
+     "fine_rows": 113822
+    },
+    {
+     "coarse_nonzeros": 199126,
+     "coarse_rows": 28456,
+     "fine_rows": 56911
+    },
+    {
+     "coarse_nonzeros": 99562,
+     "coarse_rows": 14228,
+     "fine_rows": 28456
+    },
+    {
+     "coarse_nonzeros": 49782,
+     "coarse_rows": 7114,
+     "fine_rows": 14228
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/convection_diffusion": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25488007,
+     "coarse_rows": 3642301,
+     "fine_rows": 7284601
+    },
+    {
+     "coarse_nonzeros": 12744007,
+     "coarse_rows": 1821151,
+     "fine_rows": 3642301
+    },
+    {
+     "coarse_nonzeros": 6372004,
+     "coarse_rows": 910576,
+     "fine_rows": 1821151
+    },
+    {
+     "coarse_nonzeros": 3186002,
+     "coarse_rows": 455288,
+     "fine_rows": 910576
+    },
+    {
+     "coarse_nonzeros": 1593000,
+     "coarse_rows": 227644,
+     "fine_rows": 455288
+    },
+    {
+     "coarse_nonzeros": 796498,
+     "coarse_rows": 113822,
+     "fine_rows": 227644
+    },
+    {
+     "coarse_nonzeros": 398247,
+     "coarse_rows": 56911,
+     "fine_rows": 113822
+    },
+    {
+     "coarse_nonzeros": 199126,
+     "coarse_rows": 28456,
+     "fine_rows": 56911
+    },
+    {
+     "coarse_nonzeros": 99562,
+     "coarse_rows": 14228,
+     "fine_rows": 28456
+    },
+    {
+     "coarse_nonzeros": 49782,
+     "coarse_rows": 7114,
+     "fine_rows": 14228
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/curl_curl": {
+   "levels": [
+    {
+     "coarse_nonzeros": 33478153,
+     "coarse_rows": 1571301,
+     "fine_rows": 3142601
+    },
+    {
+     "coarse_nonzeros": 16909165,
+     "coarse_rows": 785651,
+     "fine_rows": 1571301
+    },
+    {
+     "coarse_nonzeros": 7579408,
+     "coarse_rows": 392826,
+     "fine_rows": 785651
+    },
+    {
+     "coarse_nonzeros": 3243645,
+     "coarse_rows": 196413,
+     "fine_rows": 392826
+    },
+    {
+     "coarse_nonzeros": 1511499,
+     "coarse_rows": 98207,
+     "fine_rows": 196413
+    },
+    {
+     "coarse_nonzeros": 729000,
+     "coarse_rows": 49104,
+     "fine_rows": 98207
+    },
+    {
+     "coarse_nonzeros": 364600,
+     "coarse_rows": 24552,
+     "fine_rows": 49104
+    },
+    {
+     "coarse_nonzeros": 181670,
+     "coarse_rows": 12276,
+     "fine_rows": 24552
+    },
+    {
+     "coarse_nonzeros": 66598,
+     "coarse_rows": 6138,
+     "fine_rows": 12276
+    },
+    {
+     "coarse_nonzeros": 21377,
+     "coarse_rows": 3069,
+     "fine_rows": 6138
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/elasticity_p2": {
+   "levels": [
+    {
+     "coarse_nonzeros": 17957025,
+     "coarse_rows": 302847,
+     "fine_rows": 605694
+    },
+    {
+     "coarse_nonzeros": 7573142,
+     "coarse_rows": 151424,
+     "fine_rows": 302847
+    },
+    {
+     "coarse_nonzeros": 3209364,
+     "coarse_rows": 75712,
+     "fine_rows": 151424
+    },
+    {
+     "coarse_nonzeros": 1431122,
+     "coarse_rows": 37856,
+     "fine_rows": 75712
+    },
+    {
+     "coarse_nonzeros": 618520,
+     "coarse_rows": 18928,
+     "fine_rows": 37856
+    },
+    {
+     "coarse_nonzeros": 290228,
+     "coarse_rows": 9464,
+     "fine_rows": 18928
+    },
+    {
+     "coarse_nonzeros": 126278,
+     "coarse_rows": 4732,
+     "fine_rows": 9464
+    },
+    {
+     "coarse_nonzeros": 54840,
+     "coarse_rows": 2366,
+     "fine_rows": 4732
+    },
+    {
+     "coarse_nonzeros": 22005,
+     "coarse_rows": 1183,
+     "fine_rows": 2366
+    },
+    {
+     "coarse_nonzeros": 8858,
+     "coarse_rows": 592,
+     "fine_rows": 1183
+    }
+   ]
+  },
+  "preconditioner/apply/mg-uniform/porous_pressure": {
+   "levels": [
+    {
+     "coarse_nonzeros": 25594876,
+     "coarse_rows": 1721476,
+     "fine_rows": 3442951
+    },
+    {
+     "coarse_nonzeros": 12797734,
+     "coarse_rows": 860738,
+     "fine_rows": 1721476
+    },
+    {
+     "coarse_nonzeros": 6399161,
+     "coarse_rows": 430369,
+     "fine_rows": 860738
+    },
+    {
+     "coarse_nonzeros": 3202677,
+     "coarse_rows": 215185,
+     "fine_rows": 430369
+    },
+    {
+     "coarse_nonzeros": 1601643,
+     "coarse_rows": 107593,
+     "fine_rows": 215185
+    },
+    {
+     "coarse_nonzeros": 801123,
+     "coarse_rows": 53797,
+     "fine_rows": 107593
+    },
+    {
+     "coarse_nonzeros": 294241,
+     "coarse_rows": 26899,
+     "fine_rows": 53797
+    },
+    {
+     "coarse_nonzeros": 93788,
+     "coarse_rows": 13450,
+     "fine_rows": 26899
+    },
+    {
+     "coarse_nonzeros": 46893,
+     "coarse_rows": 6725,
+     "fine_rows": 13450
+    },
+    {
+     "coarse_nonzeros": 23447,
+     "coarse_rows": 3363,
+     "fine_rows": 6725
+    }
+   ]
+  },
+  "spmv/hybrid/TSOPF_RS_b2383_c1": {
+   "coo_num_stored_elements": 16021450,
+   "ell_num_stored_elements_per_row": 4
+  },
+  "spmv/hybrid/USA-road-d.USA": {
+   "coo_num_stored_elements": 14575935,
+   "ell_num_stored_elements_per_row": 2
+  },
+  "spmv/hybrid/audikw1": {
+   "coo_num_stored_elements": 17391402,
+   "ell_num_stored_elements_per_row": 69
+  },
+  "spmv/hybrid/cage15": {
+   "coo_num_stored_elements": 21502837,
+   "ell_num_stored_elements_per_row": 16
+  },
+  "spmv/hybrid/com-Orkut": {
+   "coo_num_stored_elements": 165418930,
+   "ell_num_stored_elements_per_row": 27
+  },
+  "spmv/hybrid/ecology2": {
+   "coo_num_stored_elements": 0,
+   "ell_num_stored_elements_per_row": 5
+  },
+  "spmv/hybrid/kron_g500-logn21": {
+   "coo_num_stored_elements": 180530409,
+   "ell_num_stored_elements_per_row": 1
+  },
+  "spmv/hybrid/nlpkkt240": {
+   "coo_num_stored_elements": 0,
+   "ell_num_stored_elements_per_row": 28
+  },
+  "spmv/hybrid/soc-LiveJournal1": {
+   "coo_num_stored_elements": 61293004,
+   "ell_num_stored_elements_per_row": 2
+  },
+  "spmv/hybrid/twitter-2010": {
+   "coo_num_stored_elements": 1326057798,
+   "ell_num_stored_elements_per_row": 4
+  },
+  "spmv/sellp/TSOPF_RS_b2383_c1": {
+   "slice_size": 64,
+   "total_cols": 253892
+  },
+  "spmv/sellp/USA-road-d.USA": {
+   "slice_size": 64,
+   "total_cols": 1491685
+  },
+  "spmv/sellp/audikw1": {
+   "slice_size": 64,
+   "total_cols": 1638405
+  },
+  "spmv/sellp/cage15": {
+   "slice_size": 64,
+   "total_cols": 1643149
+  },
+  "spmv/sellp/ecology2": {
+   "slice_size": 64,
+   "total_cols": 78095
+  },
+  "spmv/sellp/nlpkkt240": {
+   "slice_size": 64,
+   "total_cols": 12155178
+  }
+ }
+}
