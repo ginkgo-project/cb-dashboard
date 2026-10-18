@@ -20,8 +20,9 @@ source = "Network Repository (SuiteSparse)"
 url = "https://nrvis.com/download/data/sc/sc-TSOPF-RS-b2383-c1.zip"
 format = "mtx-zip"
 symmetric = false
-# The Network Repository copy is a pattern without the diagonal (spec). Adding
-# a diagonal entry that is already there does nothing.
+# Network Repository ships SuiteSparse's Matrix Market file (real general) as
+# sc-TSOPF-RS-b2383-c1.edges. Its values are replaced by random ones like every
+# spmv matrix's; adding a diagonal entry that is already there does nothing.
 add_diagonal = true
 expected_rows = 38120
 expected_nnz = 16171169

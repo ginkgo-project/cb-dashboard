@@ -20,10 +20,12 @@ EDGES = b"# c\n1 2\n2 3\n3 1\n"
 MTX = b"%%MatrixMarket matrix coordinate real symmetric\n3 3 2\n2 1 1.0\n3 3 2.0\n"
 
 
-def _zip(name, data):
+def _zip(name, data, *more):
     b = io.BytesIO()
     with zipfile.ZipFile(b, "w") as z:
         z.writestr(name, data)
+        for n, d in zip(more[::2], more[1::2]):
+            z.writestr(n, d)
     return b.getvalue()
 
 
@@ -48,6 +50,8 @@ class _H(http.server.BaseHTTPRequestHandler):
 def server():
     _H.files = {"/tiny.graph": TRIANGLE, "/e.txt": EDGES,
                 "/m.zip": _zip("m.mtx", MTX),
+                # Network Repository: a Matrix Market file named .edges, and a readme.
+                "/nr.zip": _zip("readme.html", b"<html>", "nr.edges", MTX),
                 "/tw.graph": b"g", "/tw.properties": b"nodes=4\narcs=3\n",
                 "/gaps.txt": b"1 3\n3 5\n5 1\n"}
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _H)
@@ -207,6 +211,31 @@ nnz_check = "exact"
     assert m["matrices"][0]["rows"] == 3 and m["matrices"][0]["nonzeros"] == 3
     # symmetric MM file: (2,1) mirrored, (3,3) diagonal -> 3 entries
     assert m["matrices"][1]["nonzeros"] == 3
+
+
+def test_mtx_zip_member_found_by_its_banner(tmp_path, server):
+    cat = extra_catalog(tmp_path, server, '''
+[[entry]]
+name = "nr"
+set = "spmv"
+source = "t"
+url = "URL/nr.zip"
+format = "mtx-zip"
+symmetric = false
+add_diagonal = false
+expected_rows = 3
+expected_nnz = 3
+nnz_check = "exact"
+''')
+    m = build(cat, tmp_path / "root", tmp_path / "manifest.json", None, None)
+    assert m["matrices"][0]["nonzeros"] == 3
+
+
+def test_mtx_zip_with_two_matrices_fails(tmp_path):
+    z = tmp_path / "two.zip"
+    z.write_bytes(_zip("a.mtx", MTX, "b.edges", MTX))
+    with pytest.raises(ValueError, match="one Matrix Market member"):
+        B._mtx_from_zip(z, tmp_path / "two.mtx")
 
 
 def test_edgelist_compact_ids(tmp_path, server):

@@ -101,12 +101,18 @@ def check_nnz(entry: Entry, nnz: int, rows: int) -> None:
 
 
 def _mtx_from_zip(zip_path: Path, dest: Path) -> tuple[Path, bool]:
-    """Extract the .mtx member next to the zip; return (path, is_symmetric)."""
+    """Extract the Matrix Market member next to the zip; return (path, is_symmetric).
+
+    The member is found by its banner, not its name: Network Repository ships
+    SuiteSparse's .mtx as <name>.edges, next to a readme.html.
+    """
     if not dest.exists():
         with zipfile.ZipFile(zip_path) as z:
-            names = [n for n in z.namelist() if n.lower().endswith(".mtx")]
+            names = [i.filename for i in z.infolist() if not i.is_dir()
+                     and z.open(i).read(14).lower() == b"%%matrixmarket"]
             if len(names) != 1:
-                raise ValueError(f"{zip_path}: expected one .mtx member, found {names}")
+                raise ValueError(f"{zip_path}: expected one Matrix Market member, "
+                                 f"found {names}")
             tmp = dest.with_name(dest.name + ".tmp")
             with z.open(names[0]) as src, open(tmp, "wb") as out:
                 while chunk := src.read(1 << 20):
