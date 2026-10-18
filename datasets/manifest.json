@@ -1,6 +1,6 @@
 {
-  "version": "1",
-  "catalog_sha256": "7e099ff3c2146d55ecec711f80df0170f0b51bc6019a424315bd685eb52e56ba",
+  "version": "2",
+  "catalog_sha256": "99f3512f401bf95b9ba74e07a23b084b34e9d5afeeeb63b3386f5b14003f6d34",
   "seed": 20261017,
   "matrices": [
     {
@@ -551,7 +551,7 @@
     },
     {
       "name": "elasticity_p2_graded",
-      "entry_sha256": "00f64a1ac924b4145bc1ede4e24f9dab23b8bbc0d0ce3026a727974438fb37cb",
+      "entry_sha256": "8e4be0671be06294017c67104597852714c190a3ac32f79e520bcfa721b84fcc",
       "set": "fem",
       "roles": [
         "spgemm"
@@ -561,23 +561,23 @@
       "url": null,
       "download_sha256": {},
       "path": "matrices/fem/elasticity_p2_graded.bin",
-      "binary_sha256": "392c0d3a39fb63b4eb05489ae63906b8d604bc0af6f78fac0d052086ec6ef899",
-      "rows": 598287,
-      "cols": 598287,
-      "nonzeros": 49195707,
+      "binary_sha256": "6513a4b039d40bac7c0e93dda594abd429e0b9f6778a34db5b580cf3c800fe78",
+      "rows": 189879,
+      "cols": 189879,
+      "nonzeros": 15277591,
       "row_length": {
         "min": 12,
-        "max": 426,
-        "mean": 82.2276048117375,
-        "std": 42.97649194923509,
-        "cv": 0.5226528493397201
+        "max": 390,
+        "mean": 80.4596137540223,
+        "std": 42.15424862835615,
+        "cv": 0.5239181082478015
       },
-      "sellp_padding_ratio": 1.1997378551750462,
+      "sellp_padding_ratio": 1.2213485751778537,
       "run_sellp": true,
       "nnz_check": "none",
       "expected_nnz": null,
       "converter_version": {
-        "repository": "ef308955198d858ca088415b0a9aaa69651e3b67",
+        "repository": "644a8df86cef3fdd5b3f154e65a3131874dfe806",
         "numpy": "2.5.4",
         "scipy": "1.18.1",
         "scikit-fem": "12.0.2"
