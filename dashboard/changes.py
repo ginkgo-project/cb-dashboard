@@ -162,6 +162,7 @@ def flags(cells: dict[str, dict[str, list[Cell | None]]]) -> list[Flag]:
             flag = Flag(key, machine, last, cell.state, cell.change, cell.band)
             if cell.state == "failed":
                 if prev is None or prev.state != "failed":
+                    flag.state = "new_failure"
                     new_failures.append(flag)
             elif cell.state == "slower":
                 slower.append(flag)

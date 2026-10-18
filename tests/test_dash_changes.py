@@ -139,7 +139,7 @@ def test_flags_order():
     }}
     out = flags(cells)
     assert [f.key for f in out] == ["fail", "slow1", "slow2", "fast"]
-    assert [f.state for f in out] == ["failed", "slower", "slower", "faster"]
+    assert [f.state for f in out] == ["new_failure", "slower", "slower", "faster"]
 
 
 def test_unchanged_groups_by_state():
@@ -151,3 +151,94 @@ def test_unchanged_groups_by_state():
     assert unchanged(cells, labels) == [
         {"state": "not_available", "count": 2, "names": ["mg-pmis"],
          "machines": ["a", "b"]}]
+
+
+def test_window_limited_to_eight_previous():
+    # an old outlier outside the last 8 must not change the baseline
+    cells = series([1.0] * 9 + [2.0] * 8 + [2.0])
+    assert cells[-1].state == "same"
+    assert cells[-1].change == pytest.approx(0.0)
+
+
+def with_params(params_list):
+    specs = []
+    for i, prm in enumerate(params_list):
+        r = run(f"r{i}")
+        specs.append([(r, pt(r, 1.0, extra={"parameters": prm}))])
+    return build(specs)
+
+
+def test_params_changed():
+    assert with_params([{"a": 1}, {"a": 2}])[-1].params_changed is True
+    assert with_params([{"a": 1}, {"a": 1}])[-1].params_changed is False
+
+
+def test_failure_priority_order():
+    for order in (("failed", "not_available"), ("not_available", "failed")):
+        rs = [run("a"), run("b")]
+        cell = build([[(r, pt(r, None, s, error=s))
+                       for r, s in zip(rs, order)]])[0]
+        assert cell.state == "failed" and cell.error == "failed"
+
+
+def bw_history(n_with_pct):
+    specs = []
+    for i in range(8):
+        r = run(f"r{i}", 3.0e12 if i < n_with_pct else None)
+        specs.append([(r, pt(r, 1e-3, nbytes=1e9))])
+    r = run("r8")
+    specs.append([(r, pt(r, 1e-3, nbytes=1e9))])
+    return build(specs, "bandwidth")[-1]
+
+
+def test_bandwidth_needs_min_history_with_pct():
+    assert bw_history(3).raw is True
+    assert bw_history(4).raw is False
+
+
+def test_pct_from_points_with_triad_only():
+    a, b = run("a", 3.0e12), run("b", None)
+    cell = build([[(a, pt(a, 1e-3, nbytes=1e9)),
+                   (b, pt(b, 1e-3, nbytes=1e9))]])[0]
+    assert cell.pct == pytest.approx(1e12 / 3.0e12)
+
+
+def test_iterations_prev_none_when_unchanged():
+    specs = []
+    for i in range(2):
+        r = run(f"r{i}")
+        specs.append([(r, pt(r, 3.7, group="solver",
+                             extra={"iterations": 37}))])
+    assert build(specs)[-1].iterations_prev is None
+
+
+def test_unchanged_requires_same_state_before():
+    cells = {"a": {"x": [Cell("same"), Cell("not_available")]}}
+    assert unchanged(cells, {"x": {"operation": "dot"}}) == []
+
+
+def test_unchanged_names_fallback():
+    row = [Cell("failed"), Cell("failed")]
+    cells = {"a": {"s": row, "f": row, "o": row, "p": row}}
+    labels = {"s": {"solver": "cg", "operation": "solve"},
+              "f": {"format": "csr", "operation": "spmv"},
+              "o": {"operation": "dot"},
+              "p": {"preconditioner": "jacobi", "solver": "cg",
+                    "operation": "solve"}}
+    out = unchanged(cells, labels)
+    assert out[0]["names"] == ["cg", "csr", "dot", "jacobi"]
+    assert out[0]["count"] == 4
+
+
+def test_speedups_largest_first():
+    cells = {"m": {"a": [Cell("same"), Cell("faster", 0.1, 0.03)],
+                   "b": [Cell("same"), Cell("faster", 0.3, 0.03)]}}
+    assert [f.key for f in flags(cells)] == ["b", "a"]
+
+
+def test_solver_gbs_uses_whole_solve_time():
+    r = run("r")
+    cell = build([[(r, pt(r, 2.0, group="solver", nbytes=8e9,
+                         extra={"iterations": 4}))]])[0]
+    assert cell.gbs == pytest.approx(8e9 / 2.0)
+    assert cell.time == pytest.approx(0.5)
