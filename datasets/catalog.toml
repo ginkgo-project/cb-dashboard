@@ -1,4 +1,4 @@
-version = "1"
+version = "2"
 seed = 20261017
 
 [[entry]]
@@ -214,4 +214,8 @@ add_diagonal = false
 nnz_check = "none"
 roles = ["spgemm"]
 spd = true
-fem = {problem = "elasticity_p2_graded", size = 28}
+# Below the 20-100M range: at size 28 (49M nonzeros) A*A has 5.2e9 intermediate
+# products, and cuSPARSE's spgemm_work_estimation fails on the GH200 with
+# CUSPARSE_STATUS_INSUFFICIENT_RESOURCES. Size 19 gives about 15M nonzeros and
+# 1.6e9 products, under 2^31 (poisson_p1 has 7.6e8).
+fem = {problem = "elasticity_p2_graded", size = 19}

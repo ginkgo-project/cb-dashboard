@@ -10,7 +10,7 @@ def test_spmv_set():
     assert len(spmv) == 10
     assert len({e.name for e in spmv}) == 10
     assert all(e.expected_nnz < 2**31 for e in spmv)
-    assert cat.version == "1" and cat.seed == 20261017
+    assert cat.version == "2" and cat.seed == 20261017
 
 
 def test_fem_roles():
