@@ -1,0 +1,101 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1d1f23;
+  --muted: #5d6470;
+  --line: #d9dde3;
+  --panel: #f5f6f8;
+  --ok: #1a7f37;
+  --fail: #cf222e;
+  --cancel: #9a6700;
+  --run: #0969da;
+  --none: #8c959f;
+  --on-status: #ffffff;
+  --accent: #e8a317;   /* the yellow of the Ginkgo leaf */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --fg: #e6e8eb;
+    --muted: #9aa3ad;
+    --line: #2b3038;
+    --panel: #171a20;
+    --ok: #3fb950;
+    --fail: #f85149;
+    --cancel: #d29922;
+    --run: #58a6ff;
+    --none: #6e7681;
+    --on-status: #0f1115;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0 auto;
+  max-width: 1400px;
+  padding: 0 16px 32px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+a { color: var(--run); }
+h1 { font-size: 1.4rem; margin: 16px 0 4px; }
+h2 { font-size: 1.1rem; margin: 24px 0 8px; }
+h3 { font-size: 0.95rem; margin: 0 0 6px; }
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+.brand img { display: block; }
+.brand h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.01em; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); font-size: 0.9rem; }
+.age.stale { color: var(--cancel); font-weight: 600; }
+.age.old { color: var(--fail); font-weight: 600; }
+.warnings summary { cursor: pointer; }
+.warnings ul { margin: 4px 0; padding-left: 20px; font-family: ui-monospace, monospace; font-size: 0.8rem; overflow-wrap: anywhere; }
+
+.banner { margin: 8px 0; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--line); }
+.banner.error { border-color: var(--fail); color: var(--fail); }
+.banner.warning { border-color: var(--cancel); color: var(--cancel); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 12px 0; overflow-x: auto; }
+.tabs a { padding: 8px 12px; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 12px; font-size: 0.85rem; }
+.filters label { display: flex; flex-direction: column; color: var(--muted); }
+.filters select, .filters button { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 2px 4px; }
+.filters button { align-self: flex-end; cursor: pointer; }
+.filters select { max-width: 16rem; }
+.filters[hidden] { display: none; }
+
+
+.summary { font-size: 1.05rem; font-weight: 600; }
+.legend, .none { color: var(--muted); font-size: 0.85rem; }
+.scroll { overflow-x: auto; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
+thead th { position: sticky; top: 0; background: var(--bg); }
+td.number { text-align: right; white-space: nowrap; }
+
+.runs { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+.flags { list-style: none; margin: 4px 0; padding: 0; }
+.flags li { padding: 3px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.flag { display: inline-block; min-width: 4.5rem; margin-right: 8px; border-radius: 4px; padding: 0 6px; font-size: 0.75rem; font-weight: 600; color: var(--on-status); text-align: center; }
+.flag.slower, .flag.new_failure { background: var(--fail); }
+.flag.faster { background: var(--ok); }
+.detail { margin: 12px 0; }
+.detail summary { cursor: pointer; font-weight: 600; }
+.mono { font-family: ui-monospace, monospace; font-size: 0.8rem; overflow-wrap: anywhere; }
+
+.foot { margin-top: 32px; color: var(--muted); font-size: 0.8rem; }

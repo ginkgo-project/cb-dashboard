@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ginkgo benchmark dashboard</title>
+<meta name="description" content="Benchmark results of Ginkgo on the CSCS machines, with changes between commits">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="https://gko-project.org/">
+    <img src="logo.png" alt="Ginkgo logo" width="40" height="40">
+    <h1>Ginkgo benchmark dashboard</h1>
+  </a>
+  <div id="meta" class="meta"></div>
+</header>
+<div id="banners"></div>
+<nav id="tabs" class="tabs" aria-label="Views">
+  <a id="basic" href="#basic">Basic</a>
+  <a id="solvers" href="#solvers">Solvers</a>
+  <a id="preconditioners" href="#preconditioners">Preconditioners</a>
+  <a id="machines" href="#machines">Machines</a>
+</nav>
+<form id="filters" class="filters" aria-label="Filters"></form>
+<main id="view"></main>
+<footer class="foot">
+  Results of the benchmarks in the cb-dashboard repository, built from the committed runs.
+  <a href="https://github.com/ginkgo-project/cb-dashboard">Source</a>
+</footer>
+</body>
+</html>
