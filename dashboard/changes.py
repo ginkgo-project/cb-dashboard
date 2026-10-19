@@ -123,7 +123,9 @@ def cells_for_case(cols: list[Column], key: str, kind: str,
                     and prev_cell.iterations is not None
                     and prev_cell.iterations != cell.iterations):
                 cell.iterations_prev = prev_cell.iterations
-            if prev_detail is not None:
+            # a run of a ported harness records no parameters: unknown, not changed
+            if prev_detail is not None and None not in (prev_detail["params"],
+                                                         detail["params"]):
                 cell.params_changed = prev_detail["params"] != detail["params"]
             _compare(cell, detail, kind, [d for d in details if d is not None])
         cells.append(cell)

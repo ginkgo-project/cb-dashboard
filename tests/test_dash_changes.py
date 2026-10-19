@@ -171,6 +171,8 @@ def with_params(params_list):
 def test_params_changed():
     assert with_params([{"a": 1}, {"a": 2}])[-1].params_changed is True
     assert with_params([{"a": 1}, {"a": 1}])[-1].params_changed is False
+    assert with_params([None, {"a": 1}])[-1].params_changed is False
+    assert with_params([{"a": 1}, None])[-1].params_changed is False
 
 
 def test_failure_priority_order():

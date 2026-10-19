@@ -153,10 +153,11 @@ def measurements(run: Run) -> dict[str, Measurement]:
 
     for group, group_invs in invs.items():
         for inv in group_invs:
-            status = {"disabled": "disabled", "skipped": "missing"}.get(
+            status = {"disabled": "disabled", "skipped": "missing",
+                      "not_available": "not_available"}.get(
                 inv["status"], "failed")
             if inv["status"] not in ("failed", "killed", "skipped",
-                                     "disabled"):
+                                     "disabled", "not_available"):
                 continue
             reason = inv.get("reason")
             args = inv.get("args") or []

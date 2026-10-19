@@ -72,6 +72,16 @@ def test_disabled_invocation_without_output(tmp_path):
         assert x.time is None
 
 
+def test_not_available_invocation_without_output(tmp_path):
+    inv = {"group": "preconditioner", "label": "porous_pressure/mg-pmis",
+           "status": "not_available", "reason": "not in this Ginkgo commit",
+           "args": []}
+    m = measurements(_run(tmp_path, invocations=[inv]))
+    for stage in ("apply", "generate"):
+        x = m[f"preconditioner/{stage}/mg-pmis/porous_pressure"]
+        assert (x.status, x.error) == ("not_available", "not in this Ginkgo commit")
+
+
 def test_failed_invocation_covers_its_formats(tmp_path):
     inv = _inv("spmv", "cage15", "failed", "timeout",
                ["-formats", "csr,coo", "-input_matrix", "/x/cage15.bin"])
