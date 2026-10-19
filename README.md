@@ -85,9 +85,9 @@ exist.
 
 The build directory is `$SCRATCH/cb/build/<machine>`, and rebuilds are
 incremental. A missing or half configured directory is configured again. So is
-one whose `cb-config.json` (the uenv, the CMake arguments and the `g++`, `nvcc`
-and `clang++` versions) doesn't match the current run, then with
-`cmake --fresh`. Besides the five benchmarks, the build makes
+one whose `cb-config.json` (the uenv, the CMake arguments, the `g++`, `nvcc`
+and `clang++` versions and the Ginkgo commit) doesn't match the current run,
+then with `cmake --fresh`. Besides the five benchmarks, the build makes
 `matrix_statistics` and `mtx_to_binary`.
 
 ### Dry run (login node)
@@ -109,7 +109,25 @@ updated after a completed run of `origin/develop` with all groups, in any order
 blas, spmv, spgemm, solver, preconditioner. `SUBMIT_DRY_RUN=1` prints the
 sbatch command instead of submitting it. Exit codes of the job: 0 on success or
 nothing to do, 1 on a build failure, 2 on an architecture mismatch, 143 when
-Slurm stopped the job with SIGTERM (time limit or `scancel`).
+Slurm stopped the job with SIGTERM (time limit or `scancel`). The jobs of one
+machine share its worktree and build directory, so they are submitted with
+`--dependency=singleton` and run one after the other.
+
+### Older Ginkgo versions
+
+To fill the history, older releases and develop commits run with today's
+benchmark code. Each has a branch `cb/<point>` in the Ginkgo repository: the
+point plus one commit that only changes `benchmark/`. That commit puts in the
+benchmark directory of `cb/harness`, which is `update/benchmarks` without
+`write_config` and `get_actual_strategy` (core changes; such runs record no
+`parameters`), and undoes the API changes of develop after the point. Its
+committer date is the point's, so the results directory and the dashboard
+column carry the point's date. Run one with
+
+    bench/submit.sh <machine> --ref origin/cb/<point>
+
+A preconditioner that the commit lacks (see `ADDED` in `bench/groups.py`) isn't
+run: its invocations are `not_available`, hatched on the dashboard.
 
 ### Logs and results
 
@@ -122,7 +140,8 @@ Slurm stopped the job with SIGTERM (time limit or `scancel`).
   `pending`, `running`, `ok`, `partial`, `failed`, `killed` (the job got
   SIGTERM while it ran) or `skipped` (not requested, build failed, job killed).
   An invocation is `ok`, `partial` or `failed` (Ginkgo's own errors are listed
-  under `failures`), or `skipped` when its timeout no longer fits in the job.
+  under `failures`), `skipped` when its timeout no longer fits in the job,
+  `disabled` on this machine, or `not_available` in this Ginkgo commit.
 
 ### Copy back
 

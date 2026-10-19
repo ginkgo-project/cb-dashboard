@@ -10,7 +10,9 @@ PYTHON="${CB_PYTHON:-$CB_ROOT/venv/$MACHINE/bin/python}"
 SCRATCH="${SCRATCH:?SCRATCH is not set}"
 cd "$REPO"
 read -r -a SB < <("$PYTHON" -m bench sbatch-args "$MACHINE")
-CMD=(sbatch "${SB[@]}" --view=default "--job-name=cb-$MACHINE"
+# singleton: the jobs of one machine share its worktree and build directory, so
+# they run one after the other.
+CMD=(sbatch "${SB[@]}" --view=default "--job-name=cb-$MACHINE" --dependency=singleton
      "--output=$SCRATCH/cb/logs/%j.out" bench/job.sh "$MACHINE" "$@")
 if [ "${SUBMIT_DRY_RUN:-0}" = 1 ]; then
   echo "${CMD[*]}"

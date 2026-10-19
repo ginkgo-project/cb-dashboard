@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,6 +18,12 @@ STENCILS = [{"size": 8000000, "stencil": s, "optimal": {"spmv": "csr"}}
             for s in ("5pt", "7pt", "27pt")]
 PRECOND_SPD = "jacobi,ilu,ilu-syncfree,ic,ic-syncfree,spd-isai,mg-pgm,mg-pmis,mg-uniform"
 PRECOND_GENERAL = "jacobi,ilu,ilu-syncfree,general-isai,mg-pgm,mg-pmis,mg-uniform"
+# The develop merge that added each newer preconditioner. A Ginkgo commit
+# without it (an older release or develop commit) doesn't run it.
+ADDED = {
+    "mg-uniform": "f804544bd0862a3370c3cb2e57d6195e03004315",  # (#2016), 2026-08-27
+    "mg-pmis": "0cd07f4eaf44134b0678876425072f055a35dd37",  # (#2035), 2026-09-03
+}
 SOLVER_SETTINGS = [
     "-preconditioners", "jacobi", "-jacobi_max_block_size", "1",
     "-rel_res_goal", "1e-10", "-max_iters", "1000",
@@ -42,6 +49,7 @@ class Invocation:
     timeout_s: int
     missing_input: Path | None = None
     disabled: str | None = None  # why it isn't run on this machine
+    unavailable: str | None = None  # why this Ginkgo commit can't run it
 
 
 def _base(m: Machine, warmup: int = 1) -> list[str]:
@@ -58,7 +66,9 @@ def _matrix(m: Machine, entry: dict) -> tuple[list[str], Path | None]:
     return ["-input_matrix", str(path)], (None if path.is_file() else path)
 
 
-def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS) -> list[Invocation]:
+def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS,
+                unavailable: Collection[str] = ()) -> list[Invocation]:
+    """`unavailable`: the preconditioners of ADDED that the Ginkgo commit lacks."""
     mats = manifest["matrices"]
     known = set(PRECOND_SPD.split(",")) | set(PRECOND_GENERAL.split(","))
     unknown = sorted(set(m.disabled_preconditioners) - known)
@@ -99,8 +109,10 @@ def invocations(m: Machine, manifest: dict, groups: list[str] = GROUPS) -> list[
                                            "-preconditioners", p] + inp
                         off = (f"disabled on {m.name}" if p in m.disabled_preconditioners
                                else None)
+                        na = (f"not in this Ginkgo commit (added by {ADDED[p][:10]})"
+                              if p in unavailable else None)
                         out.append(Invocation(g, f"{e['name']}/{p}", exe(m, "preconditioner"),
-                                              args, None, t, missing, off))
+                                              args, None, t, missing, off, na))
                     continue
                 else:
                     continue

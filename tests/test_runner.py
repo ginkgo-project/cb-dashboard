@@ -333,6 +333,19 @@ def test_disabled_invocation_is_not_run_and_does_not_count(tmp_path):
     assert not (tmp_path / "out/logs/g/off.log").exists()
 
 
+def test_unavailable_invocation_is_not_run_and_does_not_count(tmp_path):
+    marker = tmp_path / "started"
+    ok = fake(tmp_path, "ok", 'print(\'[{"a":1}]\')')
+    na = fake(tmp_path, "na", f'open({str(marker)!r}, "w")')
+    u = Invocation("g", "na", na, [], None, 30, unavailable="not in this commit")
+    r = run_group("g", [inv(ok, "ok"), u], [], tmp_path / "out", energy=lambda: {"energy": 1})
+    assert r["status"] == "ok"
+    rec = r["invocations"][1]
+    assert (rec["status"], rec["reason"], rec["exit_code"]) == (
+        "not_available", "not in this commit", None)
+    assert "energy_j" not in rec and not marker.exists()
+
+
 def test_group_of_only_disabled_invocations_is_skipped(tmp_path):
     d = Invocation("g", "off", tmp_path / "none", [], None, 30, disabled="disabled on m")
     assert run_group("g", [d], [], tmp_path / "out")["status"] == "skipped"

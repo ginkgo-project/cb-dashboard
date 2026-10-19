@@ -32,7 +32,8 @@ def test_submit_dry_run():
     lines = r.stdout.strip().splitlines()
     assert len(lines) == 1
     assert lines[0].startswith("sbatch --partition=normal")
-    assert "--uenv=prgenv-gnu/26.3:v1 --view=default --job-name=cb-daint-gh200" in lines[0]
+    assert ("--uenv=prgenv-gnu/26.3:v1 --view=default --job-name=cb-daint-gh200"
+            " --dependency=singleton") in lines[0]
     assert "--output=/scratch/cb/logs/%j.out" in lines[0]
     assert lines[0].endswith("bench/job.sh daint-gh200 --force")
 
@@ -65,6 +66,7 @@ def patch_common(monkeypatch, m, commit):
     monkeypatch.setattr(cli, "load_machine", lambda name, **kw: m)
     monkeypatch.setattr(cli, "ensure_clone", lambda url, clone: None)
     monkeypatch.setattr(cli, "resolve", lambda clone, ref: commit)
+    monkeypatch.setattr(cli, "lacks", lambda clone, sha, added: set())
     monkeypatch.setattr(cli, "prepare_worktree", lambda *a: None)
     monkeypatch.setattr(cli, "gpu_info", lambda m: {"gpu": "g"})
     monkeypatch.setattr(cli, "toolchain_info", lambda m: {"g++": "x"})
@@ -93,7 +95,7 @@ def test_nothing_to_do_exits_zero(tmp_path, monkeypatch, manifest, capsys):
 def test_dry_run_lists_invocations(tmp_path, monkeypatch, manifest, capsys):
     m = fake_machine(tmp_path, arch="nonsense")
     monkeypatch.setattr(cli, "load_machine", lambda name, **kw: m)
-    for n in ("ensure_clone", "resolve", "build", "run_group", "prepare_worktree",
+    for n in ("ensure_clone", "resolve", "lacks", "build", "run_group", "prepare_worktree",
               "measure_stream"):
         monkeypatch.setattr(cli, n, lambda *a, **k: pytest.fail("ran"))
     assert cli.main(["run", "daint-gh200", "--dry-run", "--manifest", str(manifest),
@@ -289,6 +291,28 @@ def test_unrequested_groups_recorded_as_skipped(tmp_path, monkeypatch, manifest)
     assert g["blas"]["status"] == "ok" and g["solver"]["status"] == "ok"
     for name in ("spmv", "spgemm", "preconditioner"):
         assert g[name] == {"status": "skipped", "reason": "not requested"}
+
+
+def test_preconditioners_the_commit_lacks_are_marked(tmp_path, monkeypatch):
+    p = tmp_path / "precond.json"
+    p.write_text(json.dumps({"version": "1", "matrices": [
+        {"name": "lap", "path": "matrices/lap.bin", "set": "fem", "roles": ["precond"],
+         "spd": True, "run_sellp": False}]}))
+    m = fake_machine(tmp_path)
+    patch_common(monkeypatch, m, COMMIT)
+    asked = []
+    monkeypatch.setattr(cli, "lacks", lambda clone, sha, added:
+                        asked.append((clone, sha, set(added))) or {"mg-pmis"})
+    monkeypatch.setattr(cli, "build", lambda m, src: {"cmake_cache": {}})
+    seen = {}
+    monkeypatch.setattr(cli, "run_group", lambda g, invs, srun, out, deadline=None:
+                        seen.update({i.label: i.unavailable for i in invs})
+                        or {"status": "ok", "seconds": 0.0, "invocations": []})
+    assert cli.main(["run", "daint-gh200", "--manifest", str(p),
+                     "--groups", "preconditioner"]) == 0
+    assert asked == [(m.root / "ginkgo", COMMIT.sha, {"mg-uniform", "mg-pmis"})]
+    assert seen["lap/mg-pmis"] == "not in this Ginkgo commit (added by 0cd07f4eaf)"
+    assert seen["lap/mg-uniform"] is None and seen["lap/jacobi"] is None
 
 
 def test_deadline_passed_to_groups(tmp_path, monkeypatch, manifest):

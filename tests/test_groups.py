@@ -145,6 +145,14 @@ def test_disabled_preconditioners_are_listed_but_marked(m):
                    "conv/ilu-syncfree": "disabled on daint-gh200"}
 
 
+def test_preconditioners_the_commit_lacks_are_listed_but_marked(m):
+    invs = G.invocations(m, MANIFEST, ["preconditioner"], {"mg-pmis", "mg-uniform"})
+    na = {i.label: i.unavailable for i in invs if i.unavailable}
+    assert set(na) == {"lap/mg-pmis", "lap/mg-uniform", "conv/mg-pmis", "conv/mg-uniform"}
+    assert na["lap/mg-uniform"] == "not in this Ginkgo commit (added by f804544bd0)"
+    assert not any(i.unavailable for i in by_group(m, "preconditioner"))
+
+
 def test_unknown_disabled_preconditioner_is_an_error(m):
     m.disabled_preconditioners = ["ilu-sncfree"]
     with pytest.raises(ValueError, match="unknown disabled_preconditioners"):

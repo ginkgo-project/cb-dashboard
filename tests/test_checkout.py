@@ -5,10 +5,13 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 from bench.checkout import (
     Commit,
     clone_lock,
     ensure_clone,
+    lacks,
     prepare_worktree,
     read_last,
     resolve,
@@ -93,6 +96,21 @@ def test_resolve_branch(tmp_path, monkeypatch):
     assert c.sha == c3
     assert c.develop_base == c2
     assert c.date == "2026-03-01"
+
+
+def test_lacks_names_commits_not_merged_yet(tmp_path, monkeypatch):
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    up, c1, c2 = make_upstream(tmp_path)
+    git(up, "checkout", "-b", "feature", c1)
+    c3 = commit(up, "f", "2026-03-01T12:00:00+00:00")
+    clone = tmp_path / "clone"
+    ensure_clone(str(up), clone)
+    added = {"old": c1, "new": c2, "side": c3}
+    assert lacks(clone, c2, added) == {"side"}
+    assert lacks(clone, c1, added) == {"new", "side"}
+    with pytest.raises(subprocess.CalledProcessError):
+        lacks(clone, c2, {"unknown": "f" * 40})
 
 
 def test_worktree_switches_commit(tmp_path, monkeypatch):

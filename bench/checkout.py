@@ -54,6 +54,19 @@ def resolve(clone: Path, ref: str = DEVELOP) -> Commit:
     return Commit(sha=sha, date=date, develop_base=base)
 
 
+def lacks(clone: Path, sha: str, added: dict[str, str]) -> set[str]:
+    """The names in `added` whose commit is not an ancestor of `sha`."""
+    out = set()
+    for name, commit in added.items():
+        r = subprocess.run(["git", "merge-base", "--is-ancestor", commit, sha],
+                           cwd=clone, capture_output=True, text=True)
+        if r.returncode == 1:
+            out.add(name)
+        elif r.returncode != 0:
+            raise subprocess.CalledProcessError(r.returncode, r.args, r.stdout, r.stderr)
+    return out
+
+
 def _worktree_valid(worktree: Path) -> bool:
     if not (worktree / ".git").exists():
         return False

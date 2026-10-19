@@ -116,7 +116,7 @@ def test_fingerprint_written(tmp_path, fakes):
     B.build(m, Path("/src"))
     fp = json.loads((m.build_dir / "cb-config.json").read_text())
     assert fp == {"uenv": m.uenv, "configure_args": B.configure_args(m, Path("/src"), None),
-                  "compilers": COMPILERS}
+                  "compilers": COMPILERS, "commit": None}
 
 
 def test_fingerprint_has_gcc_root_substituted(tmp_path, fakes, monkeypatch):
@@ -159,6 +159,25 @@ def test_changed_compiler_reconfigures_fresh(tmp_path, fakes, monkeypatch):
     configured_once(m, fakes)
     monkeypatch.setattr(B, "compiler_versions", lambda: {**COMPILERS, "nvcc": "release 12.8"})
     assert_fresh_configure(m, fakes, B.build(m, Path("/src")))
+
+
+def test_changed_commit_reconfigures_fresh(tmp_path, fakes, monkeypatch):
+    m = machine("daint-gh200", tmp_path)
+    monkeypatch.setattr(B, "_head", lambda src: "a" * 40)
+    configured_once(m, fakes)
+    monkeypatch.setattr(B, "_head", lambda src: "b" * 40)
+    assert_fresh_configure(m, fakes, B.build(m, Path("/src")))
+
+
+def test_head_of_a_work_tree(tmp_path):
+    assert B._head(tmp_path) is None
+    env = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_SYSTEM": "/dev/null"}
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, env=env)
+    subprocess.run(["git", "-C", str(tmp_path), "-c", "user.name=T", "-c", "user.email=t@e",
+                    "commit", "-q", "--allow-empty", "-m", "a"], check=True, env=env)
+    sha = subprocess.run(["git", "-C", str(tmp_path), "rev-parse", "HEAD"], check=True,
+                         capture_output=True, text=True).stdout.strip()
+    assert B._head(tmp_path) == sha
 
 
 def test_old_build_dir_without_fingerprint_reconfigures_fresh(tmp_path, fakes):

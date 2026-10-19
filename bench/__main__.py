@@ -13,10 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from bench.build import build
-from bench.checkout import (DEVELOP, ensure_clone, prepare_worktree, read_last, resolve,
-                            should_run, write_last)
+from bench.checkout import (DEVELOP, ensure_clone, lacks, prepare_worktree, read_last,
+                            resolve, should_run, write_last)
 from bench.energy import snapshot as pm_counters
-from bench.groups import GROUPS, invocations
+from bench.groups import ADDED, GROUPS, invocations
 from bench.machine import load_machine
 from bench.record import (REPO, gpu_info, results_dir_name, run_record, script_version,
                           toolchain_info)
@@ -85,6 +85,7 @@ def cmd_run(args) -> int:
     if not should_run(commit, read_last(state), args.ref, args.force):
         print(f"nothing to do: {commit.sha} already benchmarked")
         return 0
+    unavailable = lacks(clone, commit.sha, ADDED)  # e.g. on an older release
     started = _now()
     gpu, toolchain = gpu_info(m), toolchain_info(m)
     counters = pm_counters()  # which energy counters this node has
@@ -142,8 +143,8 @@ def cmd_run(args) -> int:
             record()
             t = time.monotonic()
             try:
-                results[g] = run_group(g, invocations(m, manifest, [g]), m.srun, out,
-                                       deadline=deadline)
+                results[g] = run_group(g, invocations(m, manifest, [g], unavailable),
+                                       m.srun, out, deadline=deadline)
             except Exception as e:
                 results[g] = {"status": "failed", "reason": f"{type(e).__name__}: {e}",
                               "seconds": time.monotonic() - t, "invocations": []}

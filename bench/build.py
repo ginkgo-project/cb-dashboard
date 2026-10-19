@@ -105,18 +105,30 @@ def _read_json(path: Path):
         return None
 
 
+def _head(src: Path) -> str | None:
+    """The commit checked out in src, None outside a git work tree."""
+    try:
+        return subprocess.run(["git", "-C", str(src), "rev-parse", "HEAD"], check=True,
+                              capture_output=True, text=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
 def build(m: Machine, src: Path, jobs: int = 64) -> dict:
     """Configure if needed, then build TARGETS.
 
     It configures when there is no build.ninja (missing or half configured
     directory), or when the fingerprint in build_dir/cb-config.json (uenv,
-    configure arguments, compiler versions) differs from this run's; then with
-    `cmake --fresh` if a CMakeCache.txt is there to discard.
+    configure arguments, compiler versions, Ginkgo commit) differs from this
+    run's; then with `cmake --fresh` if a CMakeCache.txt is there to discard.
+    So a new commit never reuses a cache another Ginkgo version wrote, and
+    ninja still rebuilds only what changed.
     """
     start = time.monotonic()
     gcc_root = detect_gcc_root() if m.needs_gcc_root else None
     args = configure_args(m, src, gcc_root)
-    fingerprint = {"uenv": m.uenv, "configure_args": args, "compilers": compiler_versions()}
+    fingerprint = {"uenv": m.uenv, "configure_args": args, "compilers": compiler_versions(),
+                   "commit": _head(src)}
     fp_path = m.build_dir / FINGERPRINT
     changed = _read_json(fp_path) != fingerprint
     configured = changed or not (m.build_dir / "build.ninja").is_file()
