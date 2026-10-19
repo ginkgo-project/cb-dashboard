@@ -315,3 +315,42 @@ test("parameterPaths: paths as the build writes them", () => {
   assert.equal(logic.childPath("", "a", false), "a");
   assert.equal(logic.childPath("a", "0", true), "a[0]");
 });
+
+test("triadChartModel: classes cycle in order of first appearance of the node", () => {
+  const history = [
+    { dir: "d1", date: "2026-10-01", node: "nidA", triad: 3.6e12 },
+    { dir: "d2", date: "2026-10-08", node: "nidB", triad: 3.7e12 },
+    { dir: "d3", date: "2026-10-15", node: "nidA", triad: 3.65e12 },
+  ];
+  const model = logic.triadChartModel(history, { width: 480, height: 160 });
+  assert.deepEqual(model.dots.map((d) => d.cls), ["n0", "n1", "n0"]);
+  assert.deepEqual(model.dots.map((d) => d.node), ["nidA", "nidB", "nidA"]);
+  assert.ok(model.dots[0].cx < model.dots[1].cx && model.dots[1].cx < model.dots[2].cx);
+  assert.ok(model.dots[1].cy < model.dots[0].cy); // larger triad is higher up
+  assert.ok(model.yTicks.length >= 2);
+  for (const d of model.dots) assert.ok(Number.isFinite(d.cx) && Number.isFinite(d.cy) && d.title.includes(d.node));
+});
+
+test("triadChartModel: one run, no runs, and more nodes than classes", () => {
+  assert.deepEqual(logic.triadChartModel([]).dots, []);
+  const one = logic.triadChartModel([{ dir: "d", date: "x", node: "n", triad: 3e12 }]);
+  assert.equal(one.dots.length, 1);
+  assert.ok(Number.isFinite(one.dots[0].cx) && Number.isFinite(one.dots[0].cy));
+  const many = logic.triadChartModel(Array.from({ length: 7 }, (_, i) => ({ dir: `d${i}`, date: "x", node: `n${i}`, triad: 3e12 + i })));
+  assert.equal(many.dots[6].cls, "n0");
+});
+
+test("energyRows: the latest run directory, gpuW = gpu_j / seconds", () => {
+  const groups = [
+    { dir: "r1", group: "spmv", seconds: 100, gpu_j: 1 },
+    { dir: "r2", group: "spmv", seconds: 213, gpu_j: 28359, node_j: 150262, cpu_j: 33703 },
+    { dir: "r2", group: "blas", seconds: 3.5, gpu_j: 392, node_j: 2312 },
+    { dir: "r2", group: "solver", seconds: 70, status: "ok" },
+  ];
+  const rows = logic.energyRows(groups);
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows[0], { group: "spmv", seconds: 213, gpuJ: 28359, gpuW: 28359 / 213, nodeJ: 150262, cpuJ: 33703 });
+  assert.deepEqual(rows[1], { group: "blas", seconds: 3.5, gpuJ: 392, gpuW: 392 / 3.5, nodeJ: 2312, cpuJ: null });
+  assert.deepEqual(rows[2], { group: "solver", seconds: 70, gpuJ: null, gpuW: null, nodeJ: null, cpuJ: null });
+  assert.deepEqual(logic.energyRows([]), []);
+});

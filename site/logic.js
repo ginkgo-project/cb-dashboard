@@ -367,3 +367,41 @@ export function parameterPaths(value, path = "") {
   }
   return [{ path, value }];
 }
+
+// ---- machines tab ----
+
+// history: machines.json triad list, in run order. x is the run order, y the
+// triad bandwidth, linear with 5% padding; cls cycles n0-n5 by first sight of the node.
+export function triadChartModel(history, { width = 480, height = 160 } = {}) {
+  const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
+  const runs = (history ?? []).filter((h) => Number.isFinite(h.triad));
+  if (!runs.length) return { dots: [], xTicks: [], yTicks: [], plot };
+  const lo = Math.min(...runs.map((h) => h.triad));
+  const hi = Math.max(...runs.map((h) => h.triad));
+  const pad = hi > lo ? (hi - lo) * 0.05 : hi * 0.05;
+  const sy = (v) => plot.y0 + ((v - (lo - pad)) / (hi + pad - (lo - pad))) * (plot.y1 - plot.y0);
+  const sx = (i) => (runs.length === 1 ? (plot.x0 + plot.x1) / 2 : plot.x0 + (i / (runs.length - 1)) * (plot.x1 - plot.x0));
+  const seen = [];
+  const dots = runs.map((h, i) => {
+    if (!seen.includes(h.node)) seen.push(h.node);
+    return {
+      cx: sx(i), cy: sy(h.triad), node: h.node, cls: `n${seen.indexOf(h.node) % 6}`,
+      title: `${h.node}${DOT}${h.date ?? h.dir}${DOT}${formatValue(h.triad, "gbs")}`,
+    };
+  });
+  const every = Math.ceil(runs.length / 6);
+  const xTicks = runs.map((h, i) => ({ value: i, pos: sx(i), label: h.date ?? h.dir })).filter((_, i) => i % every === 0);
+  return { dots, xTicks, yTicks: linearTicks(lo - pad, hi + pad, sy, (v) => formatValue(v, "gbs")), plot };
+}
+
+// groups: machines.json groups; the rows are those of the latest run directory.
+export function energyRows(groups) {
+  if (!groups?.length) return [];
+  const latest = groups[groups.length - 1].dir;
+  const orNull = (v) => (v === undefined ? null : v);
+  return groups.filter((g) => g.dir === latest).map((g) => ({
+    group: g.group, seconds: g.seconds, gpuJ: orNull(g.gpu_j),
+    gpuW: g.gpu_j !== undefined && g.seconds ? g.gpu_j / g.seconds : null,
+    nodeJ: orNull(g.node_j), cpuJ: orNull(g.cpu_j),
+  }));
+}

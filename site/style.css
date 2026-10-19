@@ -140,3 +140,27 @@ td.number { text-align: right; white-space: nowrap; }
 .settings > .params { padding-left: 0; }
 .params .param { color: var(--muted); }
 .params li.changed > .param, .params .was, p.changed { color: var(--cancel); font-weight: 600; }
+
+/* machines tab */
+.machine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 8px 32px; }
+.machine h3 { margin: 4px 0; }
+.machine h4 { margin: 16px 0 4px; }
+.machine pre { max-height: 240px; overflow: auto; font-size: 0.75rem; background: var(--panel); padding: 8px; }
+.machine dl.values { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 4px 0; }
+.machine dd { margin: 0; overflow-wrap: anywhere; }
+.nested { margin: 2px 0; padding-left: 18px; font-size: 0.8rem; }
+.runs { padding-left: 18px; }
+.key { margin-right: 10px; white-space: nowrap; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+.chart .dot.n0 { fill: var(--accent); }
+.swatch.n0 { background: var(--accent); }
+.chart .dot.n1 { fill: var(--run); }
+.swatch.n1 { background: var(--run); }
+.chart .dot.n2 { fill: var(--ok); }
+.swatch.n2 { background: var(--ok); }
+.chart .dot.n3 { fill: var(--fail); }
+.swatch.n3 { background: var(--fail); }
+.chart .dot.n4 { fill: var(--cancel); }
+.swatch.n4 { background: var(--cancel); }
+.chart .dot.n5 { fill: var(--none); }
+.swatch.n5 { background: var(--none); }

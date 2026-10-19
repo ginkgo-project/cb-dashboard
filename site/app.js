@@ -2,7 +2,7 @@
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows } from "./logic.js";
+  rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
@@ -402,8 +402,85 @@ function renderTabTables(root, data, tab) {
   } else if (tab === "preconditioners") renderPreconditionerTable(root, data, tab);
 }
 
-function renderMachines(root) {
-  root.append(el("p", { class: "none" }, "The machines tab is not built yet."));
+const fmt = (x, kind) => (x === null || x === undefined ? "–" : formatValue(x, kind));
+const joules = (x) => (x === null || x === undefined ? "–" : Math.round(x).toLocaleString("en"));
+
+// nested object -> nested list; keys and values are text nodes
+function nestedList(value) {
+  if (value === null || typeof value !== "object") return String(value);
+  return el("ul", { class: "nested" }, Object.entries(value).map(([k, v]) =>
+    el("li", {}, typeof v === "object" && v !== null ? [el("strong", {}, k), nestedList(v)] : `${k}: ${v}`)));
+}
+
+function renderSetup(setup) {
+  const rows = [
+    ["GPU", setup.gpu], ["Driver", setup.driver],
+    ["Power limit", setup.power_limit_w != null ? `${setup.power_limit_w} W` : null],
+    ["Partition", setup.partition], ["Binding", setup.binding ? `${(setup.binding.srun ?? []).join(" ")} (cpus ${setup.binding.cpus ?? "?"})` : null],
+    ["uenv", setup.uenv], ["Compilers", Object.values(setup.toolchain ?? {}).join("; ")],
+    ["Dataset version", setup.dataset_version],
+  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+  return [
+    el("dl", { class: "values setup" }, rows.map(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
+    el("details", { class: "detail" }, el("summary", {}, "CMake flags"),
+      el("pre", {}, Object.entries(setup.cmake_cache ?? {}).filter(([, v]) => v !== "").map(([k, v]) => `${k}=${v}`).join("\n"))),
+    el("details", { class: "detail" }, el("summary", {}, "Benchmark settings"),
+      el("dl", { class: "values" }, Object.entries(setup.settings ?? {}).map(([k, v]) => [el("dt", {}, k), el("dd", {}, String(v))]))),
+  ];
+}
+
+function renderTriad(m) {
+  const model = triadChartModel(m.triad);
+  const out = [];
+  if (!model.dots.length) out.push(el("p", { class: "none" }, "No run has a node bandwidth yet."));
+  else {
+    const nodes = [...new Set(m.triad.map((t) => t.node))];
+    const frame = chartFrame(model, "Node bandwidth over time", "run", "triad", 480, 160);
+    frame.append(svg("g", {}, model.dots.map((d) => svg("circle", { class: `dot ${d.cls}`, cx: d.cx, cy: d.cy, r: 4.5 }, svg("title", {}, d.title)))));
+    out.push(frame, el("p", { class: "legend" }, "Colour is the node: ",
+      nodes.map((n, i) => el("span", { class: "key" }, el("span", { class: `swatch n${i % 6}` }), n)), ". Only runs with a measured triad are shown."));
+  }
+  out.push(el("details", { class: "detail" }, el("summary", {}, "Nodes seen"),
+    table(["node", "runs", "min", "median", "max"], m.nodes.map((n) => [n.node, n.runs, fmt(n.triad_min, "gbs"), fmt(n.triad_median, "gbs"), fmt(n.triad_max, "gbs")])),
+    m.nodes.filter((n) => n.gpu_after).map((n) => el("details", { class: "detail" }, el("summary", {}, `${n.node}: last gpu_after`), nestedList(n.gpu_after)))));
+  return out;
+}
+
+function renderEnergy(id, m) {
+  const rows = energyRows(m.groups);
+  const out = [];
+  if (!rows.some((r) => r.gpuJ !== null || r.nodeJ !== null)) out.push(el("p", { class: "none" }, "The latest run has no energy readings."));
+  else {
+    out.push(table(["group", "seconds", "GPU J", "GPU W", "node J"], rows.map((r) =>
+      [r.group, r.seconds != null ? r.seconds.toFixed(0) : "–", joules(r.gpuJ), r.gpuW !== null ? r.gpuW.toFixed(0) : "–", joules(r.nodeJ)]), "energy"));
+    if (id.startsWith("beverin")) out.push(el("p", { class: "legend" }, "On the MI300A, accel0 is the whole APU, CPU included, so GPU J includes the CPU."));
+  }
+  if (rows.some((r) => r.cpuJ !== null)) {
+    out.push(el("details", { class: "detail" }, el("summary", {}, "CPU energy"),
+      table(["group", "CPU J"], rows.map((r) => [r.group, joules(r.cpuJ)]))));
+  }
+  out.push(el("h4", {}, "Run durations"), el("ul", { class: "runs" }, m.runs.map((r) =>
+    el("li", {}, `${r.dir}: ${r.status}, ${formatSeconds(r.seconds)}${r.failed ? `, ${r.failed} failed` : ""}${r.killed ? ", killed" : ""}`))));
+  return out;
+}
+
+async function renderMachines(root, token) {
+  let data;
+  try {
+    if (!state.machines) state.machines = await loadJson("data/machines.json");
+    data = state.machines;
+  } catch (error) {
+    if (tokens.isLatest(token)) showBanner("error", `Could not load the machines data: ${error.message}`);
+    return;
+  }
+  if (!tokens.isLatest(token)) return;
+  const ids = Object.keys(data.machines);
+  const column = (title, build) => [el("h2", {}, title),
+    el("div", { class: "machine-grid" }, ids.map((id) => el("section", { class: "machine" }, el("h3", {}, machineLabel(id)), build(id, data.machines[id]))))];
+  root.append(
+    column("Setup", (id, m) => renderSetup(m.setup)),
+    column("Node bandwidth over time", (id, m) => renderTriad(m)),
+    column("Runs and energy", (id, m) => renderEnergy(id, m)));
 }
 
 function renderTab(root, tab, data) {
@@ -425,7 +502,7 @@ async function render() {
   const root = document.getElementById("view");
   root.replaceChildren();
   if (tab === "machines") {
-    renderMachines(root);
+    await renderMachines(root, token);
     return;
   }
   try {
