@@ -2,11 +2,11 @@
 // through text nodes (the put helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  flatChildren, cellLink, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
+  flatChildren, cellLink, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, zoomView, panView, plotFraction, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab; shown: the route
-// of the last rendered tab
-const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} }, shown: null };
+// of the last rendered tab; views: the roofline view of each tab
+const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} }, shown: null, views: {} };
 const tokens = renderTokens();
 const boxTokens = renderTokens(); // one click box fill at a time
 const TAB_FILES = ["basic", "solvers", "preconditioners"];
@@ -298,25 +298,96 @@ function renderCharts(root, data, tab) {
       frame);
   }
 
+  renderRoofline(root, data, tab);
+}
+
+const ROOF = { width: 640, height: 360 };
+
+function rooflineFrame(rf) {
+  const order = Object.keys(state.meta.machines);
+  const { plot } = rf;
+  const frame = chartFrame(rf, "Roofline, this week", "intensity (flop per byte)", "GFLOP/s", ROOF.width, ROOF.height);
+  return put(frame,
+    svg("clipPath", { id: "roofline-plot" },
+      svg("rect", { x: plot.x0, y: plot.y1, width: plot.x1 - plot.x0, height: plot.y0 - plot.y1 })),
+    svg("g", { "clip-path": "url(#roofline-plot)" },
+      rf.ceilings.map((c) => svg("polyline", { class: `ceiling m${order.indexOf(c.machine)}`, points: c.points, fill: "none" },
+        svg("title", {}, `${machineLabel(c.machine)} ceiling`))),
+      rf.dots.map((d) => {
+        const series = markerSeries(order, d.machine);
+        return marker(series.shape, d.cx, d.cy, series.index, d.title);
+      })));
+}
+
+// The roofline, zoomed and panned in place: the view of each tab is kept in
+// state.views while the page is open, null for the whole roofline. The host
+// stays while the svg inside it is redrawn, so a drag keeps its pointer.
+function renderRoofline(root, data, tab) {
   put(root, el("h2", {}, "Roofline, this week"));
-  const rf = rooflineModel(data.latest, state.meta.machines, data.cases);
-  if (!rf.dots.length) {
+  const model = (view) => rooflineModel(data.latest, state.meta.machines, data.cases, { ...ROOF, view });
+  let rf = model(state.views[tab]);
+  if (!rf.total) {
     put(root, el("p", { class: "none" }, "No results with a known flops-per-byte this week."));
     return;
   }
+  const host = el("div", { class: "zoomable" });
+  const count = el("span", { class: "legend" });
+  const draw = (view) => {
+    state.views[tab] = view;
+    rf = model(view);
+    replace(host, rooflineFrame(rf));
+    replace(count, rf.dots.length < rf.total ? `${rf.dots.length} of ${rf.total} results in view` : "");
+  };
+  let next = null; // the view of the next animation frame
+  const later = (view) => {
+    if (!next) requestAnimationFrame(() => { const v = next; next = null; draw(v); });
+    next = view;
+  };
+  const at = (e) => plotFraction(rf.plot, ROOF, host.firstChild.getBoundingClientRect(), e.clientX, e.clientY);
+  const clamp = (f) => Math.min(1, Math.max(0, f));
+
+  host.addEventListener("wheel", (e) => {
+    if (!e.ctrlKey && !e.metaKey) return; // a plain wheel scrolls the page; a pinch comes with ctrlKey
+    e.preventDefault();
+    const { fx, fy } = at(e);
+    const pixels = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+    later(zoomView(next ?? rf.view, rf.domain, Math.exp(pixels * 0.002), clamp(fx), clamp(fy)));
+  }, { passive: false });
+  let drag = null;
+  host.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    drag = { id: e.pointerId, from: at(e), view: rf.view };
+    host.setPointerCapture(e.pointerId);
+    host.classList.add("dragging");
+  });
+  host.addEventListener("pointermove", (e) => {
+    if (drag?.id !== e.pointerId) return;
+    const p = at(e);
+    later(panView(drag.view, rf.domain, drag.from.fx - p.fx, drag.from.fy - p.fy));
+  });
+  const drop = (e) => {
+    if (drag?.id !== e.pointerId) return;
+    drag = null;
+    host.classList.remove("dragging");
+  };
+  host.addEventListener("pointerup", drop);
+  host.addEventListener("pointercancel", drop);
+  host.addEventListener("dblclick", () => draw(null));
+
+  const button = (text, title, onclick) => el("button", { type: "button", title, onclick }, text);
   const order = Object.keys(state.meta.machines);
-  const frame = chartFrame(rf, "Roofline, this week", "intensity (flop per byte)", "GFLOP/s", 640, 360);
-  put(frame, svg("g", {},
-    rf.ceilings.map((c) => svg("polyline", { class: `ceiling m${order.indexOf(c.machine)}`, points: c.points, fill: "none" },
-      svg("title", {}, `${machineLabel(c.machine)} ceiling`))),
-    rf.dots.map((d) => {
-      const series = markerSeries(order, d.machine);
-      return marker(series.shape, d.cx, d.cy, series.index, d.title);
-    })));
   put(root,
     el("p", { class: "legend" }, order.map((id, i) => `${i === 0 ? "circles" : "squares"}: ${machineLabel(id)}`).join("; ")
-      + ". Lines: measured triad bandwidth times intensity, up to the fp64 peak."),
-    frame);
+      + ". Lines: measured triad bandwidth times intensity, up to the fp64 peak."
+      + " Drag to pan; ctrl or ⌘ and the wheel, or a pinch, zoom; a double click shows the whole roofline."),
+    el("div", { class: "filters zoom" },
+      button("+", "zoom in", () => draw(zoomView(rf.view, rf.domain, 0.5))),
+      button("−", "zoom out", () => draw(zoomView(rf.view, rf.domain, 2))),
+      button("fit the results", "zoom to the results and the ceilings above them", () => draw(rf.fit)),
+      button("whole roofline", "zoom out to the whole roofline", () => draw(null)),
+      count),
+    host);
+  draw(state.views[tab]);
 }
 const STATE_TEXT = (state) => String(state).replaceAll("_", " ");
 const num = (x, render) => (x === null || x === undefined ? "–" : render(x));

@@ -139,6 +139,11 @@ td.number { text-align: right; white-space: nowrap; }
 .chart .ceiling { stroke-width: 2; }
 .chart .ceiling.m0 { stroke: var(--accent); }
 .chart .ceiling.m1 { stroke: var(--run); }
+.chart .dot:hover { stroke: var(--fg); stroke-width: 2; }
+.zoomable { max-width: 760px; cursor: grab; user-select: none; -webkit-user-select: none; }
+.zoomable.dragging { cursor: grabbing; }
+.filters.zoom { align-items: center; margin-bottom: 0; }
+.filters.zoom button { align-self: auto; min-width: 2em; }
 .params { list-style: none; margin: 2px 0; padding-left: 16px; font-family: ui-monospace, monospace; font-size: 0.8rem; }
 .settings > .params { padding-left: 0; }
 .params .param { color: var(--muted); }

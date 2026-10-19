@@ -270,8 +270,8 @@ function decadeTicks(e0, e1, scale) {
   return ticks;
 }
 
-function linearTicks(lo, hi, scale, format) {
-  const step0 = (hi - lo) / 5;
+function linearTicks(lo, hi, scale, format, count = 5) {
+  const step0 = (hi - lo) / count;
   const mag = 10 ** Math.floor(Math.log10(step0));
   const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= step0);
   const ticks = [];
@@ -280,6 +280,83 @@ function linearTicks(lo, hi, scale, format) {
     ticks.push({ value, pos: scale(value), label: format(value) });
   }
   return ticks;
+}
+
+// a tick label: plain from 10⁻³ to below 10⁵, else m·10ⁿ
+export function tickNumber(v) {
+  const e = v > 0 ? Math.floor(Math.log10(v) + 1e-9) : 0;
+  if (e >= -3 && e < 5) return String(Number(v.toPrecision(6)));
+  const m = Number((v / 10 ** e).toPrecision(6));
+  return m === 1 ? tenPower(e) : `${m}·${tenPower(e)}`;
+}
+
+// The ticks of a log axis over [lo, hi]: whole decades when three fit, else
+// 1, 2 and 5 of each decade, else about eight evenly spaced ones (deep in
+// a zoom).
+export function logTicks(lo, hi, scale) {
+  const inside = (v) => v >= lo * (1 - 1e-9) && v <= hi * (1 + 1e-9);
+  for (const ms of [[1], [1, 2, 5]]) {
+    const ticks = [];
+    for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) {
+      for (const m of ms) {
+        const value = m * 10 ** e;
+        if (inside(value)) ticks.push({ value, pos: scale(value), label: ms.length === 1 ? tenPower(e) : tickNumber(value) });
+      }
+    }
+    if (ticks.length >= 3) return ticks;
+  }
+  return linearTicks(lo, hi, scale, tickNumber, 8);
+}
+
+// ---- zoom and pan of a log-log chart; a range is [lo, hi] in data units ----
+
+const MIN_DECADES = 0.02; // the deepest zoom, in decades of an axis
+const FIT_DECADES = 0.1; // the narrowest range "fit the results" picks
+
+const logRange = ([lo, hi]) => [Math.log10(lo), Math.log10(hi)];
+
+// the log range [a, a + span], moved and shrunk to lie inside the domain
+function placeRange(a, span, [da, db]) {
+  const s = Math.min(Math.max(span, MIN_DECADES), db - da);
+  const start = Math.min(Math.max(a, da), db - s);
+  return [10 ** start, 10 ** (start + s)];
+}
+
+// range scaled by factor (below 1 zooms in) around the point at fraction at
+// of it (0 at lo, 1 at hi), which stays where it is
+export function zoomRange(range, domain, factor, at = 0.5) {
+  const [a, b] = logRange(range);
+  const d = logRange(domain);
+  const span = Math.min(Math.max((b - a) * factor, MIN_DECADES), d[1] - d[0]);
+  return placeRange(a + at * (b - a) - at * span, span, d);
+}
+
+// range moved by frac of its width, towards hi when positive
+export function panRange(range, domain, frac) {
+  const [a, b] = logRange(range);
+  return placeRange(a + frac * (b - a), b - a, logRange(domain));
+}
+
+// [lo, hi] with pad of its width on each side
+export function fitRange([lo, hi], domain, pad = 0.08) {
+  const [a, b] = logRange([lo, hi]);
+  const span = Math.max(b - a, FIT_DECADES) * (1 + 2 * pad);
+  return placeRange((a + b - span) / 2, span, logRange(domain));
+}
+
+// a view is {x: range, y: range}; fx and fy are fractions across the plot
+export const zoomView = (view, domain, factor, fx = 0.5, fy = 0.5) =>
+  ({ x: zoomRange(view.x, domain.x, factor, fx), y: zoomRange(view.y, domain.y, factor, fy) });
+export const panView = (view, domain, fx, fy) =>
+  ({ x: panRange(view.x, domain.x, fx), y: panRange(view.y, domain.y, fy) });
+
+// Where a pointer at clientX, clientY is across the plot of an svg of
+// viewBox size drawn in rect: fx 0 at the left, fy 0 at the bottom, 1 at
+// the right and the top.
+export function plotFraction(plot, { width, height }, rect, clientX, clientY) {
+  const ux = ((clientX - rect.left) / rect.width) * width;
+  const uy = ((clientY - rect.top) / rect.height) * height;
+  return { fx: (ux - plot.x0) / (plot.x1 - plot.x0), fy: (plot.y0 - uy) / (plot.y0 - plot.y1) };
 }
 
 const Y_KINDS = {
@@ -348,7 +425,11 @@ export function markerSeries(order, id) {
 // machines: {id: {label, fp64_peak}}; latest: tabData.latest. x is the
 // intensity (flops/byte), y GFLOP/s, both log. The ceiling of a machine is
 // min(triad * I, peak); without a triad only the flat peak line is drawn.
-export function rooflineModel(latest, machines, cases, { width = 640, height = 360 } = {}) {
+// domain is the whole roofline, view the part drawn (the domain unless a
+// view is given), fit the view holding all results and the ceilings above
+// them; total counts the results, dots only those in the view. Ceilings
+// can leave a zoomed plot: the page clips them.
+export function rooflineModel(latest, machines, cases, { width = 640, height = 360, view = null } = {}) {
   const byKey = new Map(cases.map((c) => [c.key, c]));
   const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
   const raw = [];
@@ -368,15 +449,28 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
   }
   const xs = [...raw.map((d) => d.i), ...ceil.filter((c) => c.knee).map((c) => c.knee)];
   const ys = [...raw.map((d) => d.g), ...ceil.map((c) => c.peak)];
-  if (!xs.length || !ys.length) return { dots: [], ceilings: [], xTicks: [], yTicks: [], plot };
+  if (!raw.length || !xs.length || !ys.length) return { dots: [], ceilings: [], xTicks: [], yTicks: [], plot, total: 0 };
+  // the domain: whole decades, widened to hold the fit, so that no result
+  // of the fit sits on the plot's edge
+  const along = (lo, hi) => fitRange([lo, hi], [1e-300, 1e300]);
+  const union = ([a, b], [c, d]) => [Math.min(a, c), Math.max(b, d)];
+  const fitX = along(Math.min(...raw.map((d) => d.i)), Math.max(...raw.map((d) => d.i)));
   const [x0e, x1e] = decadeDomain(Math.min(...xs), Math.max(...xs));
+  const dx = union([10 ** x0e, 10 ** x1e], fitX);
+  const ceilingAt = (c, i) => (c.triad ? Math.min(c.triad * i, c.peak) : c.peak);
+  const above = ceil.flatMap((c) => fitX.map((i) => ceilingAt(c, i)));
+  const fitY = along(Math.min(...raw.map((d) => d.g)), Math.max(...raw.map((d) => d.g), ...above));
   // the ceiling's lowest point is min(triad * xlo, peak): part of the y domain
-  const lows = ceil.map((c) => (c.triad ? Math.min(c.triad * 10 ** x0e, c.peak) : c.peak));
+  const lows = ceil.map((c) => ceilingAt(c, dx[0]));
   const [y0e, y1e] = decadeDomain(Math.min(...ys, ...lows), Math.max(...ys));
-  const sx = logScale(10 ** x0e, 10 ** x1e, plot.x0, plot.x1);
-  const sy = logScale(10 ** y0e, 10 ** y1e, plot.y0, plot.y1);
-  const xlo = 10 ** x0e;
-  const xhi = 10 ** x1e;
+  const domain = { x: dx, y: union([10 ** y0e, 10 ** y1e], fitY) };
+  const fit = { x: fitX, y: fitY };
+  const shown = view ? panView(view, domain, 0, 0) : domain; // moved inside the domain
+  const [xlo, xhi] = shown.x;
+  const [ylo, yhi] = shown.y;
+  const sx = logScale(xlo, xhi, plot.x0, plot.x1);
+  const sy = logScale(ylo, yhi, plot.y0, plot.y1);
+  const inView = (d) => d.i >= xlo * (1 - 1e-9) && d.i <= xhi * (1 + 1e-9) && d.g >= ylo * (1 - 1e-9) && d.g <= yhi * (1 + 1e-9);
   const ceilings = ceil.map((c) => {
     const pts = [];
     if (c.triad) {
@@ -389,11 +483,11 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
     return { machine: c.machine, knee: c.knee, points: pts.map(([i, g]) => `${sx(i)},${sy(g)}`).join(" ") };
   });
   return {
-    dots: raw.map((d) => ({ cx: sx(d.i), cy: sy(d.g), machine: d.machine, key: d.key, title: d.title })),
+    dots: raw.filter(inView).map((d) => ({ cx: sx(d.i), cy: sy(d.g), machine: d.machine, key: d.key, title: d.title })),
     ceilings,
-    xTicks: decadeTicks(x0e, x1e, sx),
-    yTicks: decadeTicks(y0e, y1e, sy),
-    plot,
+    xTicks: logTicks(xlo, xhi, sx),
+    yTicks: logTicks(ylo, yhi, sy),
+    plot, domain, view: shown, fit, total: raw.length,
   };
 }
 

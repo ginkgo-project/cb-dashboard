@@ -4,12 +4,13 @@
     python tests/dom_smoke.py [--require-browser]
 
 A page fails when its DOM contains "[object ", has a text node that is
-exactly "null" or "undefined", or lacks its landmark: the heatmap on the
-first three tabs, the setup on the machines tab, the selected cell and its
-click box when a cell is selected, and the stage filter on the
-preconditioners tab. Every flag link found on the tabs is followed too: it
-must show its cell. Without a browser the test skips, unless
---require-browser is given (as in CI). Standard library only.
+exactly "null" or "undefined", or lacks its landmark: the heatmap and the
+roofline with its zoom buttons on the first three tabs, the setup on
+the machines tab, the selected cell and its click box when a cell is
+selected, and the stage filter on the preconditioners tab. Every flag
+link found on the tabs is followed too: it must show its cell. Without a
+browser the test skips, unless --require-browser is given (as in CI).
+Standard library only.
 """
 from __future__ import annotations
 
@@ -120,6 +121,9 @@ CLICKBOX = ("filled click box",
                 t.strip() == "Command to reproduce" for t in d.texts))
 SETUP = ("machine setup", lambda d: d.has("dl", "values", "setup"))
 STAGES = ("stage filter", lambda d: d.has("option", value="generate"))
+ROOFLINE = ("roofline with its zoom buttons",
+            lambda d: d.has("svg", "chart", **{"aria-label": "Roofline, this week"})
+            and d.has("div", "filters", "zoom") and d.has("clippath", id="roofline-plot"))
 GENERATE = ("generate rows",
             lambda d: any(t.strip().endswith("(generate)") for t in d.texts))
 
@@ -155,8 +159,8 @@ def main(argv=None) -> int:
               f"no browser found ({', '.join(BROWSERS)})")
         return 1 if args.require_browser else 0
 
-    pages = [("#basic", [HEATMAP]), ("#solvers", [HEATMAP]),
-             ("#preconditioners", [HEATMAP, STAGES]),
+    pages = [("#basic", [HEATMAP, ROOFLINE]), ("#solvers", [HEATMAP, ROOFLINE]),
+             ("#preconditioners", [HEATMAP, STAGES, ROOFLINE]),
              ("#preconditioners?stage=generate", [HEATMAP, GENERATE]),
              ("#machines", [SETUP])]
     cell = default_cell(site)

@@ -459,3 +459,99 @@ test("markerSeries: the colour class and shape of a machine, as in the roofline"
   assert.deepEqual(logic.markerSeries(order, "beverin-mi300a"), { index: 1, shape: "square" });
   assert.deepEqual(logic.markerSeries(order, "zz"), { index: 0, shape: "circle" });
 });
+
+const near = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol * Math.max(1, Math.abs(b));
+const decades = ([lo, hi]) => Math.log10(hi / lo);
+
+test("tickNumber: plain from 10⁻³ to below 10⁵, else m·10ⁿ", () => {
+  assert.equal(logic.tickNumber(0.12), "0.12");
+  assert.equal(logic.tickNumber(250), "250");
+  assert.equal(logic.tickNumber(0.1 + 0.2), "0.3");
+  assert.equal(logic.tickNumber(2e5), "2·10⁵");
+  assert.equal(logic.tickNumber(1e-4), "10⁻⁴");
+});
+
+test("logTicks: decades, then 1-2-5, then even steps as the range narrows", () => {
+  const ticks = (lo, hi) => logic.logTicks(lo, hi, logic.logScale(lo, hi, 0, 100));
+  assert.deepEqual(ticks(1, 1e3).map((t) => t.label), ["10⁰", "10¹", "10²", "10³"]);
+  assert.deepEqual(ticks(0.15, 3).map((t) => t.label), ["0.2", "0.5", "1", "2"]);
+  const deep = ticks(0.1, 0.15);
+  assert.ok(deep.length >= 3, `${deep.length} ticks`);
+  for (const t of deep) {
+    assert.ok(t.value >= 0.1 && t.value <= 0.15 && t.pos >= 0 && t.pos <= 100, t.label);
+    assert.equal(t.label, String(Number(t.value.toPrecision(6))));
+  }
+  // less than half a decade: ticks across the whole range, not only its top
+  const half = ticks(0.104, 0.25);
+  assert.ok(half.length >= 5 && half[0].value < 0.13, half.map((t) => t.label).join(" "));
+});
+
+test("zoomRange: the point under the pointer stays, and the domain bounds the zoom", () => {
+  const domain = [1e-2, 1e2];
+  const r = logic.zoomRange([1e-1, 1e1], domain, 0.5, 0.25);
+  assert.ok(near(decades(r), 1));
+  assert.ok(near(Math.log10(r[0]) + 0.25 * decades(r), -0.5)); // a quarter in, as before
+  assert.deepEqual(logic.zoomRange([1e-1, 1e1], domain, 100).map(Math.log10), [-2, 2]);
+  assert.ok(near(decades(logic.zoomRange([1, 1.1], domain, 1e-6)), 0.02)); // the deepest zoom
+});
+
+test("panRange: moves by a fraction of the width and stops at the domain's edge", () => {
+  const domain = [1e-2, 1e2];
+  const r = logic.panRange([1e-1, 1e1], domain, 0.25);
+  assert.ok(near(Math.log10(r[0]), -0.5) && near(Math.log10(r[1]), 1.5));
+  const edge = logic.panRange([1e-1, 1e1], domain, -5);
+  assert.ok(near(Math.log10(edge[0]), -2) && near(decades(edge), 2));
+});
+
+test("fitRange: the values with a margin, and a single value gets a tenth of a decade", () => {
+  const r = logic.fitRange([0.1, 0.15], [1e-2, 1e2]);
+  assert.ok(r[0] < 0.1 && r[1] > 0.15 && decades(r) < 0.3);
+  const one = logic.fitRange([5, 5], [1e-2, 1e2]);
+  assert.ok(one[0] < 5 && one[1] > 5 && near(decades(one), 0.1 * 1.16));
+});
+
+test("plotFraction: the plot's corners are 0 and 1 at any drawn size", () => {
+  const plot = { x0: 60, x1: 626, y0: 322, y1: 12 };
+  const rect = { left: 100, top: 50, width: 320, height: 180 }; // drawn at half size
+  const at = (ux, uy) => logic.plotFraction(plot, { width: 640, height: 360 }, rect, 100 + ux / 2, 50 + uy / 2);
+  assert.deepEqual(at(60, 322), { fx: 0, fy: 0 });
+  assert.deepEqual(at(626, 12), { fx: 1, fy: 1 });
+});
+
+// a cluster like the solvers': intensities 0.10 to 0.15, far left of the knee
+const cluster = {
+  m1: { triad: 3e12, points: [
+    { key: "a", time: 1, gflops: 2.0e11, intensity: 0.10 },
+    { key: "b", time: 1, gflops: 2.5e11, intensity: 0.12 },
+    { key: "c", time: 1, gflops: 3.0e11, intensity: 0.15 }] },
+};
+
+test("rooflineModel: a view draws only its results, with ticks inside it", () => {
+  const full = logic.rooflineModel(cluster, { m1: { fp64_peak: 3e13 } }, scatterCases);
+  assert.equal(full.total, 3);
+  assert.deepEqual(full.view, full.domain);
+  const view = { x: [0.11, 0.2], y: [1e2, 1e3] };
+  const rf = logic.rooflineModel(cluster, { m1: { fp64_peak: 3e13 } }, scatterCases, { view });
+  assert.deepEqual(rf.dots.map((d) => d.key), ["b", "c"]);
+  assert.equal(rf.total, 3);
+  const { plot } = rf;
+  for (const t of rf.xTicks) assert.ok(t.pos >= plot.x0 - 1e-6 && t.pos <= plot.x1 + 1e-6, t.label);
+  for (const t of rf.yTicks) assert.ok(t.pos <= plot.y0 + 1e-6 && t.pos >= plot.y1 - 1e-6, t.label);
+  assert.ok(rf.xTicks.length >= 3 && rf.yTicks.length >= 3);
+});
+
+test("rooflineModel: a view outside the domain is moved into it", () => {
+  const rf = logic.rooflineModel(cluster, { m1: { fp64_peak: 3e13 } }, scatterCases, { view: { x: [1e5, 1e6], y: [1e-9, 1e-8] } });
+  assert.ok(rf.view.x[1] <= rf.domain.x[1] * (1 + 1e-9) && rf.view.y[0] >= rf.domain.y[0] * (1 - 1e-9));
+});
+
+test("rooflineModel: fit holds every result and the ceiling above them", () => {
+  const rf = logic.rooflineModel(cluster, { m1: { fp64_peak: 3e13 } }, scatterCases);
+  const { fit } = rf;
+  assert.ok(fit.x[0] < 0.10 && fit.x[1] > 0.15 && decades(fit.x) < decades(rf.domain.x) / 5);
+  assert.ok(fit.y[0] < 200 && fit.y[1] > 3000 * 0.15); // the bandwidth ceiling at 0.15 is 450 GFLOP/s
+  const zoomed = logic.rooflineModel(cluster, { m1: { fp64_peak: 3e13 } }, scatterCases, { view: fit });
+  assert.equal(zoomed.dots.length, 3);
+  const spread = Math.max(...zoomed.dots.map((d) => d.cx)) - Math.min(...zoomed.dots.map((d) => d.cx));
+  assert.ok(spread > (rf.plot.x1 - rf.plot.x0) / 2, `${spread}`); // the cluster spreads over the plot
+});
