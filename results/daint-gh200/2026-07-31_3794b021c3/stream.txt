@@ -1,0 +1,11 @@
+CUDA Driver: 13020
+CUDA Device 0: "NVIDIA GH200 120GB" 132 SMs(9,0) Memory: 2619 MHz x 6144-bit = 4022.78 GB/s PEAK, ECC is ON
+Memory Allocation: DEFAULT
+Parallel for kernel config: thread blocks of size 256
+Reduction kernel config: 528 groups of (fixed) size 1024
+function,num_times,n_elements,sizeof,max_MB_per_sec,min_runtime,max_runtime,avg_runtime
+Copy,100,134217728,8,3.51108e+06,0.00061163,0.00061515,0.000612892
+Mul,100,134217728,8,3.48338e+06,0.000616494,0.000619982,0.000617682
+Add,100,134217728,8,3.69296e+06,0.000872262,0.000876583,0.00087455
+Triad,100,134217728,8,3.70055e+06,0.000870471,0.000877318,0.000872449
+Dot,100,134217728,8,3.65667e+06,0.000587279,0.000594606,0.00059096
