@@ -8,7 +8,9 @@ from .cases import Measurement
 from .load import Column, Run
 
 BASELINE_WINDOW, MIN_HISTORY, BAND_FLOOR, BAND_SIGMAS = 8, 4, 0.03, 3.0
-NOT_OK_ORDER = ("failed", "not_available", "disabled", "missing")
+# not available first: a commit that reports NotImplemented in one run lacks
+# the case, so a failure of it in another run (e.g. a timeout) says nothing
+NOT_OK_ORDER = ("not_available", "failed", "disabled", "missing")
 # a case that is now in one of these states, after another state in the
 # column before, is flagged as new
 NEW_STATES = {"not_available": "new_not_available", "missing": "new_missing"}

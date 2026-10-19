@@ -180,7 +180,12 @@ def test_failure_priority_order():
         rs = [run("a"), run("b")]
         cell = build([[(r, pt(r, None, s, error=s))
                        for r, s in zip(rs, order)]])[0]
-        assert cell.state == "failed" and cell.error == "failed"
+        assert cell.state == "not_available" and cell.error == "not_available"
+    for order in (("failed", "missing"), ("missing", "failed")):
+        rs = [run("a"), run("b")]
+        cell = build([[(r, pt(r, None, s, error=s))
+                       for r, s in zip(rs, order)]])[0]
+        assert cell.state == "failed"
 
 
 def bw_history(n_with_pct):
