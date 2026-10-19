@@ -254,3 +254,36 @@ def test_disabled_in_latest_run_wins():
     # the other way round, the newer run measured it: its value is shown
     later = build([[(a, pt(a, None, status="disabled")), (b, pt(b, 1e-3))]])[0]
     assert later.state == "history" and later.time == 1e-3
+
+
+def test_new_not_available_and_missing_are_flagged():
+    cells = {"m": {
+        "slow": [Cell("same"), Cell("slower", -0.1, 0.03)],
+        "na": [Cell("same"), Cell("not_available")],
+        "miss": [Cell("history"), Cell("missing")],
+        "fail": [Cell("same"), Cell("failed")],
+        "fail_na": [Cell("failed"), Cell("not_available")],
+        "old_na": [Cell("not_available"), Cell("not_available")],
+        "old_miss": [Cell("missing"), Cell("missing")],
+        "first_na": [Cell("not_available")],
+        "new_case": [None, Cell("missing")],
+    }}
+    assert [(f.key, f.state) for f in flags(cells)] == [
+        ("fail", "new_failure"), ("na", "new_not_available"),
+        ("fail_na", "new_not_available"), ("miss", "new_missing"),
+        ("slow", "slower")]
+
+
+def test_baseline_n_counts_the_earlier_values():
+    cells = series([1.0] * 11)
+    assert [c.baseline_n for c in cells] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8]
+
+
+def test_baseline_n_of_a_bandwidth_case():
+    assert bw_history(5).baseline_n == 5  # the columns with a node bandwidth
+    assert bw_history(3).baseline_n == 8  # raw time: all eight
+
+
+def test_baseline_n_absent_without_a_value():
+    rs = [run("a")]
+    assert build([[(rs[0], pt(rs[0], None, "failed"))]])[0].baseline_n is None

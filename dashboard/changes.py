@@ -9,6 +9,9 @@ from .load import Column, Run
 
 BASELINE_WINDOW, MIN_HISTORY, BAND_FLOOR, BAND_SIGMAS = 8, 4, 0.03, 3.0
 NOT_OK_ORDER = ("failed", "not_available", "disabled", "missing")
+# a case that is now in one of these states, after another state in the
+# column before, is flagged as new
+NEW_STATES = {"not_available": "new_not_available", "missing": "new_missing"}
 
 
 @dataclass
@@ -34,6 +37,7 @@ class Cell:
     residual: float | None = None
     storage: int | None = None
     levels: int | None = None
+    baseline_n: int | None = None  # earlier values the baseline is the median of
     params_changed: bool = False
     runs: list[str] = field(default_factory=list)
     error: str | None = None
@@ -137,6 +141,7 @@ def _compare(cell: Cell, detail: dict, kind: str, prev: list[dict]) -> None:
     else:
         cell.raw = kind == "bandwidth"
         current, values = detail["p_raw"], [d["p_raw"] for d in window]
+    cell.baseline_n = len(values)
     if len(values) < MIN_HISTORY:
         cell.state = "history"
         return
@@ -153,7 +158,9 @@ def _compare(cell: Cell, detail: dict, kind: str, prev: list[dict]) -> None:
 
 
 def flags(cells: dict[str, dict[str, list[Cell | None]]]) -> list[Flag]:
+    """New failures, cases now not available or missing, slower, faster."""
     new_failures, slower, faster = [], [], []
+    new_states: dict[str, list[Flag]] = {s: [] for s in NEW_STATES.values()}
     for machine, by_key in cells.items():
         for key, row in by_key.items():
             if not row:
@@ -168,13 +175,18 @@ def flags(cells: dict[str, dict[str, list[Cell | None]]]) -> list[Flag]:
                 if prev is None or prev.state != "failed":
                     flag.state = "new_failure"
                     new_failures.append(flag)
+            elif cell.state in NEW_STATES:
+                if prev is not None and prev.state != cell.state:
+                    flag.state = NEW_STATES[cell.state]
+                    new_states[flag.state].append(flag)
             elif cell.state == "slower":
                 slower.append(flag)
             elif cell.state == "faster":
                 faster.append(flag)
     slower.sort(key=lambda f: f.change)
     faster.sort(key=lambda f: -f.change)
-    return new_failures + slower + faster
+    return [*new_failures, *(f for fs in new_states.values() for f in fs),
+            *slower, *faster]
 
 
 def unchanged(cells: dict[str, dict[str, list[Cell | None]]],

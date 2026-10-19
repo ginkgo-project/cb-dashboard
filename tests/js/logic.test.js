@@ -373,3 +373,60 @@ test("app.js appends children only through put()", () => {
   assert.equal(source.match(/\.append\(/g)?.length, 1);
   assert.equal(source.match(/\.replaceChildren\(/g)?.length, 1);
 });
+
+test("cellLink: the case's view is in the link, so its row is shown", () => {
+  const coo = spmv("a", "coo");
+  assert.equal(logic.cellLink("basic", coo, "m1", 2), "#basic?cell=spmv%2Fcoo%2Fa%402&format=coo&machine=m1&operation=spmv");
+  const dot = { key: "blas/dot/1", group: "blas", labels: { operation: "dot", n: "1" } };
+  const spgemm = { key: "spgemm/x", group: "spgemm", labels: { operation: "spgemm", matrix: "x" } };
+  const gen = { key: "preconditioner/generate/jacobi/a", group: "preconditioner", labels: { stage: "generate", preconditioner: "jacobi", matrix: "a" } };
+  const cg = { key: "solver/cg/5pt", group: "solver", labels: { solver: "cg", stencil: "5pt" } };
+  assert.equal(logic.cellLink("solvers", cg, "m1", 0), "#solvers?cell=solver%2Fcg%2F5pt%400&machine=m1");
+  for (const [tab, c] of [["basic", coo], ["basic", dot], ["basic", spgemm], ["preconditioners", gen], ["solvers", cg]]) {
+    const { params } = logic.parseHash(logic.cellLink(tab, c, "m1", 3));
+    assert.ok(logic.rowFilter(tab, c, params), c.key);
+    assert.equal(params.cell, `${c.key}@3`);
+    assert.equal(params.format, c.labels.operation === "spmv" ? c.labels.format : undefined);
+  }
+});
+
+test("revealCell: only a newly selected cell is scrolled to", () => {
+  const route = (tab, params) => ({ tab, params });
+  const sel = route("basic", { machine: "m", cell: "k@1" });
+  assert.equal(logic.revealCell(null, sel), true);
+  assert.equal(logic.revealCell(route("basic", {}), sel), true);
+  assert.equal(logic.revealCell(route("basic", { machine: "m", cell: "k@0" }), sel), true);
+  assert.equal(logic.revealCell(route("solvers", { machine: "m", cell: "k@1" }), sel), true);
+  assert.equal(logic.revealCell(route("basic", { machine: "n", cell: "k@1" }), sel), true);
+  assert.equal(logic.revealCell(sel, route("basic", { machine: "m", cell: "k@1", x: "n" })), false);
+  assert.equal(logic.revealCell(sel, route("basic", { machine: "m" })), false);
+});
+
+test("rawNote: a comparison in raw time is marked, history is not", () => {
+  const c = fixture.cases[0];
+  const noStream = { state: "slower", change: -0.2, band: 0.03, raw: true, time: 2e-3 };
+  assert.equal(logic.rawNote(noStream), "compared in raw time: no node bandwidth for this run");
+  assert.equal(logic.rawNote({ ...noStream, pct: 0.4 }), "compared in raw time: too few earlier runs with a node bandwidth");
+  assert.equal(logic.rawNote({ ...noStream, raw: false }), null);
+  assert.equal(logic.rawNote({ state: "history", raw: true }), null); // not compared at all
+  assert.ok(logic.cellTitle(noStream, c).includes("compared in raw time: no node bandwidth for this run"));
+  assert.equal(logic.cellClass(noStream), "cell slower s3 raw");
+  assert.equal(logic.cellClass({ state: "same", raw: true }), "cell same raw");
+  assert.equal(logic.cellClass({ state: "history", raw: true }), "cell history");
+});
+
+test("flagText: a case now not available or missing", () => {
+  const c = { group: "spmv", labels: { operation: "spmv", format: "csr", matrix: "cage15" } };
+  assert.equal(logic.flagText({ state: "new_not_available" }, c, "Daint GH200"), "now not available · SpMV csr · cage15 · Daint GH200");
+  assert.equal(logic.flagText({ state: "new_missing" }, c, "Daint GH200"), "now missing · SpMV csr · cage15 · Daint GH200");
+});
+
+test("baselineText: the median of the previous N columns, and the previous column", () => {
+  const cols = fixture.machines.m1.columns;
+  assert.equal(logic.baselineText({ state: "slower", change: -0.2, band: 0.03, baseline_n: 5 }, cols, 2),
+    "Change against the median of the previous 5 columns; previous column: bbbbbbb (2026-10-02).");
+  assert.equal(logic.baselineText({ state: "history", baseline_n: 1 }, cols, 1),
+    "Not enough history yet: 1 earlier column with a value, 4 needed; previous column: aaaaaaa (2026-10-01).");
+  assert.equal(logic.baselineText({ state: "failed" }, cols, 1), "Previous column: aaaaaaa (2026-10-01).");
+  assert.equal(logic.baselineText({ state: "history", baseline_n: 0 }, cols, 0), "First column, nothing to compare with.");
+});

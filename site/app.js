@@ -2,10 +2,11 @@
 // through text nodes (the put helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  flatChildren, rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
+  flatChildren, cellLink, revealCell, rawNote, baselineText, rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 
-// tabs: the tab files, loaded on the first visit of the tab
-const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
+// tabs: the tab files, loaded on the first visit of the tab; shown: the route
+// of the last rendered tab
+const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} }, shown: null };
 const tokens = renderTokens();
 const boxTokens = renderTokens(); // one click box fill at a time
 const TAB_FILES = ["basic", "solvers", "preconditioners"];
@@ -97,9 +98,8 @@ function renderFlags(root, data, tab) {
   put(root, el("ul", { class: "flags" }, data.flags.map((flag) => {
     const c = byKey.get(flag.key) ?? { key: flag.key, group: "", labels: {} };
     return el("li", {},
-      el("span", { class: `flag ${flag.state}` }, flag.state.replace("_", " ")),
-      el("a", { href: formatHash(tab, { machine: flag.machine, cell: `${flag.key}@${flag.column}` }) },
-        flagText(flag, c, machineLabel(flag.machine))));
+      el("span", { class: `flag ${flag.state}` }, flag.state.replaceAll("_", " ")),
+      el("a", { href: cellLink(tab, c, flag.machine, flag.column) }, flagText(flag, c, machineLabel(flag.machine))));
   })));
 }
 
@@ -189,12 +189,13 @@ async function fillBox(box, data, tab, machine, key, col) {
     ["residual", cell.residual == null ? null : cell.residual.toExponential(2)],
     ["error", cell.error],
   ].filter(([, v]) => v != null);
-  const prev = columns[col - 1];
+  const raw = rawNote(cell);
   put(box,
     el("h3", {}, `${caseLabel(c)} · ${machineLabel(machine)} · ${columns[col]?.date ?? ""} at ${shortSha(columns[col]?.commit)}`),
     el("dl", { class: "values" }, values.map(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
     cell.params_changed ? el("p", { class: "banner warning" }, "Parameters changed since the previous column.") : null,
-    el("p", {}, prev ? `Compared with the previous column at commit ${shortSha(prev.commit)} (${prev.date}).` : "First column, nothing to compare with."));
+    raw ? el("p", { class: "banner warning" }, `${raw[0].toUpperCase()}${raw.slice(1)}.`) : null,
+    el("p", {}, baselineText(cell, columns, col)));
   const runsList = el("ul", { class: "runs-list" }, el("li", { class: "none" }, "Loading the runs ..."));
   const command = el("p", { class: "none" }, "Loading the command ...");
   put(box, el("h3", {}, "Runs"), runsList, el("h3", {}, "Command to reproduce"), command);
@@ -243,6 +244,7 @@ function renderHeatmap(root, data, tab) {
           onclick: () => { location.hash = formatHash(tab, { ...params, machine, cell: `${row.key}@${cell.col}` }); },
           onkeydown: (e) => { if (e.key === "Enter") e.target.click(); },
         }, cell.dot ? "•" : ""))))))),
+    el("p", { class: "legend" }, "A corner mark: compared in raw time, because a run had no node bandwidth."),
     box);
   if (selKey && selCol !== undefined) fillBox(box, data, tab, machine, selKey, Number(selCol));
   else put(box, el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
@@ -340,6 +342,14 @@ function renderBasicFilters(root, data) {
   put(root, el("div", { class: "filters" },
     select("operation", "operation", operations.map((o) => [o, o]), operation, "basic", params),
     operation === "spmv" ? select("format", "format", formats.map((f) => [f, f]), format, "basic", params) : null));
+}
+
+// apply or generate: the spec shows the two stages separately
+function renderStageFilter(root) {
+  const params = state.route.params;
+  const stage = params.stage === "generate" ? "generate" : "apply";
+  put(root, el("div", { class: "filters" },
+    select("stage", "stage", [["apply", "apply"], ["generate", "generate"]], stage, "preconditioners", params)));
 }
 
 function renderSolverTable(root, data) {
@@ -496,6 +506,7 @@ function renderTab(root, tab, data) {
   renderFlags(root, data, tab);
   renderUnchanged(root, data);
   if (tab === "basic") renderBasicFilters(root, data);
+  if (tab === "preconditioners") renderStageFilter(root);
   renderHeatmap(root, data, tab);
   renderCharts(root, data, tab);
   renderTabTables(root, data, tab);
@@ -523,6 +534,9 @@ async function render() {
   if (!tokens.isLatest(token)) return; // a newer render started while loading
   renderTab(root, tab, state.tabs[tab]);
   window.scrollTo(0, scrollY);
+  // a cell selected from a flag link or a pasted link: show its click box
+  if (revealCell(state.shown, state.route)) document.querySelector(".clickbox")?.scrollIntoView({ block: "nearest" });
+  state.shown = state.route;
 }
 
 function onHashChange() {

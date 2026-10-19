@@ -6,9 +6,10 @@
 A page fails when its DOM contains "[object ", has a text node that is
 exactly "null" or "undefined", or lacks its landmark: the heatmap on the
 first three tabs, the setup on the machines tab, the selected cell and its
-click box when a cell is selected. Every flag link found on the tabs is
-followed too. Without a browser the test skips, unless --require-browser is
-given (as in CI). Standard library only.
+click box when a cell is selected, and the stage filter on the
+preconditioners tab. Every flag link found on the tabs is followed too: it
+must show its cell. Without a browser the test skips, unless
+--require-browser is given (as in CI). Standard library only.
 """
 from __future__ import annotations
 
@@ -118,6 +119,9 @@ CLICKBOX = ("filled click box",
             lambda d: d.has("section", "clickbox") and any(
                 t.strip() == "Command to reproduce" for t in d.texts))
 SETUP = ("machine setup", lambda d: d.has("dl", "values", "setup"))
+STAGES = ("stage filter", lambda d: d.has("option", value="generate"))
+GENERATE = ("generate rows",
+            lambda d: any(t.strip().endswith("(generate)") for t in d.texts))
 
 
 def default_cell(site: Path) -> str | None:
@@ -152,7 +156,8 @@ def main(argv=None) -> int:
         return 1 if args.require_browser else 0
 
     pages = [("#basic", [HEATMAP]), ("#solvers", [HEATMAP]),
-             ("#preconditioners", [HEATMAP]),
+             ("#preconditioners", [HEATMAP, STAGES]),
+             ("#preconditioners?stage=generate", [HEATMAP, GENERATE]),
              ("#machines", [SETUP])]
     cell = default_cell(site)
     if cell is None:
@@ -182,7 +187,7 @@ def main(argv=None) -> int:
                        if h not in seen][:FLAG_LINKS_PER_TAB]
                 for h in new:
                     seen.add(h)
-                    pages.append((h, [HEATMAP, CLICKBOX]))
+                    pages.append((h, [HEATMAP, SELECTED, CLICKBOX]))
     server.shutdown()
     print(f"{len(pages) - failed} of {len(pages)} pages ok ({browser})")
     return 1 if failed else 0

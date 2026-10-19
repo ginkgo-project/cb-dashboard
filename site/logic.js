@@ -89,11 +89,34 @@ export function caseLabel(c) {
   }
 }
 
+const STATUS_FLAGS = { new_failure: "new failure", new_not_available: "now not available", new_missing: "now missing" };
+
 export function flagText(flag, c, machineLabel) {
-  const what = flag.state === "new_failure"
-    ? "new failure"
-    : `${formatChange(flag.change)}${flag.band === undefined || flag.band === null ? "" : ` (noise ±${(flag.band * 100).toFixed(1)}%)`}`;
+  const what = STATUS_FLAGS[flag.state]
+    ?? `${formatChange(flag.change)}${flag.band === undefined || flag.band === null ? "" : ` (noise ±${(flag.band * 100).toFixed(1)}%)`}`;
   return [what, caseLabel(c), machineLabel].join(DOT);
+}
+
+// The heatmap view that shows the case: operation and format for basic,
+// stage for preconditioners, as rowFilter reads them.
+function viewParams(tab, c) {
+  const l = c.labels || {};
+  if (tab === "basic") return { operation: l.operation, format: l.operation === "spmv" ? l.format : undefined };
+  if (tab === "preconditioners") return { stage: l.stage };
+  return {};
+}
+
+// The link to a heatmap cell, in the view that shows its row.
+export function cellLink(tab, c, machine, column) {
+  return formatHash(tab, { ...viewParams(tab, c), machine, cell: `${c.key}@${column}` });
+}
+
+// Whether a render shows a newly selected cell, which is then scrolled into
+// view; a filter change keeps the scroll position.
+export function revealCell(prev, route) {
+  const cell = route.params.cell;
+  if (!cell) return false;
+  return !prev || prev.tab !== route.tab || prev.params.cell !== cell || prev.params.machine !== route.params.machine;
 }
 
 // The children to append: nested arrays flattened, null, undefined and false
@@ -122,15 +145,29 @@ export function rowFilter(tab, c, params = {}) {
   return true;
 }
 
-// r = |change| / band: s1 below 2, s2 below 4, s3 above
+const COMPARED = ["same", "slower", "faster"];
+
+// A bandwidth case compared in raw time, as the build marks it with raw:
+// this run, or too many earlier ones, had no node bandwidth. A history cell
+// is not compared at all, so raw says nothing there.
+export function rawNote(cell) {
+  if (!cell?.raw || !COMPARED.includes(cell.state)) return null;
+  return cell.pct === undefined || cell.pct === null
+    ? "compared in raw time: no node bandwidth for this run"
+    : "compared in raw time: too few earlier runs with a node bandwidth";
+}
+
+// r = |change| / band: s1 below 2, s2 below 4, s3 above; raw marks rawNote
 export function cellClass(cell) {
   if (!cell) return "cell empty";
+  const raw = rawNote(cell) ? " raw" : "";
   switch (cell.state) {
-    case "same": case "history": case "failed": case "disabled": return `cell ${cell.state}`;
+    case "same": return `cell same${raw}`;
+    case "history": case "failed": case "disabled": return `cell ${cell.state}`;
     case "not_available": return "cell na";
     case "slower": case "faster": {
       const r = Math.abs(cell.change ?? 0) / (cell.band || 0.03);
-      return `cell ${cell.state} ${r < 2 ? "s1" : r < 4 ? "s2" : "s3"}`;
+      return `cell ${cell.state} ${r < 2 ? "s1" : r < 4 ? "s2" : "s3"}${raw}`;
     }
     default: return "cell empty";
   }
@@ -142,9 +179,30 @@ export function cellTitle(cell, c) {
   if (cell.change !== undefined && cell.change !== null) {
     parts.push(`${formatChange(cell.change)}${cell.band != null ? ` (band ±${(cell.band * 100).toFixed(1)}%)` : ""}`);
   }
+  const raw = rawNote(cell);
+  if (raw) parts.push(raw);
   if (cell.time !== undefined && cell.time !== null) parts.push(formatValue(cell.time, "time"));
   if (cell.pct !== undefined && cell.pct !== null) parts.push(`${formatValue(cell.pct, "pct")} of node bandwidth`);
   return parts.join(DOT);
+}
+
+const MIN_HISTORY = 4; // as in dashboard/changes.py
+const count = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+// What the click box says the cell is compared with. The baseline is the
+// median of the previous baseline_n values (at most 8), not the previous
+// column alone.
+export function baselineText(cell, columns, col) {
+  const prev = columns[col - 1];
+  if (!prev) return "First column, nothing to compare with.";
+  const previous = `${(prev.commit || "").slice(0, 7)} (${prev.date})`;
+  if (cell.change !== undefined && cell.change !== null) {
+    return `Change against the median of the previous ${count(cell.baseline_n, "column")}; previous column: ${previous}.`;
+  }
+  if (cell.state === "history" && cell.baseline_n != null) {
+    return `Not enough history yet: ${count(cell.baseline_n, "earlier column")} with a value, ${MIN_HISTORY} needed; previous column: ${previous}.`;
+  }
+  return `Previous column: ${previous}.`;
 }
 
 export function heatmapModel(tabData, machine, params = {}) {

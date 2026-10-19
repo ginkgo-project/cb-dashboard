@@ -94,6 +94,7 @@ td.number { text-align: right; white-space: nowrap; }
 .flag { display: inline-block; min-width: 4.5rem; margin-right: 8px; border-radius: 4px; padding: 0 6px; font-size: 0.75rem; font-weight: 600; color: var(--on-status); text-align: center; }
 .flag.slower, .flag.new_failure { background: var(--fail); }
 .flag.faster { background: var(--ok); }
+.flag.new_not_available, .flag.new_missing { background: var(--cancel); }
 .detail { margin: 12px 0; }
 .detail summary { cursor: pointer; font-weight: 600; }
 .mono { font-family: ui-monospace, monospace; font-size: 0.8rem; overflow-wrap: anywhere; }
@@ -118,6 +119,7 @@ td.number { text-align: right; white-space: nowrap; }
 .heatmap td.failed { background: repeating-linear-gradient(45deg, var(--fail) 0 4px, transparent 4px 8px); }
 .heatmap td.na { background: repeating-linear-gradient(90deg, var(--none) 0 3px, transparent 3px 8px); }
 .heatmap td.disabled { background: transparent; outline: 1px solid var(--none); outline-offset: -1px; }
+.heatmap td.raw { background-image: linear-gradient(135deg, var(--fg) 0 5px, transparent 5px); }
 .heatmap td.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
 .clickbox { margin: 16px 0; padding: 8px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 .clickbox dl.values { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 4px 0; }
