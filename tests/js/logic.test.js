@@ -230,3 +230,25 @@ test("test_roofline_without_triad", () => {
   assert.equal(pts.length, 2);
   assert.equal(pts[0][1], pts[1][1]);
 });
+
+test("scatterModel: time axis is logarithmic", () => {
+  const points = [{ key: "a", time: 1e-6 }, { key: "b", time: 1e-3 }, { key: "c", time: 0 }];
+  const cases = [{ key: "a", props: { n: 10 } }, { key: "b", props: { n: 100 } }, { key: "c", props: { n: 100 } }];
+  const model = logic.scatterModel(points, cases, { x: "n", y: "time" });
+  assert.equal(model.dots.length, 2); // the non-positive time is dropped
+  const [a, b] = model.dots;
+  const height = model.plot.y0 - model.plot.y1;
+  // three decades span the plot: the dots are the whole height apart
+  assert.ok(Math.abs(Math.abs(a.cy - b.cy) - height) < 1e-6);
+  assert.ok(model.yTicks.every((t) => Number.isFinite(t.pos)));
+});
+
+test("rooflineModel: the ceiling stays inside the plot", () => {
+  const latest = { m1: { triad: 1e9, points: [{ key: "a", time: 1, gflops: 1e13, intensity: 1000 }, { key: "b", time: 1, gflops: 2e13, intensity: 5000 }] } };
+  const model = logic.rooflineModel(latest, { m1: { fp64_peak: 3e13 } }, scatterCases);
+  const { plot } = model;
+  for (const p of model.ceilings[0].points.split(" ")) {
+    const y = Number(p.split(",")[1]);
+    assert.ok(y <= plot.y0 + 1e-6 && y >= plot.y1 - 1e-6, `y ${y} outside`);
+  }
+});

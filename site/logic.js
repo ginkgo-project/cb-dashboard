@@ -225,20 +225,30 @@ export function scatterModel(points, cases, { x = "row_length_cv", y = "pct", wi
     const xv = c?.props?.[x];
     if (!(xv > 0) || !Number.isFinite(xv)) continue; // log axis
     const label = c ? caseLabel(c) : p.key;
-    if (Number.isFinite(p[y])) raw.push({ key: p.key, xv, yv: p[y], faint: false, title: `${label}${DOT}${x} ${xv}${DOT}${yk.format(p[y])}` });
-    if (p.prev && Number.isFinite(p.prev[y])) raw.push({ key: p.key, xv, yv: p.prev[y], faint: true, title: `${label}${DOT}previous column${DOT}${yk.format(p.prev[y])}` });
+    const ok = (v) => Number.isFinite(v) && (y !== "time" || v > 0); // time axis is logarithmic
+    if (ok(p[y])) raw.push({ key: p.key, xv, yv: p[y], faint: false, title: `${label}${DOT}${x} ${xv}${DOT}${yk.format(p[y])}` });
+    if (p.prev && ok(p.prev[y])) raw.push({ key: p.key, xv, yv: p.prev[y], faint: true, title: `${label}${DOT}previous column${DOT}${yk.format(p.prev[y])}` });
   }
   const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
   if (!raw.length) return { dots: [], xTicks: [], yTicks: [], plot, xLabel: x, yLabel: yk.name };
   const [e0, e1] = decadeDomain(Math.min(...raw.map((d) => d.xv)), Math.max(...raw.map((d) => d.xv)));
   const sx = logScale(10 ** e0, 10 ** e1, plot.x0, plot.x1);
   const yHi = Math.max(...raw.map((d) => d.yv));
-  const yMax = y === "pct" ? Math.max(1, yHi) : yHi * 1.05 || 1;
-  const sy = (v) => plot.y0 + (v / yMax) * (plot.y1 - plot.y0);
+  let sy;
+  let yTicks;
+  if (y === "time") { // times span decades: log axis
+    const [f0, f1] = decadeDomain(Math.min(...raw.map((d) => d.yv)), yHi);
+    sy = logScale(10 ** f0, 10 ** f1, plot.y0, plot.y1);
+    yTicks = decadeTicks(f0, f1, sy).map((t) => ({ ...t, label: formatValue(t.value, "time") }));
+  } else { // pct: linear from 0
+    const yMax = Math.max(1, yHi);
+    sy = (v) => plot.y0 + (v / yMax) * (plot.y1 - plot.y0);
+    yTicks = linearTicks(0, yMax, sy, yk.format);
+  }
   return {
     dots: raw.map((d) => ({ cx: sx(d.xv), cy: sy(d.yv), key: d.key, title: d.title, faint: d.faint })),
     xTicks: decadeTicks(e0, e1, sx),
-    yTicks: linearTicks(0, yMax, sy, yk.format),
+    yTicks,
     plot, xLabel: x, yLabel: yk.name,
   };
 }
@@ -268,7 +278,9 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
   const ys = [...raw.map((d) => d.g), ...ceil.map((c) => c.peak)];
   if (!xs.length || !ys.length) return { dots: [], ceilings: [], xTicks: [], yTicks: [], plot };
   const [x0e, x1e] = decadeDomain(Math.min(...xs), Math.max(...xs));
-  const [y0e, y1e] = decadeDomain(Math.min(...ys), Math.max(...ys));
+  // the ceiling's lowest point is min(triad * xlo, peak): part of the y domain
+  const lows = ceil.map((c) => (c.triad ? Math.min(c.triad * 10 ** x0e, c.peak) : c.peak));
+  const [y0e, y1e] = decadeDomain(Math.min(...ys, ...lows), Math.max(...ys));
   const sx = logScale(10 ** x0e, 10 ** x1e, plot.x0, plot.x1);
   const sy = logScale(10 ** y0e, 10 ** y1e, plot.y0, plot.y1);
   const xlo = 10 ** x0e;
