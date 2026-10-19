@@ -2,7 +2,7 @@
 // through text nodes (the put helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  flatChildren, cellLink, revealCell, rawNote, baselineText, rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
+  flatChildren, cellLink, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab; shown: the route
 // of the last rendered tab
@@ -59,19 +59,11 @@ async function loadJson(path) {
 const machineLabel = (id) => state.meta?.machines[id]?.label ?? id;
 const shortSha = (sha) => (sha || "").slice(0, 7);
 
-function formatSeconds(s) {
-  if (s === undefined || s === null) return "";
-  return s >= 3600 ? `${(s / 3600).toFixed(1)} h` : `${Math.round(s / 60)} min`;
-}
-
 function renderMeta() {
   const meta = document.getElementById("meta");
   replace(meta);
-  for (const [id, machine] of Object.entries(state.meta.machines)) {
-    const run = machine.last_run;
-    put(meta, el("span", { class: "run" }, run
-      ? `${machine.label}: ${run.commit_date} at ${shortSha(run.commit)}, ${run.status}, ${formatSeconds(run.seconds)}`
-      : `${machine.label}: no run`));
+  for (const machine of Object.values(state.meta.machines)) {
+    put(meta, el("span", { class: "run" }, runSummary(machine.label, machine.last_run)));
   }
   const counts = state.meta.flag_counts;
   const total = TAB_FILES.reduce((sum, tab) => sum + (counts[tab] ?? 0), 0);
@@ -98,7 +90,7 @@ function renderFlags(root, data, tab) {
   put(root, el("ul", { class: "flags" }, data.flags.map((flag) => {
     const c = byKey.get(flag.key) ?? { key: flag.key, group: "", labels: {} };
     return el("li", {},
-      el("span", { class: `flag ${flag.state}` }, flag.state.replaceAll("_", " ")),
+      el("span", { class: `flag ${flag.state}` }, flagBadge(flag.state)),
       el("a", { href: cellLink(tab, c, flag.machine, flag.column) }, flagText(flag, c, machineLabel(flag.machine))));
   })));
 }
@@ -244,7 +236,8 @@ function renderHeatmap(root, data, tab) {
           onclick: () => { location.hash = formatHash(tab, { ...params, machine, cell: `${row.key}@${cell.col}` }); },
           onkeydown: (e) => { if (e.key === "Enter") e.target.click(); },
         }, cell.dot ? "•" : ""))))))),
-    el("p", { class: "legend" }, "A corner mark: compared in raw time, because a run had no node bandwidth."),
+    el("p", { class: "legend" }, "A dotted outline: not enough history yet, fewer than 4 earlier columns with a value, so no colour. "
+      + "A corner mark: compared in raw time, because a run had no node bandwidth."),
     box);
   if (selKey && selCol !== undefined) fillBox(box, data, tab, machine, selKey, Number(selCol));
   else put(box, el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
@@ -255,8 +248,6 @@ function select(label, name, options, current, tab, params) {
     onchange: (e) => { location.hash = formatHash(tab, { ...params, [name]: e.target.value }); },
   }, options.map(([value, text]) => el("option", { value, selected: value === current }, text))));
 }
-
-const SERIES = ["circle", "square"]; // one marker shape per machine
 
 function chartFrame(model, title, xLabel, yLabel, width, height) {
   const { plot } = model;
@@ -298,7 +289,8 @@ function renderCharts(root, data, tab) {
     put(root, el("p", { class: "none" }, "No cases with a matrix property and a result this week for this selection."));
   } else {
     const frame = chartFrame(model, "This week, against a matrix property", x, model.yLabel, 640, 320);
-    put(frame, svg("g", {}, model.dots.map((d) => marker("circle", d.cx, d.cy, 0, d.title, { faint: d.faint }))));
+    const series = markerSeries(Object.keys(state.meta.machines), machine); // as in the roofline
+    put(frame, svg("g", {}, model.dots.map((d) => marker(series.shape, d.cx, d.cy, series.index, d.title, { faint: d.faint }))));
     put(root,
       el("div", { class: "filters" }, select("x axis", "x", props.keys.map((k) => [k, k]), x, tab, params),
         select("y axis", "values", yOptions, y, tab, params)),
@@ -317,7 +309,10 @@ function renderCharts(root, data, tab) {
   put(frame, svg("g", {},
     rf.ceilings.map((c) => svg("polyline", { class: `ceiling m${order.indexOf(c.machine)}`, points: c.points, fill: "none" },
       svg("title", {}, `${machineLabel(c.machine)} ceiling`))),
-    rf.dots.map((d) => marker(SERIES[order.indexOf(d.machine)] ?? "circle", d.cx, d.cy, order.indexOf(d.machine), d.title))));
+    rf.dots.map((d) => {
+      const series = markerSeries(order, d.machine);
+      return marker(series.shape, d.cx, d.cy, series.index, d.title);
+    })));
   put(root,
     el("p", { class: "legend" }, order.map((id, i) => `${i === 0 ? "circles" : "squares"}: ${machineLabel(id)}`).join("; ")
       + ". Lines: measured triad bandwidth times intensity, up to the fp64 peak."),

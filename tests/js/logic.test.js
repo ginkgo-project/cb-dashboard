@@ -430,3 +430,32 @@ test("baselineText: the median of the previous N columns, and the previous colum
   assert.equal(logic.baselineText({ state: "failed" }, cols, 1), "Previous column: aaaaaaa (2026-10-01).");
   assert.equal(logic.baselineText({ state: "history", baseline_n: 0 }, cols, 0), "First column, nothing to compare with.");
 });
+test("flagBadge: speed or status, so the badge never repeats the flag text", () => {
+  const c = { group: "spmv", labels: { operation: "spmv", format: "csr", matrix: "cage15" } };
+  assert.deepEqual(["new_failure", "new_not_available", "new_missing", "slower", "faster"].map(logic.flagBadge),
+    ["status", "status", "status", "slower", "faster"]);
+  for (const state of ["new_failure", "new_not_available", "new_missing", "slower", "faster"]) {
+    const text = logic.flagText({ state, change: 0.1, band: 0.03 }, c, "Daint GH200");
+    assert.ok(!text.includes(logic.flagBadge(state)), text);
+  }
+});
+
+test("runSummary: each machine's last run with its node", () => {
+  const run = { commit_date: "2026-10-18", commit: "9cb13ee6ab0123", node: "nid006398", status: "partial", seconds: 686 };
+  assert.equal(logic.runSummary("Daint GH200", run), "Daint GH200: 2026-10-18 at 9cb13ee, node nid006398, partial, 11 min");
+  assert.equal(logic.runSummary("Daint GH200", { ...run, node: undefined, seconds: 7200 }), "Daint GH200: 2026-10-18 at 9cb13ee, node unknown, partial, 2.0 h");
+  assert.equal(logic.runSummary("Daint GH200", undefined), "Daint GH200: no run");
+});
+
+test("history cells: titled as not enough history yet", () => {
+  const title = logic.cellTitle({ state: "history", time: 1e-3 }, fixture.cases[0]);
+  assert.ok(title.includes("not enough history yet") && !title.includes("history ·"), title);
+  assert.ok(logic.cellTitle({ state: "not_available" }, fixture.cases[0]).includes("not available"));
+});
+
+test("markerSeries: the colour class and shape of a machine, as in the roofline", () => {
+  const order = ["daint-gh200", "beverin-mi300a"];
+  assert.deepEqual(logic.markerSeries(order, "daint-gh200"), { index: 0, shape: "circle" });
+  assert.deepEqual(logic.markerSeries(order, "beverin-mi300a"), { index: 1, shape: "square" });
+  assert.deepEqual(logic.markerSeries(order, "zz"), { index: 0, shape: "circle" });
+});

@@ -142,12 +142,13 @@ def _flat_diff(before, after) -> list[dict]:
             if p not in a or p not in b or a[p] != b[p]]
 
 
-def _parameters(col: Column, points, keys) -> dict | None:
-    for key in keys:
-        for r in col.runs:
+def _parameters(col: Column, points, keys) -> tuple[str, dict] | None:
+    """The case and parameters of the column's latest run that has any."""
+    for r in reversed(col.runs):
+        for key in keys:
             p = points[r.dir].get(key)
             if p is not None and p.m.extra.get("parameters") is not None:
-                return p.m.extra["parameters"]
+                return key, p.m.extra["parameters"]
     return None
 
 
@@ -159,12 +160,14 @@ def _settings(label: str, keys, rep, machines: dict) -> dict:
     out = {}
     for name, name_keys in by_name.items():
         for cols, points in machines.values():
-            cur = _parameters(cols[-1], points, name_keys)
-            if cur is None:
+            found = _parameters(cols[-1], points, name_keys)
+            if found is None:
                 continue
-            prev = (_parameters(cols[-2], points, name_keys)
+            key, cur = found
+            # the same case in the column before, so the diff is a change
+            prev = (_parameters(cols[-2], points, [key])
                     if len(cols) > 1 else None)
-            changed = [] if prev is None else _flat_diff(prev, cur)
+            changed = [] if prev is None else _flat_diff(prev[1], cur)
             out[name] = {"parameters": cur, "changed": changed}
             break
     return out
@@ -312,15 +315,34 @@ def _stream(run: Run) -> dict:
 
 
 def _bench_settings(runs: list[Run]) -> dict | None:
-    """warm-up, repetitions, ... from the latest run's first blas invocation."""
-    args = None
+    """warm-up, repetitions, ... of the latest run with invocations.
+
+    From its first spmv invocation, or that of another group but blas, with
+    the blas value added where blas differs, as blas warms up 3 times:
+    "1 (blas: 3)". A setting only blas has is taken from blas.
+    """
     for r in reversed(runs):
-        invs = _invocations(r, "blas")
-        if invs:
-            args = invs[0].get("args") or []
+        first = {g: _invocations(r, g)[0].get("args") or []
+                 for g in GROUPS if _invocations(r, g)}
+        if first:
             break
-    if args is None:
+    else:
         return None
+    blas = _parse_args(first.get("blas", []))
+    main = next((_parse_args(first[g]) for g in GROUPS
+                 if g != "blas" and g in first), {})
+    out = {}
+    for k in BENCH_SETTINGS:
+        if k in main:
+            differs = k in blas and blas[k] != main[k]
+            out[k] = f"{main[k]} (blas: {blas[k]})" if differs else main[k]
+        elif k in blas:
+            out[k] = blas[k]
+    return out
+
+
+def _parse_args(args: list[str]) -> dict:
+    """-name value, -name=value and bare -name (True) options."""
     flag = re.compile(r"-+[A-Za-z]")
     parsed, i = {}, 0
     while i < len(args):
@@ -333,7 +355,7 @@ def _bench_settings(runs: list[Run]) -> dict | None:
             else:
                 parsed[name] = True
         i += 1
-    return {k: parsed[k] for k in BENCH_SETTINGS if k in parsed}
+    return parsed
 
 
 def _setup(runs: list[Run]) -> dict:

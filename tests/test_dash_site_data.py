@@ -7,8 +7,11 @@ import pytest
 from dash_fakes import write_manifest, write_run
 
 from dashboard.__main__ import main
+from dashboard.cases import Measurement
+from dashboard.changes import Point
+from dashboard.load import Column, Run
 from dashboard.models import load_machines
-from dashboard.site_data import TABS, build_site
+from dashboard.site_data import TABS, _bench_settings, _settings, build_site
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
@@ -258,3 +261,51 @@ def test_real_results_build(tmp_path):
                for v in meta["machines"].values())
     total = sum(p.stat().st_size for p in out.rglob("*") if p.is_file())
     assert total < 2_000_000
+
+
+def _jacobi(run, key, params):
+    m = Measurement(key, "preconditioner", {"preconditioner": "jacobi"}, "ok",
+                    1e-3, extra={"parameters": params})
+    return Point(run, m, None, None)
+
+
+def test_settings_from_the_latest_run_of_the_column():
+    a, b = Run("m", "a", {}, {}), Run("m", "a_2", {}, {})
+    key = "preconditioner/apply/jacobi/x"
+    pts = {"a": {key: _jacobi(a, key, {"relax": 1})},
+           "a_2": {key: _jacobi(b, key, {"relax": 2})}}
+    cols = [Column("c", "d", "r", [a, b])]
+    out = _settings("preconditioner", [key], {key: pts["a"][key].m},
+                    {"m": (cols, pts)})
+    assert out["jacobi"]["parameters"] == {"relax": 2}
+
+
+def test_settings_diff_compares_one_case_across_the_columns():
+    # x left the latest column: y is compared with y, not with x
+    a, b = Run("m", "a", {}, {}), Run("m", "b", {}, {})
+    kx, ky = "preconditioner/apply/jacobi/x", "preconditioner/apply/jacobi/y"
+    pts = {"a": {kx: _jacobi(a, kx, {"relax": 1}),
+                 ky: _jacobi(a, ky, {"relax": 2})},
+           "b": {ky: _jacobi(b, ky, {"relax": 2})}}
+    cols = [Column("c1", "d", "r", [a]), Column("c2", "d", "r", [b])]
+    rep = {k: pts["a"][k].m for k in (kx, ky)}
+    out = _settings("preconditioner", [kx, ky], rep, {"m": (cols, pts)})
+    assert out["jacobi"] == {"parameters": {"relax": 2}, "changed": []}
+
+
+def _invoking(**args):
+    groups = {g: {"invocations": [{"label": "x", "args": a}]}
+              for g, a in args.items()}
+    return Run("m", "r", {"groups": groups}, {})
+
+
+def test_bench_settings_from_spmv_with_the_blas_difference():
+    run = _invoking(blas=["-warmup", "3", "-repetitions", "5", "-gpu_timer"],
+                    spmv=["-warmup", "1", "-repetitions", "5", "-gpu_timer",
+                          "-seed", "42", "-formats", "csr"])
+    assert _bench_settings([run]) == {"warmup": "1 (blas: 3)",
+                                      "repetitions": "5", "gpu_timer": True,
+                                      "seed": "42"}
+    assert _bench_settings([_invoking(blas=["-warmup", "3"])]) == {
+        "warmup": "3"}
+    assert _bench_settings([Run("m", "r", {"groups": {}}, {})]) is None

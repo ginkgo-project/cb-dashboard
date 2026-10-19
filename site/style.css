@@ -119,6 +119,7 @@ td.number { text-align: right; white-space: nowrap; }
 .heatmap td.failed { background: repeating-linear-gradient(45deg, var(--fail) 0 4px, transparent 4px 8px); }
 .heatmap td.na { background: repeating-linear-gradient(90deg, var(--none) 0 3px, transparent 3px 8px); }
 .heatmap td.disabled { background: transparent; outline: 1px solid var(--none); outline-offset: -1px; }
+.heatmap td.history { outline: 1px dotted var(--muted); outline-offset: -1px; }
 .heatmap td.raw { background-image: linear-gradient(135deg, var(--fg) 0 5px, transparent 5px); }
 .heatmap td.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
 .clickbox { margin: 16px 0; padding: 8px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }

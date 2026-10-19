@@ -91,6 +91,12 @@ export function caseLabel(c) {
 
 const STATUS_FLAGS = { new_failure: "new failure", new_not_available: "now not available", new_missing: "now missing" };
 
+// The badge before the flag text: the direction of a speed change, or
+// "status" for a new failure, not available or missing, which the text names.
+export function flagBadge(state) {
+  return state === "slower" || state === "faster" ? state : "status";
+}
+
 export function flagText(flag, c, machineLabel) {
   const what = STATUS_FLAGS[flag.state]
     ?? `${formatChange(flag.change)}${flag.band === undefined || flag.band === null ? "" : ` (noise ±${(flag.band * 100).toFixed(1)}%)`}`;
@@ -123,6 +129,17 @@ export function revealCell(prev, route) {
 // dropped, so a condition or a map can be passed as a child.
 export function flatChildren(children) {
   return children.flat(Infinity).filter((c) => c !== undefined && c !== null && c !== false);
+}
+
+export function formatSeconds(s) {
+  if (s === undefined || s === null) return "";
+  return s >= 3600 ? `${(s / 3600).toFixed(1)} h` : `${Math.round(s / 60)} min`;
+}
+
+// The header's line for a machine: meta.json's last_run.
+export function runSummary(label, run) {
+  if (!run) return `${label}: no run`;
+  return `${label}: ${run.commit_date} at ${(run.commit || "").slice(0, 7)}, node ${run.node ?? "unknown"}, ${run.status}, ${formatSeconds(run.seconds)}`;
 }
 
 // One render at a time: each render takes a token, and after any await it
@@ -175,7 +192,7 @@ export function cellClass(cell) {
 
 export function cellTitle(cell, c) {
   if (!cell) return `${caseLabel(c)}${DOT}no data`;
-  const parts = [caseLabel(c), cell.state.replaceAll("_", " ")];
+  const parts = [caseLabel(c), cell.state === "history" ? "not enough history yet" : cell.state.replaceAll("_", " ")];
   if (cell.change !== undefined && cell.change !== null) {
     parts.push(`${formatChange(cell.change)}${cell.band != null ? ` (band ±${(cell.band * 100).toFixed(1)}%)` : ""}`);
   }
@@ -317,6 +334,15 @@ export function scatterModel(points, cases, { x = "row_length_cv", y = "pct", wi
     yTicks,
     plot, xLabel: x, yLabel: yk.name,
   };
+}
+
+const SHAPES = ["circle", "square"]; // one marker shape per machine
+
+// The marker of a machine in the charts: its colour class m<index> and shape,
+// by its place in meta.json's machines.
+export function markerSeries(order, id) {
+  const index = Math.max(0, order.indexOf(id));
+  return { index, shape: SHAPES[index] ?? "circle" };
 }
 
 // machines: {id: {label, fp64_peak}}; latest: tabData.latest. x is the
