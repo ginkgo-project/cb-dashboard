@@ -260,7 +260,8 @@ test("scatterModel: gbs axis is logarithmic", () => {
   assert.equal(model.dots.length, 2);
   const [a, b] = model.dots;
   assert.ok(Math.abs(Math.abs(a.cy - b.cy) - (model.plot.y0 - model.plot.y1)) < 1e-6);
-  assert.ok(model.yTicks.some((t) => t.label === "1 GB/s") && model.yTicks.some((t) => t.label === "1000 GB/s"));
+  // the axis name carries the unit, the ticks only the number
+  assert.ok(model.yTicks.some((t) => t.label === "1") && model.yTicks.some((t) => t.label === "1000"));
   assert.equal(model.yLabel, "GB/s");
 });
 
@@ -471,8 +472,8 @@ test("tickNumber: plain from 10⁻³ to below 10⁵, else m·10ⁿ", () => {
   assert.equal(logic.tickNumber(1e-4), "10⁻⁴");
 });
 
-test("logTicks: decades, then 1-2-5, then even steps as the range narrows", () => {
-  const ticks = (lo, hi) => logic.logTicks(lo, hi, logic.logScale(lo, hi, 0, 100));
+test("logAxis: decades, then 1-2-5, then even steps as the range narrows", () => {
+  const ticks = (lo, hi) => logic.logAxis(lo, hi, logic.logScale(lo, hi, 0, 100)).ticks;
   assert.deepEqual(ticks(1, 1e3).map((t) => t.label), ["10⁰", "10¹", "10²", "10³"]);
   assert.deepEqual(ticks(0.15, 3).map((t) => t.label), ["0.2", "0.5", "1", "2"]);
   const deep = ticks(0.1, 0.15);
@@ -554,4 +555,35 @@ test("rooflineModel: fit holds every result and the ceiling above them", () => {
   assert.equal(zoomed.dots.length, 3);
   const spread = Math.max(...zoomed.dots.map((d) => d.cx)) - Math.min(...zoomed.dots.map((d) => d.cx));
   assert.ok(spread > (rf.plot.x1 - rf.plot.x0) / 2, `${spread}`); // the cluster spreads over the plot
+});
+
+test("logAxis: a minor grid at 2 to 9 of each decade, and between 1-2-5 ticks", () => {
+  const scale = (v) => v;
+  const decades = logic.logAxis(1, 1e3, scale);
+  assert.deepEqual(decades.minor.slice(0, 8), [2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.equal(decades.minor.length, 24);
+  const ones = logic.logAxis(0.15, 3, scale);
+  assert.ok(ones.minor.every((v) => !ones.ticks.some((t) => Math.abs(t.value - v) < 1e-12)));
+  assert.ok(ones.minor.some((v) => Math.abs(v - 0.3) < 1e-12) && ones.minor.some((v) => Math.abs(v - 0.9) < 1e-12));
+});
+
+test("linearAxis: the minor grid splits a step in fifths, a step of 2 in quarters", () => {
+  const scale = (v) => v;
+  const quarters = logic.linearAxis(0, 1, scale, String, 5); // step 0.2: quarters
+  assert.deepEqual(quarters.ticks.map((t) => Math.round(t.value * 10) / 10), [0, 0.2, 0.4, 0.6, 0.8, 1]);
+  assert.equal(quarters.minor.length, 5 * 3);
+  const ones = logic.linearAxis(0, 10, scale, String, 10); // step 1: fifths
+  assert.equal(ones.minor.length, 10 * 4);
+  assert.ok(ones.minor.every((v) => Math.abs(v - Math.round(v)) > 1e-9));
+});
+
+test("charts: the left margin holds the longest y tick label", () => {
+  const short = logic.scatterModel([{ key: "a", pct: 0.5 }], scatterCases, { x: "row_length_cv", y: "pct" });
+  const long = logic.scatterModel([{ key: "a", time: 2e-4 }], scatterCases, { x: "row_length_cv", y: "time" });
+  const widest = (m) => Math.max(...m.yTicks.map((t) => t.label.length));
+  assert.ok(long.plot.x0 > short.plot.x0);
+  for (const m of [short, long]) assert.ok(m.plot.x0 >= 30 + widest(m) * 8, `${m.plot.x0}`);
+  const triad = logic.triadChartModel([{ dir: "d", date: "2026-10-18", node: "n", triad: 3.6e12 }], { width: 600, height: 200 });
+  assert.ok(triad.yTicks.every((t) => /^\d+$/.test(t.label)), triad.yTicks.map((t) => t.label).join(" "));
+  assert.deepEqual(triad.size, { width: 600, height: 200 });
 });

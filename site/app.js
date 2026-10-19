@@ -249,19 +249,51 @@ function select(label, name, options, current, tab, params) {
   }, options.map(([value, text]) => el("option", { value, selected: value === current }, text))));
 }
 
-function chartFrame(model, title, xLabel, yLabel, width, height) {
-  const { plot } = model;
+function chartFrame(model, title, xLabel, yLabel) {
+  const { plot, size: { width, height } } = model;
   return svg("svg", { class: "chart", viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": title },
     svg("title", {}, title),
+    model.yMinor.map((pos) => svg("line", { class: "grid minor", x1: plot.x0, x2: plot.x1, y1: pos, y2: pos })),
+    model.xMinor.map((pos) => svg("line", { class: "grid minor", x1: pos, x2: pos, y1: plot.y1, y2: plot.y0 })),
     model.yTicks.map((t) => [
       svg("line", { class: "grid", x1: plot.x0, x2: plot.x1, y1: t.pos, y2: t.pos }),
-      svg("text", { class: "tick", x: plot.x0 - 6, y: t.pos + 4, "text-anchor": "end" }, t.label)]),
+      svg("text", { class: "tick", x: plot.x0 - 6, y: t.pos + 5, "text-anchor": "end" }, t.label)]),
     model.xTicks.map((t) => [
       svg("line", { class: "grid", x1: t.pos, x2: t.pos, y1: plot.y1, y2: plot.y0 }),
-      svg("text", { class: "tick", x: t.pos, y: plot.y0 + 16, "text-anchor": "middle" }, t.label)]),
-    svg("text", { class: "axis", x: (plot.x0 + plot.x1) / 2, y: height - 4, "text-anchor": "middle" }, xLabel),
-    svg("text", { class: "axis", x: 12, y: (plot.y0 + plot.y1) / 2, "text-anchor": "middle",
-      transform: `rotate(-90 12 ${(plot.y0 + plot.y1) / 2})` }, yLabel));
+      svg("text", { class: "tick", x: t.pos, y: plot.y0 + 18, "text-anchor": "middle" }, t.label)]),
+    svg("text", { class: "axis", x: (plot.x0 + plot.x1) / 2, y: height - 6, "text-anchor": "middle" }, xLabel),
+    svg("text", { class: "axis", x: 14, y: (plot.y0 + plot.y1) / 2, "text-anchor": "middle",
+      transform: `rotate(-90 14 ${(plot.y0 + plot.y1) / 2})` }, yLabel));
+}
+
+// Each chart is drawn at its host's width in css pixels, so that its text
+// keeps one size at any width, and its height follows the width: [ratio,
+// min, max]. A host is drawn again when its width changes by more than a
+// few pixels; a scroll bar coming and going does not redraw it back and forth.
+const SIZES = { scatter: [0.36, 280, 460], roofline: [0.42, 320, 540], triad: [0.36, 200, 280] };
+const redraws = new WeakMap();
+const resizer = new ResizeObserver((entries) => {
+  for (const { target } of entries) {
+    if (target.isConnected) redraws.get(target)?.();
+    else resizer.unobserve(target);
+  }
+});
+
+// draw(size) returns the chart's svg; redraw draws it again at once, as
+// after a zoom. Until the host is laid out its width is the view's.
+function chartHost(kind, draw, className = "") {
+  const host = el("div", { class: `chart-host ${className}` });
+  let drawn = 0;
+  const redraw = () => {
+    const width = host.clientWidth || document.getElementById("view").clientWidth || 640;
+    const [ratio, lo, hi] = SIZES[kind];
+    drawn = width;
+    replace(host, draw({ width, height: Math.round(Math.min(hi, Math.max(lo, width * ratio))) }));
+  };
+  redraws.set(host, () => { if (Math.abs(host.clientWidth - drawn) > 8) redraw(); });
+  resizer.observe(host);
+  redraw();
+  return { host, redraw };
 }
 
 function marker(shape, cx, cy, machineIndex, title, extra = {}) {
@@ -288,25 +320,26 @@ function renderCharts(root, data, tab) {
   if (!model || !model.dots.length) {
     put(root, el("p", { class: "none" }, "No cases with a matrix property and a result this week for this selection."));
   } else {
-    const frame = chartFrame(model, "This week, against a matrix property", x, model.yLabel, 640, 320);
     const series = markerSeries(Object.keys(state.meta.machines), machine); // as in the roofline
-    put(frame, svg("g", {}, model.dots.map((d) => marker(series.shape, d.cx, d.cy, series.index, d.title, { faint: d.faint }))));
+    const { host } = chartHost("scatter", (size) => {
+      const sized = scatterModel(points, shown, { x, y, ...size });
+      return put(chartFrame(sized, "This week, against a matrix property", x, sized.yLabel),
+        svg("g", {}, sized.dots.map((d) => marker(series.shape, d.cx, d.cy, series.index, d.title, { faint: d.faint }))));
+    });
     put(root,
       el("div", { class: "filters" }, select("x axis", "x", props.keys.map((k) => [k, k]), x, tab, params),
         select("y axis", "values", yOptions, y, tab, params)),
       el("p", { class: "legend" }, `${machineLabel(machine)}, this week; faint dots: the previous column. The x axis is logarithmic.`),
-      frame);
+      host);
   }
 
   renderRoofline(root, data, tab);
 }
 
-const ROOF = { width: 640, height: 360 };
-
 function rooflineFrame(rf) {
   const order = Object.keys(state.meta.machines);
   const { plot } = rf;
-  const frame = chartFrame(rf, "Roofline, this week", "intensity (flop per byte)", "GFLOP/s", ROOF.width, ROOF.height);
+  const frame = chartFrame(rf, "Roofline, this week", "intensity (flop per byte)", "GFLOP/s");
   return put(frame,
     svg("clipPath", { id: "roofline-plot" },
       svg("rect", { x: plot.x0, y: plot.y1, width: plot.x1 - plot.x0, height: plot.y0 - plot.y1 })),
@@ -324,26 +357,28 @@ function rooflineFrame(rf) {
 // stays while the svg inside it is redrawn, so a drag keeps its pointer.
 function renderRoofline(root, data, tab) {
   put(root, el("h2", {}, "Roofline, this week"));
-  const model = (view) => rooflineModel(data.latest, state.meta.machines, data.cases, { ...ROOF, view });
+  const model = (view, size) => rooflineModel(data.latest, state.meta.machines, data.cases, { ...size, view });
   let rf = model(state.views[tab]);
   if (!rf.total) {
     put(root, el("p", { class: "none" }, "No results with a known flops-per-byte this week."));
     return;
   }
-  const host = el("div", { class: "zoomable" });
   const count = el("span", { class: "legend" });
+  const { host, redraw } = chartHost("roofline", (size) => {
+    rf = model(state.views[tab], size);
+    replace(count, rf.dots.length < rf.total ? `${rf.dots.length} of ${rf.total} results in view` : "");
+    return rooflineFrame(rf);
+  }, "zoomable");
   const draw = (view) => {
     state.views[tab] = view;
-    rf = model(view);
-    replace(host, rooflineFrame(rf));
-    replace(count, rf.dots.length < rf.total ? `${rf.dots.length} of ${rf.total} results in view` : "");
+    redraw();
   };
   let next = null; // the view of the next animation frame
   const later = (view) => {
     if (!next) requestAnimationFrame(() => { const v = next; next = null; draw(v); });
     next = view;
   };
-  const at = (e) => plotFraction(rf.plot, ROOF, host.firstChild.getBoundingClientRect(), e.clientX, e.clientY);
+  const at = (e) => plotFraction(rf.plot, rf.size, host.firstChild.getBoundingClientRect(), e.clientX, e.clientY);
   const clamp = (f) => Math.min(1, Math.max(0, f));
 
   host.addEventListener("wheel", (e) => {
@@ -387,7 +422,6 @@ function renderRoofline(root, data, tab) {
       button("whole roofline", "zoom out to the whole roofline", () => draw(null)),
       count),
     host);
-  draw(state.views[tab]);
 }
 const STATE_TEXT = (state) => String(state).replaceAll("_", " ");
 const num = (x, render) => (x === null || x === undefined ? "–" : render(x));
@@ -520,9 +554,12 @@ function renderTriad(m) {
   if (!model.dots.length) out.push(el("p", { class: "none" }, "No run has a node bandwidth yet."));
   else {
     const nodes = [...new Set(m.triad.map((t) => t.node))];
-    const frame = chartFrame(model, "Node bandwidth over time", "run", "triad", 480, 160);
-    put(frame, svg("g", {}, model.dots.map((d) => svg("circle", { class: `dot ${d.cls}`, cx: d.cx, cy: d.cy, r: 4.5 }, svg("title", {}, d.title)))));
-    out.push(frame, el("p", { class: "legend" }, "Colour is the node: ",
+    const { host } = chartHost("triad", (size) => {
+      const sized = triadChartModel(m.triad, size);
+      return put(chartFrame(sized, "Node bandwidth over time", "run", "triad GB/s"),
+        svg("g", {}, sized.dots.map((d) => svg("circle", { class: `dot ${d.cls}`, cx: d.cx, cy: d.cy, r: 4.5 }, svg("title", {}, d.title)))));
+    });
+    out.push(host, el("p", { class: "legend" }, "Colour is the node: ",
       nodes.map((n, i) => el("span", { class: "key" }, el("span", { class: `swatch n${i % 6}` }), n)), ". Only runs with a measured triad are shown."));
   }
   out.push(el("details", { class: "detail" }, el("summary", {}, "Nodes seen"),

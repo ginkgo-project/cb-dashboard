@@ -32,13 +32,15 @@
 
 * { box-sizing: border-box; }
 
+html { font-size: 17px; } /* the rem of every size below */
+
 body {
   margin: 0 auto;
   max-width: 1400px;
   padding: 0 16px 32px;
   background: var(--bg);
   color: var(--fg);
-  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 a { color: var(--run); }
@@ -129,9 +131,12 @@ td.number { text-align: right; white-space: nowrap; }
 .runs-list { margin: 4px 0; padding-left: 20px; }
 .command { margin: 4px 0; padding: 8px; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
 
-.chart { width: 100%; max-width: 760px; height: auto; display: block; margin: 8px 0 16px; }
+.chart-host { margin: 8px 0 16px; }
+.chart { width: 100%; height: auto; display: block; }
 .chart .grid { stroke: var(--line); stroke-width: 1; }
-.chart .tick, .chart .axis { fill: var(--muted); font-size: 11px; }
+.chart .grid.minor { stroke-width: 0.6; stroke-dasharray: 2 3; }
+.chart .tick { fill: var(--muted); font-size: 0.8rem; }
+.chart .axis { fill: var(--muted); font-size: 0.85rem; }
 .chart .dot { stroke: var(--bg); stroke-width: 1; }
 .chart .dot.m0 { fill: var(--accent); }
 .chart .dot.m1 { fill: var(--run); }
@@ -140,7 +145,7 @@ td.number { text-align: right; white-space: nowrap; }
 .chart .ceiling.m0 { stroke: var(--accent); }
 .chart .ceiling.m1 { stroke: var(--run); }
 .chart .dot:hover { stroke: var(--fg); stroke-width: 2; }
-.zoomable { max-width: 760px; cursor: grab; user-select: none; -webkit-user-select: none; }
+.zoomable { cursor: grab; user-select: none; -webkit-user-select: none; }
 .zoomable.dragging { cursor: grabbing; }
 .filters.zoom { align-items: center; margin-bottom: 0; }
 .filters.zoom button { align-self: auto; min-width: 2em; }

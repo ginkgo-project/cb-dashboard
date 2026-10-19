@@ -252,9 +252,25 @@ export function logScale(d0, d1, r0, r1) {
   return (v) => (b === a ? (r0 + r1) / 2 : r0 + ((Math.log10(v) - a) / (b - a)) * (r1 - r0));
 }
 
-const MARGIN = { left: 60, right: 14, top: 12, bottom: 38 };
+// Chart coordinates are css pixels: the page draws each chart at its own
+// width. The left margin grows with the longest y tick label, at about
+// TICK_CHAR per character, and holds the rotated axis label too.
+const MARGIN = { left: 30, right: 16, top: 12, bottom: 44 };
+const TICK_CHAR = 8.4;
 const SUPERSCRIPT = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
 const tenPower = (e) => `10${String(e).replace(/./g, (ch) => SUPERSCRIPT[ch])}`;
+
+// the plot area of a chart whose y axis has these ticks
+function plotArea(width, height, yTicks) {
+  const longest = Math.max(0, ...yTicks.map((t) => String(t.label).length));
+  return { x0: Math.round(MARGIN.left + longest * TICK_CHAR), x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
+}
+
+// how many evenly spaced ticks fit along px, one per `per` pixels
+const tickCount = (px, per) => Math.min(8, Math.max(3, Math.floor(px / per)));
+const X_TICK_PX = 90;
+const Y_TICK_PX = 45;
+const DATE_TICK_PX = 110; // a date label, 2026-10-18, and a gap
 
 // whole decades covering [lo, hi]; at least one decade wide
 function decadeDomain(lo, hi) {
@@ -264,22 +280,23 @@ function decadeDomain(lo, hi) {
   return [a, b];
 }
 
-function decadeTicks(e0, e1, scale) {
-  const ticks = [];
-  for (let e = e0; e <= e1; e++) ticks.push({ value: 10 ** e, pos: scale(10 ** e), label: tenPower(e) });
-  return ticks;
-}
-
-function linearTicks(lo, hi, scale, format, count = 5) {
+// About count evenly spaced ticks over [lo, hi], and the minor grid between
+// them: fifths of the step, or quarters of a step of 2.
+export function linearAxis(lo, hi, scale, format, count = 5) {
   const step0 = (hi - lo) / count;
   const mag = 10 ** Math.floor(Math.log10(step0));
-  const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= step0);
-  const ticks = [];
-  for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + step * 1e-9; v += step) {
-    const value = Math.round(v / step) * step;
-    ticks.push({ value, pos: scale(value), label: format(value) });
-  }
-  return ticks;
+  const m = [1, 2, 5, 10].find((k) => k * mag >= step0);
+  const step = m * mag;
+  const sub = m === 2 ? 4 : 5;
+  const multiples = (s) => {
+    const out = [];
+    for (let k = Math.ceil(lo / s - 1e-9) || 0; k * s <= hi + s * 1e-9; k++) out.push(k); // || 0: no -0
+    return out;
+  };
+  return {
+    ticks: multiples(step).map((k) => ({ value: k * step, pos: scale(k * step), label: format(k * step) })),
+    minor: multiples(step / sub).filter((k) => k % sub !== 0).map((k) => scale((k * step) / sub)),
+  };
 }
 
 // a tick label: plain from 10⁻³ to below 10⁵, else m·10ⁿ
@@ -290,22 +307,29 @@ export function tickNumber(v) {
   return m === 1 ? tenPower(e) : `${m}·${tenPower(e)}`;
 }
 
-// The ticks of a log axis over [lo, hi]: whole decades when three fit, else
-// 1, 2 and 5 of each decade, else about eight evenly spaced ones (deep in
-// a zoom).
-export function logTicks(lo, hi, scale) {
+// The ticks of a log axis over [lo, hi] and its minor grid: whole decades
+// over 2 to 9 of each when three decades fit, else 1, 2 and 5 of each
+// decade over the rest of 1 to 9, else about count evenly spaced ticks
+// (deep in a zoom). label names a tick's value; by default decades read
+// 10ⁿ and the others plain numbers.
+export function logAxis(lo, hi, scale, { count = 8, label = null } = {}) {
   const inside = (v) => v >= lo * (1 - 1e-9) && v <= hi * (1 + 1e-9);
-  for (const ms of [[1], [1, 2, 5]]) {
-    const ticks = [];
+  const at = (ms) => {
+    const out = [];
     for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) {
-      for (const m of ms) {
-        const value = m * 10 ** e;
-        if (inside(value)) ticks.push({ value, pos: scale(value), label: ms.length === 1 ? tenPower(e) : tickNumber(value) });
-      }
+      for (const m of ms) if (inside(m * 10 ** e)) out.push({ value: m * 10 ** e, e });
     }
-    if (ticks.length >= 3) return ticks;
-  }
-  return linearTicks(lo, hi, scale, tickNumber, 8);
+    return out;
+  };
+  const axis = (ms, rest, name) => ({
+    ticks: at(ms).map(({ value, e }) => ({ value, pos: scale(value), label: label ? label(value) : name(value, e) })),
+    minor: at(rest).map(({ value }) => scale(value)),
+  });
+  const decades = axis([1], [2, 3, 4, 5, 6, 7, 8, 9], (v, e) => tenPower(e));
+  if (decades.ticks.length >= 3) return decades;
+  const ones = axis([1, 2, 5], [3, 4, 6, 7, 8, 9], tickNumber);
+  if (ones.ticks.length >= 3) return ones;
+  return linearAxis(lo, hi, scale, label ?? tickNumber, count);
 }
 
 // ---- zoom and pan of a log-log chart; a range is [lo, hi] in data units ----
@@ -359,11 +383,14 @@ export function plotFraction(plot, { width, height }, rect, clientX, clientY) {
   return { fx: (ux - plot.x0) / (plot.x1 - plot.x0), fy: (plot.y0 - uy) / (plot.y0 - plot.y1) };
 }
 
+// tick: a y tick's label; the axis name carries the unit of GB/s and
+// GFLOP/s, while time ticks change unit along the axis
+const perGiga = (v) => tickNumber(v / 1e9);
 const Y_KINDS = {
-  pct: { name: "% of node bandwidth", format: (v) => `${Math.round(v * 100)}%`, kind: "pct" },
-  time: { name: "time", format: (v) => formatValue(v, "time"), kind: "time" },
-  gbs: { name: "GB/s", format: (v) => formatValue(v, "gbs"), kind: "gbs" },
-  gflops: { name: "GFLOP/s", format: (v) => formatValue(v, "gflops"), kind: "gflops" },
+  pct: { name: "% of node bandwidth", format: (v) => `${Math.round(v * 100)}%`, tick: (v) => `${Math.round(v * 100)}%`, kind: "pct" },
+  time: { name: "time", format: (v) => formatValue(v, "time"), tick: (v) => formatValue(v, "time"), kind: "time" },
+  gbs: { name: "GB/s", format: (v) => formatValue(v, "gbs"), tick: perGiga, kind: "gbs" },
+  gflops: { name: "GFLOP/s", format: (v) => formatValue(v, "gflops"), tick: perGiga, kind: "gflops" },
 };
 
 // The shown cases' props that can be plotted, and the default x.
@@ -389,27 +416,30 @@ export function scatterModel(points, cases, { x = "row_length_cv", y = "pct", wi
     if (ok(p[y])) raw.push({ key: p.key, xv, yv: p[y], faint: false, title: `${label}${DOT}${x} ${xv}${DOT}${yk.format(p[y])}` });
     if (p.prev && ok(p.prev[y])) raw.push({ key: p.key, xv, yv: p.prev[y], faint: true, title: `${label}${DOT}previous column${DOT}${yk.format(p.prev[y])}` });
   }
-  const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
-  if (!raw.length) return { dots: [], xTicks: [], yTicks: [], plot, xLabel: x, yLabel: yk.name };
-  const [e0, e1] = decadeDomain(Math.min(...raw.map((d) => d.xv)), Math.max(...raw.map((d) => d.xv)));
-  const sx = logScale(10 ** e0, 10 ** e1, plot.x0, plot.x1);
+  const size = { width, height };
+  if (!raw.length) return { dots: [], xTicks: [], yTicks: [], xMinor: [], yMinor: [], plot: plotArea(width, height, []), size, xLabel: x, yLabel: yk.name };
+  const [y0, y1] = [height - MARGIN.bottom, MARGIN.top];
+  const count = tickCount(y0 - y1, Y_TICK_PX);
   const yHi = Math.max(...raw.map((d) => d.yv));
   let sy;
-  let yTicks;
+  let yAxis;
   if (y !== "pct") { // time, GB/s and GFLOP/s span decades: log axis
     const [f0, f1] = decadeDomain(Math.min(...raw.map((d) => d.yv)), yHi);
-    sy = logScale(10 ** f0, 10 ** f1, plot.y0, plot.y1);
-    yTicks = decadeTicks(f0, f1, sy).map((t) => ({ ...t, label: yk.format(t.value) }));
+    sy = logScale(10 ** f0, 10 ** f1, y0, y1);
+    yAxis = logAxis(10 ** f0, 10 ** f1, sy, { count, label: yk.tick });
   } else { // pct: linear from 0
     const yMax = Math.max(1, yHi);
-    sy = (v) => plot.y0 + (v / yMax) * (plot.y1 - plot.y0);
-    yTicks = linearTicks(0, yMax, sy, yk.format);
+    sy = (v) => y0 + (v / yMax) * (y1 - y0);
+    yAxis = linearAxis(0, yMax, sy, yk.tick, count);
   }
+  const plot = plotArea(width, height, yAxis.ticks);
+  const [e0, e1] = decadeDomain(Math.min(...raw.map((d) => d.xv)), Math.max(...raw.map((d) => d.xv)));
+  const sx = logScale(10 ** e0, 10 ** e1, plot.x0, plot.x1);
+  const xAxis = logAxis(10 ** e0, 10 ** e1, sx, { count: tickCount(plot.x1 - plot.x0, X_TICK_PX) });
   return {
     dots: raw.map((d) => ({ cx: sx(d.xv), cy: sy(d.yv), key: d.key, title: d.title, faint: d.faint })),
-    xTicks: decadeTicks(e0, e1, sx),
-    yTicks,
-    plot, xLabel: x, yLabel: yk.name,
+    xTicks: xAxis.ticks, xMinor: xAxis.minor, yTicks: yAxis.ticks, yMinor: yAxis.minor,
+    plot, size, xLabel: x, yLabel: yk.name,
   };
 }
 
@@ -431,7 +461,7 @@ export function markerSeries(order, id) {
 // can leave a zoomed plot: the page clips them.
 export function rooflineModel(latest, machines, cases, { width = 640, height = 360, view = null } = {}) {
   const byKey = new Map(cases.map((c) => [c.key, c]));
-  const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
+  const size = { width, height };
   const raw = [];
   const ceil = [];
   for (const [id, info] of Object.entries(machines ?? {})) {
@@ -449,7 +479,9 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
   }
   const xs = [...raw.map((d) => d.i), ...ceil.filter((c) => c.knee).map((c) => c.knee)];
   const ys = [...raw.map((d) => d.g), ...ceil.map((c) => c.peak)];
-  if (!raw.length || !xs.length || !ys.length) return { dots: [], ceilings: [], xTicks: [], yTicks: [], plot, total: 0 };
+  if (!raw.length || !xs.length || !ys.length) {
+    return { dots: [], ceilings: [], xTicks: [], yTicks: [], xMinor: [], yMinor: [], plot: plotArea(width, height, []), size, total: 0 };
+  }
   // the domain: whole decades, widened to hold the fit, so that no result
   // of the fit sits on the plot's edge
   const along = (lo, hi) => fitRange([lo, hi], [1e-300, 1e300]);
@@ -468,8 +500,12 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
   const shown = view ? panView(view, domain, 0, 0) : domain; // moved inside the domain
   const [xlo, xhi] = shown.x;
   const [ylo, yhi] = shown.y;
+  const [y0, y1] = [height - MARGIN.bottom, MARGIN.top];
+  const sy = logScale(ylo, yhi, y0, y1);
+  const yAxis = logAxis(ylo, yhi, sy, { count: tickCount(y0 - y1, Y_TICK_PX) });
+  const plot = plotArea(width, height, yAxis.ticks);
   const sx = logScale(xlo, xhi, plot.x0, plot.x1);
-  const sy = logScale(ylo, yhi, plot.y0, plot.y1);
+  const xAxis = logAxis(xlo, xhi, sx, { count: tickCount(plot.x1 - plot.x0, X_TICK_PX) });
   const inView = (d) => d.i >= xlo * (1 - 1e-9) && d.i <= xhi * (1 + 1e-9) && d.g >= ylo * (1 - 1e-9) && d.g <= yhi * (1 + 1e-9);
   const ceilings = ceil.map((c) => {
     const pts = [];
@@ -485,9 +521,8 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
   return {
     dots: raw.filter(inView).map((d) => ({ cx: sx(d.i), cy: sy(d.g), machine: d.machine, key: d.key, title: d.title })),
     ceilings,
-    xTicks: logTicks(xlo, xhi, sx),
-    yTicks: logTicks(ylo, yhi, sy),
-    plot, domain, view: shown, fit, total: raw.length,
+    xTicks: xAxis.ticks, xMinor: xAxis.minor, yTicks: yAxis.ticks, yMinor: yAxis.minor,
+    plot, size, domain, view: shown, fit, total: raw.length,
   };
 }
 
@@ -557,13 +592,16 @@ export function parameterPaths(value, path = "") {
 // history: machines.json triad list, in run order. x is the run order, y the
 // triad bandwidth, linear with 5% padding; cls cycles n0-n5 by first sight of the node.
 export function triadChartModel(history, { width = 480, height = 160 } = {}) {
-  const plot = { x0: MARGIN.left, x1: width - MARGIN.right, y0: height - MARGIN.bottom, y1: MARGIN.top };
+  const size = { width, height };
   const runs = (history ?? []).filter((h) => Number.isFinite(h.triad));
-  if (!runs.length) return { dots: [], xTicks: [], yTicks: [], plot };
+  if (!runs.length) return { dots: [], xTicks: [], yTicks: [], xMinor: [], yMinor: [], plot: plotArea(width, height, []), size };
   const lo = Math.min(...runs.map((h) => h.triad));
   const hi = Math.max(...runs.map((h) => h.triad));
   const pad = hi > lo ? (hi - lo) * 0.05 : hi * 0.05;
-  const sy = (v) => plot.y0 + ((v - (lo - pad)) / (hi + pad - (lo - pad))) * (plot.y1 - plot.y0);
+  const [y0, y1] = [height - MARGIN.bottom, MARGIN.top];
+  const sy = (v) => y0 + ((v - (lo - pad)) / (hi + pad - (lo - pad))) * (y1 - y0);
+  const yAxis = linearAxis(lo - pad, hi + pad, sy, perGiga, tickCount(y0 - y1, Y_TICK_PX));
+  const plot = plotArea(width, height, yAxis.ticks);
   const sx = (i) => (runs.length === 1 ? (plot.x0 + plot.x1) / 2 : plot.x0 + (i / (runs.length - 1)) * (plot.x1 - plot.x0));
   const seen = [];
   const dots = runs.map((h, i) => {
@@ -573,9 +611,9 @@ export function triadChartModel(history, { width = 480, height = 160 } = {}) {
       title: `${h.node}${DOT}${h.date ?? h.dir}${DOT}${formatValue(h.triad, "gbs")}`,
     };
   });
-  const every = Math.ceil(runs.length / 6);
+  const every = Math.ceil(runs.length / Math.max(1, Math.floor((plot.x1 - plot.x0) / DATE_TICK_PX)));
   const xTicks = runs.map((h, i) => ({ value: i, pos: sx(i), label: h.date ?? h.dir })).filter((_, i) => i % every === 0);
-  return { dots, xTicks, yTicks: linearTicks(lo - pad, hi + pad, sy, (v) => formatValue(v, "gbs")), plot };
+  return { dots, xTicks, yTicks: yAxis.ticks, xMinor: [], yMinor: yAxis.minor, plot, size };
 }
 
 // groups: machines.json groups; the rows are those of the latest run directory.
