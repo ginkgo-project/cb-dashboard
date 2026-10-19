@@ -117,6 +117,13 @@ export function cellLink(tab, c, machine, column) {
   return formatHash(tab, { ...viewParams(tab, c), machine, cell: `${c.key}@${column}` });
 }
 
+// The cell parameter after a click on a cell: a click on the selected cell
+// clears it, which closes its click box.
+export function clickedCell(selected, key, column) {
+  const cell = `${key}@${column}`;
+  return selected === cell ? undefined : cell;
+}
+
 // Whether a render shows a newly selected cell, which is then scrolled into
 // view; a filter change keeps the scroll position.
 export function revealCell(prev, route) {

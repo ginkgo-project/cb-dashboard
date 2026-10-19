@@ -587,3 +587,12 @@ test("charts: the left margin holds the longest y tick label", () => {
   assert.ok(triad.yTicks.every((t) => /^\d+$/.test(t.label)), triad.yTicks.map((t) => t.label).join(" "));
   assert.deepEqual(triad.size, { width: 600, height: 200 });
 });
+
+test("clickedCell: a click selects a cell, and a second click on it clears it", () => {
+  assert.equal(logic.clickedCell(undefined, "spmv/csr/a", 3), "spmv/csr/a@3");
+  assert.equal(logic.clickedCell("spmv/csr/a@3", "spmv/csr/a", 3), undefined);
+  assert.equal(logic.clickedCell("spmv/csr/a@3", "spmv/csr/a", 2), "spmv/csr/a@2"); // another column
+  assert.equal(logic.clickedCell("spmv/csr/a@3", "spmv/csr/b", 3), "spmv/csr/b@3");
+  // formatHash drops the cleared cell
+  assert.equal(logic.formatHash("basic", { machine: "m", cell: logic.clickedCell("k@0", "k", 0) }), "#basic?machine=m");
+});

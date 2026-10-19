@@ -2,7 +2,7 @@
 // through text nodes (the put helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  flatChildren, cellLink, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, zoomView, panView, plotFraction, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
+  flatChildren, cellLink, clickedCell, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, zoomView, panView, plotFraction, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab; shown: the route
 // of the last rendered tab; views: the roofline view of each tab
@@ -233,14 +233,14 @@ function renderHeatmap(root, data, tab) {
         row.cells.map((cell) => el("td", {
           class: `${cell.cls}${model.columns[cell.col].setup ? " setup" : ""}${row.key === selKey && String(cell.col) === selCol ? " selected" : ""}`,
           title: cell.title, tabindex: cell.cls === "cell empty" ? undefined : "0",
-          onclick: () => { location.hash = formatHash(tab, { ...params, machine, cell: `${row.key}@${cell.col}` }); },
+          onclick: () => { location.hash = formatHash(tab, { ...params, machine, cell: clickedCell(params.cell, row.key, cell.col) }); },
           onkeydown: (e) => { if (e.key === "Enter") e.target.click(); },
         }, cell.dot ? "•" : ""))))))),
     el("p", { class: "legend" }, "A dotted outline: not enough history yet, fewer than 4 earlier columns with a value, so no colour. "
       + "A corner mark: compared in raw time, because a run had no node bandwidth."),
     box);
   if (selKey && selCol !== undefined) fillBox(box, data, tab, machine, selKey, Number(selCol));
-  else put(box, el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
+  else put(box, el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command; click it again to close them."));
 }
 
 function select(label, name, options, current, tab, params) {
