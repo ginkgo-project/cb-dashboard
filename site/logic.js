@@ -204,6 +204,8 @@ function linearTicks(lo, hi, scale, format) {
 const Y_KINDS = {
   pct: { name: "% of node bandwidth", format: (v) => `${Math.round(v * 100)}%`, kind: "pct" },
   time: { name: "time", format: (v) => formatValue(v, "time"), kind: "time" },
+  gbs: { name: "GB/s", format: (v) => formatValue(v, "gbs"), kind: "gbs" },
+  gflops: { name: "GFLOP/s", format: (v) => formatValue(v, "gflops"), kind: "gflops" },
 };
 
 // The shown cases' props that can be plotted, and the default x.
@@ -225,7 +227,7 @@ export function scatterModel(points, cases, { x = "row_length_cv", y = "pct", wi
     const xv = c?.props?.[x];
     if (!(xv > 0) || !Number.isFinite(xv)) continue; // log axis
     const label = c ? caseLabel(c) : p.key;
-    const ok = (v) => Number.isFinite(v) && (y !== "time" || v > 0); // time axis is logarithmic
+    const ok = (v) => Number.isFinite(v) && (y === "pct" || v > 0); // the other axes are logarithmic
     if (ok(p[y])) raw.push({ key: p.key, xv, yv: p[y], faint: false, title: `${label}${DOT}${x} ${xv}${DOT}${yk.format(p[y])}` });
     if (p.prev && ok(p.prev[y])) raw.push({ key: p.key, xv, yv: p.prev[y], faint: true, title: `${label}${DOT}previous column${DOT}${yk.format(p.prev[y])}` });
   }
@@ -236,10 +238,10 @@ export function scatterModel(points, cases, { x = "row_length_cv", y = "pct", wi
   const yHi = Math.max(...raw.map((d) => d.yv));
   let sy;
   let yTicks;
-  if (y === "time") { // times span decades: log axis
+  if (y !== "pct") { // time, GB/s and GFLOP/s span decades: log axis
     const [f0, f1] = decadeDomain(Math.min(...raw.map((d) => d.yv)), yHi);
     sy = logScale(10 ** f0, 10 ** f1, plot.y0, plot.y1);
-    yTicks = decadeTicks(f0, f1, sy).map((t) => ({ ...t, label: formatValue(t.value, "time") }));
+    yTicks = decadeTicks(f0, f1, sy).map((t) => ({ ...t, label: yk.format(t.value) }));
   } else { // pct: linear from 0
     const yMax = Math.max(1, yHi);
     sy = (v) => plot.y0 + (v / yMax) * (plot.y1 - plot.y0);

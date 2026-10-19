@@ -279,8 +279,8 @@ function renderCharts(root, data, tab) {
   const props = scatterProps(shown);
   const x = props.keys.includes(params.x) ? params.x : props.default;
   const hasPct = shown.some((c) => c.compare?.[machine] === "bandwidth");
-  const y = params.values === "time" || !hasPct ? "time" : "pct";
-  const yOptions = [...(hasPct ? [["pct", "% of node bandwidth"]] : []), ["time", "time"]];
+  const y = params.values === "pct" && hasPct ? "pct" : ["time", "gbs", "gflops"].includes(params.values) ? params.values : hasPct ? "pct" : "time";
+  const yOptions = [...(hasPct ? [["pct", "% of node bandwidth"]] : []), ["time", "time"], ["gbs", "GB/s"], ["gflops", "GFLOP/s"]];
 
   root.append(el("h2", {}, "This week, against a matrix property"));
   const points = (data.latest?.[machine]?.points ?? []).filter((p) => shown.some((c) => c.key === p.key));

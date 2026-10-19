@@ -252,3 +252,14 @@ test("rooflineModel: the ceiling stays inside the plot", () => {
     assert.ok(y <= plot.y0 + 1e-6 && y >= plot.y1 - 1e-6, `y ${y} outside`);
   }
 });
+
+test("scatterModel: gbs axis is logarithmic", () => {
+  const points = [{ key: "a", gbs: 1e9 }, { key: "b", gbs: 1e12 }, { key: "c", gbs: -1 }];
+  const cases = [{ key: "a", props: { n: 10 } }, { key: "b", props: { n: 100 } }, { key: "c", props: { n: 100 } }];
+  const model = logic.scatterModel(points, cases, { x: "n", y: "gbs" });
+  assert.equal(model.dots.length, 2);
+  const [a, b] = model.dots;
+  assert.ok(Math.abs(Math.abs(a.cy - b.cy) - (model.plot.y0 - model.plot.y1)) < 1e-6);
+  assert.ok(model.yTicks.some((t) => t.label === "1 GB/s") && model.yTicks.some((t) => t.label === "1000 GB/s"));
+  assert.equal(model.yLabel, "GB/s");
+});
