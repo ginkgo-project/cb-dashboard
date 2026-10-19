@@ -106,14 +106,20 @@ def measurements(run: Run) -> dict[str, Measurement]:
                  "flops_rate": v.get("flops"),
                  "bandwidth_rate": v.get("bandwidth")})
 
-    for e in run.data.get("solver") or []:
+    entries = run.data.get("solver") or []
+    by_order = _entry_labels(invs.get("solver", []), len(STENCILS))
+    if len(by_order) != len(entries):
+        by_order = [None] * len(entries)
+    for e, inv_label in zip(entries, by_order):
         stencil = e["stencil"]
         for name, v in e.get("solver", {}).items():
             solver = name.removesuffix("-jacobi")
+            # a run of a ported harness records no parameters: its
+            # invocation names the orthogonalization instead
             ortho = (v.get("parameters") or {}).get("ortho_method")
             label = "mgs"
             if solver == "gmres":
-                label = ortho or "mgs"
+                label = ortho or inv_label or "mgs"
                 solver = f"gmres-{label}"
             key = f"solver/{solver}/{stencil}"
             apply = v.get("apply") or {}
@@ -168,6 +174,21 @@ def measurements(run: Run) -> dict[str, Measurement]:
                 out[key] = Measurement(
                     key, group, labs, status, None, [],
                     f"{group}:{name}", reason, {})
+    return out
+
+
+def _entry_labels(group_invs: list[dict], cases: int) -> list[str]:
+    """The invocation label of each entry of a group's output, in order.
+
+    The runner appends the output of each invocation in the order of run.json,
+    one entry per test case; one that crashed, timed out or wrote no valid
+    JSON adds none.
+    """
+    out = []
+    for inv in group_invs:
+        if inv.get("exit_code") == 0 and (inv["status"] == "ok"
+                                          or inv.get("failures")):
+            out += [inv["label"]] * cases
     return out
 
 

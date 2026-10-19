@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from dash_fakes import write_run
 
+from bench.groups import STENCILS
 from dashboard.cases import measurements, plain_preconditioner
 from dashboard.load import load_runs
 
@@ -125,6 +126,27 @@ def test_solver_keys(tmp_path):
     assert c.extra["rel_residual"] == 1e-10 / 2.0
     assert c.extra["iterations"] == 7
     assert c.extra["generate_time"] == 0.1
+
+
+def test_gmres_without_parameters_named_by_invocation(tmp_path):
+    def entry(stencil, t):
+        e = _solver("gmres-jacobi", None)
+        e["stencil"] = stencil
+        del e["solver"]["gmres-jacobi"]["parameters"]
+        e["solver"]["gmres-jacobi"]["apply"]["time"] = t
+        return e
+    stencils = [s["stencil"] for s in STENCILS]
+    data = {"solver": [entry(s, 1.0) for s in stencils]
+            + [entry(s, 3.0) for s in stencils]}
+    ok = {"exit_code": 0, "failures": []}
+    invs = [{**_inv("solver", "mgs"), **ok},
+            {**_inv("solver", "cgs", "failed", "timeout"), "exit_code": None},
+            {**_inv("solver", "cgs2"), **ok}]
+    m = measurements(_run(tmp_path, data, invs))
+    assert m["solver/gmres-mgs/7pt"].time == 1.0
+    assert m["solver/gmres-cgs2/7pt"].time == 3.0
+    assert m["solver/gmres-cgs2/7pt"].invocation == "solver:cgs2"
+    assert "solver/gmres-cgs/7pt" not in m
 
 
 def test_blas_and_spgemm(tmp_path):
