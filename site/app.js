@@ -2,7 +2,7 @@
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  rowFilter, scatterProps, scatterModel, rooflineModel } from "./logic.js";
+  rowFilter, scatterProps, scatterModel, rooflineModel, solverRows, preconditionerRows } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
@@ -314,7 +314,93 @@ function renderCharts(root, data, tab) {
       + ". Lines: measured triad bandwidth times intensity, up to the fp64 peak."),
     frame);
 }
-function renderTabTables(root, data, tab) {}
+const STATE_TEXT = (state) => String(state).replaceAll("_", " ");
+const num = (x, render) => (x === null || x === undefined ? "–" : render(x));
+const ms = (x) => formatValue(x / 1e3, "time");
+
+function machineOf(data) {
+  const ids = Object.keys(data.machines);
+  return ids.includes(state.route.params.machine) ? state.route.params.machine : ids[0];
+}
+
+// the operation select, and the format select for spmv only
+function renderBasicFilters(root, data) {
+  const params = state.route.params;
+  const operations = [...new Set(data.cases.map((c) => c.labels.operation))];
+  const operation = operations.includes(params.operation) ? params.operation : "spmv";
+  const formats = [...new Set(data.cases.filter((c) => c.labels.operation === "spmv").map((c) => c.labels.format))];
+  const format = formats.includes(params.format) ? params.format : "csr";
+  root.append(el("div", { class: "filters" },
+    select("operation", "operation", operations.map((o) => [o, o]), operation, "basic", params),
+    operation === "spmv" ? select("format", "format", formats.map((f) => [f, f]), format, "basic", params) : null));
+}
+
+function renderSolverTable(root, data) {
+  const machine = machineOf(data);
+  root.append(el("h2", {}, "This week"),
+    el("p", { class: "legend" }, `${machineLabel(machine)}, the latest column; times are per iteration.`),
+    table(["solver", "stencil", "iterations", "time per iteration", "bandwidth", "of node bandwidth", "residual"],
+      solverRows(data, machine).map((r) => [r.solver, r.stencil, num(r.iterations, String),
+        num(r.msPerIteration, ms), num(r.gbs, (v) => formatValue(v, "gbs")), num(r.pct, (v) => formatValue(v, "pct")),
+        num(r.residual, (v) => v.toExponential(2))]), "this-week"));
+}
+
+// parameters as a nested list; a changed path (dotted) is marked; seen collects the paths shown
+function parameterList(value, path, changed, seen) {
+  if (value === null || typeof value !== "object") return null;
+  const entries = Array.isArray(value) ? value.map((v, i) => [String(i), v]) : Object.entries(value);
+  return el("ul", { class: "params" }, entries.map(([name, v]) => {
+    const here = path ? `${path}.${name}` : name;
+    seen.add(here);
+    const mark = changed.get(here);
+    const nested = parameterList(v, here, changed, seen);
+    return el("li", { class: mark ? "changed" : undefined },
+      el("span", { class: "param" }, name), nested ? "" : `: ${JSON.stringify(v)}`,
+      mark ? el("span", { class: "was" }, ` (changed from ${JSON.stringify(mark.before)} to ${JSON.stringify(mark.after)})`) : null,
+      nested);
+  }));
+}
+
+function renderSettings(root, data, names) {
+  const known = names.filter((n) => data.settings?.[n]);
+  if (!known.length) return;
+  root.append(el("h2", {}, "Settings"),
+    el("p", { class: "legend" }, "The parameters of the latest run. Changed values are marked."),
+    known.map((name) => {
+      const { parameters, changed = [] } = data.settings[name];
+      const paths = new Map(changed.map((c) => [c.path, c]));
+      const seen = new Set();
+      const list = Object.keys(parameters ?? {}).length ? parameterList(parameters, "", paths, seen)
+        : el("p", { class: "none" }, "No parameters recorded.");
+      return el("details", { class: "detail settings", open: changed.length > 0 },
+        el("summary", {}, changed.length ? `${name} (${changed.length} changed)` : name),
+        list,
+        changed.filter((c) => !seen.has(c.path)).map((c) =>
+          el("p", { class: "changed" }, `${c.path}: changed from ${JSON.stringify(c.before)} to ${JSON.stringify(c.after)}`)));
+    }));
+}
+
+function renderPreconditionerTable(root, data, tab) {
+  const params = state.route.params;
+  const machine = machineOf(data);
+  const matrices = [...new Set(data.cases.map((c) => c.labels.matrix))];
+  const matrix = matrices.includes(params.matrix) ? params.matrix : matrices[0];
+  root.append(el("h2", {}, "This week"),
+    el("div", { class: "filters" }, select("matrix", "matrix", matrices.map((m) => [m, m]), matrix, tab, params)),
+    el("p", { class: "legend" }, `${machineLabel(machine)}, the latest column.`),
+    table(["preconditioner", "generate", "apply", "storage", "levels", "state"],
+      preconditionerRows(data, machine, matrix).map((r) => [r.preconditioner,
+        num(r.generateMs, ms), num(r.applyMs, ms), num(r.storageMb, (v) => `${v.toFixed(1)} MB`),
+        num(r.levels, String), ["history", "same", "slower", "faster"].includes(r.state) ? "" : STATE_TEXT(r.state)]), "this-week"));
+  renderSettings(root, data, [...new Set(data.cases.map((c) => c.labels.preconditioner))]);
+}
+
+function renderTabTables(root, data, tab) {
+  if (tab === "solvers") {
+    renderSolverTable(root, data);
+    renderSettings(root, data, [...new Set(data.cases.map((c) => c.labels.solver))]);
+  } else if (tab === "preconditioners") renderPreconditionerTable(root, data, tab);
+}
 
 function renderMachines(root) {
   root.append(el("p", { class: "none" }, "The machines tab is not built yet."));
@@ -323,6 +409,7 @@ function renderMachines(root) {
 function renderTab(root, tab, data) {
   renderFlags(root, data, tab);
   renderUnchanged(root, data);
+  if (tab === "basic") renderBasicFilters(root, data);
   renderHeatmap(root, data, tab);
   renderCharts(root, data, tab);
   renderTabTables(root, data, tab);

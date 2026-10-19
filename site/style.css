@@ -136,3 +136,7 @@ td.number { text-align: right; white-space: nowrap; }
 .chart .ceiling { stroke-width: 2; }
 .chart .ceiling.m0 { stroke: var(--accent); }
 .chart .ceiling.m1 { stroke: var(--run); }
+.params { list-style: none; margin: 2px 0; padding-left: 16px; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+.settings > .params { padding-left: 0; }
+.params .param { color: var(--muted); }
+.params li.changed > .param, .params .was, p.changed { color: var(--cancel); font-weight: 600; }

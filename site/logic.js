@@ -306,3 +306,49 @@ export function rooflineModel(latest, machines, cases, { width = 640, height = 3
     plot,
   };
 }
+
+const NUMERIC_STATES = ["history", "same", "slower", "faster"];
+const numeric = (cell) => !!cell && NUMERIC_STATES.includes(cell.state);
+const lastCell = (tabData, machine, key) => {
+  const cells = tabData.machines?.[machine]?.cells?.[key] ?? [];
+  return cells[cells.length - 1] ?? null;
+};
+
+// The "this week" solver table: the last column's cells, in case order.
+export function solverRows(tabData, machine) {
+  return tabData.cases.map((c) => {
+    const cell = lastCell(tabData, machine, c.key);
+    const has = numeric(cell);
+    const pick = (field) => (has && cell[field] !== undefined ? cell[field] : null);
+    return {
+      solver: c.labels.solver, stencil: c.labels.stencil,
+      iterations: pick("iterations"),
+      msPerIteration: has && cell.time != null ? cell.time * 1e3 : null,
+      gbs: pick("gbs"), pct: pick("pct"), residual: pick("residual"),
+    };
+  });
+}
+
+// One row per preconditioner on the matrix; non-numeric states show the state only.
+export function preconditionerRows(tabData, machine, matrix) {
+  const byName = new Map();
+  for (const c of tabData.cases) {
+    if (c.labels.matrix !== matrix) continue;
+    const entry = byName.get(c.labels.preconditioner) ?? {};
+    entry[c.labels.stage] = lastCell(tabData, machine, c.key);
+    byName.set(c.labels.preconditioner, entry);
+  }
+  return [...byName].map(([preconditioner, { apply, generate }]) => {
+    const state = (apply ?? generate)?.state ?? "not_available";
+    const ok = numeric(apply);
+    const ms = (cell) => (numeric(cell) && cell.time != null ? cell.time * 1e3 : null);
+    return {
+      preconditioner,
+      generateMs: ms(generate),
+      applyMs: ms(apply),
+      storageMb: ok && apply.storage != null ? apply.storage / 1e6 : null,
+      levels: ok && apply.levels != null ? apply.levels : null,
+      state,
+    };
+  });
+}

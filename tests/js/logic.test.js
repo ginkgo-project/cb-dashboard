@@ -263,3 +263,44 @@ test("scatterModel: gbs axis is logarithmic", () => {
   assert.ok(model.yTicks.some((t) => t.label === "1 GB/s") && model.yTicks.some((t) => t.label === "1000 GB/s"));
   assert.equal(model.yLabel, "GB/s");
 });
+
+const solverData = {
+  cases: [
+    { key: "solver/cg/5pt", group: "solver", labels: { solver: "cg", stencil: "5pt" } },
+    { key: "solver/ir/7pt", group: "solver", labels: { solver: "ir", stencil: "7pt" } },
+  ],
+  machines: { m1: { columns: [{}, {}], cells: {
+    "solver/cg/5pt": [{ state: "history", time: 1 }, { state: "same", time: 1.5e-3, gbs: 2e12, pct: 0.5, iterations: 97, residual: 1e-10 }],
+    "solver/ir/7pt": [null, null],
+  } } },
+};
+
+test("solverRows: ms per iteration from the last column, in case order", () => {
+  const rows = logic.solverRows(solverData, "m1");
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0], { solver: "cg", stencil: "5pt", iterations: 97, msPerIteration: 1.5, gbs: 2e12, pct: 0.5, residual: 1e-10 });
+  assert.equal(rows[1].solver, "ir");
+  assert.equal(rows[1].msPerIteration, null);
+});
+
+const precData = {
+  cases: ["apply", "generate"].flatMap((stage) => ["jacobi", "ilu"].map((p) => (
+    { key: `preconditioner/${stage}/${p}/a`, group: "preconditioner", labels: { stage, preconditioner: p, matrix: "a" } }))),
+  machines: { m1: { columns: [{}], cells: {
+    "preconditioner/apply/jacobi/a": [{ state: "history", time: 2e-3, storage: 3e6, levels: 4 }],
+    "preconditioner/generate/jacobi/a": [{ state: "history", time: 5e-2 }],
+    "preconditioner/apply/ilu/a": [{ state: "disabled", error: "disabled on m1" }],
+    "preconditioner/generate/ilu/a": [{ state: "disabled" }],
+  } } },
+};
+
+test("preconditionerRows: joins apply and generate", () => {
+  const rows = logic.preconditionerRows(precData, "m1", "a");
+  assert.deepEqual(rows[0], { preconditioner: "jacobi", generateMs: 50, applyMs: 2, storageMb: 3, levels: 4, state: "history" });
+});
+
+test("preconditionerRows: a disabled preconditioner has a state and null numbers", () => {
+  const rows = logic.preconditionerRows(precData, "m1", "a");
+  assert.deepEqual(rows[1], { preconditioner: "ilu", generateMs: null, applyMs: null, storageMb: null, levels: null, state: "disabled" });
+  assert.deepEqual(logic.preconditionerRows(precData, "m1", "zzz"), []);
+});
