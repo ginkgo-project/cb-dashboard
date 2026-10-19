@@ -405,3 +405,8 @@ export function energyRows(groups) {
     nodeJ: orNull(g.node_j), cpuJ: orNull(g.cpu_j),
   }));
 }
+
+// A version sha for display: 7 characters, the full value as the title.
+export function shortVersion(v) {
+  return typeof v === "string" && v ? { text: v.slice(0, 7), title: v } : { text: "unknown", title: "unknown" };
+}

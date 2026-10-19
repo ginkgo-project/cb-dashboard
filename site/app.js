@@ -2,7 +2,7 @@
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows } from "./logic.js";
+  rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
@@ -419,9 +419,11 @@ function renderSetup(setup) {
     ["Partition", setup.partition], ["Binding", setup.binding ? `${(setup.binding.srun ?? []).join(" ")} (cpus ${setup.binding.cpus ?? "?"})` : null],
     ["uenv", setup.uenv], ["Compilers", Object.values(setup.toolchain ?? {}).join("; ")],
     ["Dataset version", setup.dataset_version],
+    ["Script version", shortVersion(setup.script_version)],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
   return [
-    el("dl", { class: "values setup" }, rows.map(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
+    el("dl", { class: "values setup" }, rows.map(([k, v]) => [el("dt", {}, k),
+      typeof v === "object" ? el("dd", { title: v.title }, v.text) : el("dd", {}, v)])),
     el("details", { class: "detail" }, el("summary", {}, "CMake flags"),
       el("pre", {}, Object.entries(setup.cmake_cache ?? {}).filter(([, v]) => v !== "").map(([k, v]) => `${k}=${v}`).join("\n"))),
     el("details", { class: "detail" }, el("summary", {}, "Benchmark settings"),

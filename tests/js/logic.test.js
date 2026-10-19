@@ -354,3 +354,10 @@ test("energyRows: the latest run directory, gpuW = gpu_j / seconds", () => {
   assert.deepEqual(rows[2], { group: "solver", seconds: 70, gpuJ: null, gpuW: null, nodeJ: null, cpuJ: null });
   assert.deepEqual(logic.energyRows([]), []);
 });
+
+test("shortVersion: 7 characters of a sha, unknown otherwise", () => {
+  const sha = "0123456789abcdef0123456789abcdef01234567";
+  assert.deepEqual(logic.shortVersion(sha), { text: "0123456", title: sha });
+  assert.deepEqual(logic.shortVersion({ error: "x" }), { text: "unknown", title: "unknown" });
+  assert.deepEqual(logic.shortVersion(undefined), { text: "unknown", title: "unknown" });
+});
