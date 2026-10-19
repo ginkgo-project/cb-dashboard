@@ -361,3 +361,15 @@ test("shortVersion: 7 characters of a sha, unknown otherwise", () => {
   assert.deepEqual(logic.shortVersion({ error: "x" }), { text: "unknown", title: "unknown" });
   assert.deepEqual(logic.shortVersion(undefined), { text: "unknown", title: "unknown" });
 });
+
+test("flatChildren: nested arrays are flattened, null, undefined and false dropped", () => {
+  assert.deepEqual(logic.flatChildren(["a", [null, ["b", undefined]], false, [[0, ""]]]), ["a", "b", 0, ""]);
+  assert.deepEqual(logic.flatChildren([]), []);
+});
+
+test("app.js appends children only through put()", () => {
+  const source = readFileSync(new URL("../../site/app.js", import.meta.url), "utf8");
+  // the one native append and replaceChildren are those of put() and replace()
+  assert.equal(source.match(/\.append\(/g)?.length, 1);
+  assert.equal(source.match(/\.replaceChildren\(/g)?.length, 1);
+});

@@ -1,8 +1,8 @@
 name: Test and deploy
 
-# Tests the dashboard, builds site/data/ from the tracked runs under results/
-# and deploys site/ to GitHub Pages. A failed step deploys nothing, so the page
-# keeps the last good version.
+# Tests the dashboard, builds site/data/ from the tracked runs under results/,
+# checks the page in a headless browser and deploys site/ to GitHub Pages. A
+# failed step deploys nothing, so the page keeps the last good version.
 on:
   push:
     branches: [main]
@@ -44,6 +44,9 @@ jobs:
           node --test tests/js/*.test.js
       - name: Build the page data
         run: python -m dashboard build --ginkgo ginkgo
+      # loads each tab in headless Chrome: no "[object", "null" or missing view
+      - name: Check the page in a headless browser
+        run: python tests/dom_smoke.py --require-browser
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

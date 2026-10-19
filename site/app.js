@@ -1,14 +1,29 @@
 // Renders the benchmark dashboard from site/data/*.json. All text goes
-// through textContent (the el helper), so node names, errors and reasons
+// through text nodes (the put helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
+  flatChildren, rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
 const tokens = renderTokens();
 const boxTokens = renderTokens(); // one click box fill at a time
 const TAB_FILES = ["basic", "solvers", "preconditioners"];
+
+// Every child is appended here: arrays are flattened, null, undefined and
+// false dropped, and anything that is not a node becomes a text node. The
+// native append would write an array or null as text.
+function put(node, ...children) {
+  for (const child of flatChildren(children)) {
+    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return node;
+}
+
+function replace(node, ...children) {
+  node.replaceChildren();
+  return put(node, ...children);
+}
 
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -18,11 +33,7 @@ function el(tag, attrs = {}, ...children) {
     else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
     else node.setAttribute(key, value === true ? "" : value);
   }
-  for (const child of children.flat(Infinity)) {
-    if (child === undefined || child === null || child === false) continue;
-    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
-  }
-  return node;
+  return put(node, ...children);
 }
 
 // used by the charts of the later tasks
@@ -31,15 +42,11 @@ export function svg(tag, attrs = {}, ...children) {
   for (const [key, value] of Object.entries(attrs)) {
     if (value !== undefined && value !== null) node.setAttribute(key, value);
   }
-  for (const child of children.flat(Infinity)) {
-    if (child === undefined || child === null || child === false) continue;
-    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
-  }
-  return node;
+  return put(node, ...children);
 }
 
 function showBanner(level, text) {
-  document.getElementById("banners").append(el("p", { class: `banner ${level}`, role: "status" }, text));
+  put(document.getElementById("banners"), el("p", { class: `banner ${level}`, role: "status" }, text));
 }
 
 async function loadJson(path) {
@@ -58,16 +65,16 @@ function formatSeconds(s) {
 
 function renderMeta() {
   const meta = document.getElementById("meta");
-  meta.replaceChildren();
+  replace(meta);
   for (const [id, machine] of Object.entries(state.meta.machines)) {
     const run = machine.last_run;
-    meta.append(el("span", { class: "run" }, run
+    put(meta, el("span", { class: "run" }, run
       ? `${machine.label}: ${run.commit_date} at ${shortSha(run.commit)}, ${run.status}, ${formatSeconds(run.seconds)}`
       : `${machine.label}: no run`));
   }
   const counts = state.meta.flag_counts;
   const total = TAB_FILES.reduce((sum, tab) => sum + (counts[tab] ?? 0), 0);
-  meta.append(el("span", { class: "flag-counts" },
+  put(meta, el("span", { class: "flag-counts" },
     `${total} flagged: ${TAB_FILES.map((tab) => `${tab} ${counts[tab] ?? 0}`).join(", ")}`));
 }
 
@@ -82,12 +89,12 @@ function renderTabs() {
 // the flagged list: each entry links to its cell in the heatmap
 function renderFlags(root, data, tab) {
   const byKey = new Map(data.cases.map((c) => [c.key, c]));
-  root.append(el("h2", {}, "Flagged"));
+  put(root, el("h2", {}, "Flagged"));
   if (!data.flags.length) {
-    root.append(el("p", { class: "none" }, "Nothing flagged in the latest run."));
+    put(root, el("p", { class: "none" }, "Nothing flagged in the latest run."));
     return;
   }
-  root.append(el("ul", { class: "flags" }, data.flags.map((flag) => {
+  put(root, el("ul", { class: "flags" }, data.flags.map((flag) => {
     const c = byKey.get(flag.key) ?? { key: flag.key, group: "", labels: {} };
     return el("li", {},
       el("span", { class: `flag ${flag.state}` }, flag.state.replace("_", " ")),
@@ -103,7 +110,7 @@ function renderUnchanged(root, data) {
     const machines = u.machines?.length ? ` on ${u.machines.map(machineLabel).join(", ")}` : "";
     return `${u.count} ${u.state.replaceAll("_", " ")}${names}${machines}`;
   });
-  root.append(el("p", { class: "summary" }, parts.length ? `Not flagged: ${parts.join("; ")}` : "Not flagged: nothing else to report."));
+  put(root, el("p", { class: "summary" }, parts.length ? `Not flagged: ${parts.join("; ")}` : "Not flagged: nothing else to report."));
 }
 
 function table(columns, rows, className) {
@@ -115,14 +122,14 @@ function table(columns, rows, className) {
 
 function renderDataset(root, data) {
   if (!data.dataset) return;
-  root.append(el("details", { class: "detail" },
+  put(root, el("details", { class: "detail" },
     el("summary", {}, data.dataset.title),
     table(data.dataset.columns, data.dataset.rows, "dataset")));
 }
 
 function renderModels(root, data) {
   if (!data.models?.length) return;
-  root.append(el("details", { class: "detail" },
+  put(root, el("details", { class: "detail" },
     el("summary", {}, "Cost models"),
     table(["model", "bytes", "flops", "source", "bandwidth bound"],
       data.models.map((m) => [m.name, m.bytes, m.flops, m.source, m.bandwidth_bound]), "models")));
@@ -166,9 +173,9 @@ async function fillBox(box, data, tab, machine, key, col) {
   const c = data.cases.find((x) => x.key === key);
   const columns = data.machines[machine]?.columns ?? [];
   const cell = data.machines[machine]?.cells?.[key]?.[col];
-  box.replaceChildren();
+  replace(box);
   if (!c || !cell) {
-    box.append(el("p", { class: "none" }, "No data for the selected cell."));
+    put(box, el("p", { class: "none" }, "No data for the selected cell."));
     return;
   }
   const values = [
@@ -183,18 +190,18 @@ async function fillBox(box, data, tab, machine, key, col) {
     ["error", cell.error],
   ].filter(([, v]) => v != null);
   const prev = columns[col - 1];
-  box.append(
+  put(box,
     el("h3", {}, `${caseLabel(c)} · ${machineLabel(machine)} · ${columns[col]?.date ?? ""} at ${shortSha(columns[col]?.commit)}`),
     el("dl", { class: "values" }, values.map(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
     cell.params_changed ? el("p", { class: "banner warning" }, "Parameters changed since the previous column.") : null,
     el("p", {}, prev ? `Compared with the previous column at commit ${shortSha(prev.commit)} (${prev.date}).` : "First column, nothing to compare with."));
   const runsList = el("ul", { class: "runs-list" }, el("li", { class: "none" }, "Loading the runs ..."));
   const command = el("p", { class: "none" }, "Loading the command ...");
-  box.append(el("h3", {}, "Runs"), runsList, el("h3", {}, "Command to reproduce"), command);
+  put(box, el("h3", {}, "Runs"), runsList, el("h3", {}, "Command to reproduce"), command);
   const dirs = cell.runs ?? columns[col]?.runs ?? [];
   const runs = await Promise.allSettled(dirs.map((dir) => loadRun(machine, dir)));
   if (!boxTokens.isLatest(token)) return; // another cell was selected meanwhile
-  runsList.replaceChildren(...runs.map((r, i) => r.status === "fulfilled"
+  replace(runsList, runs.map((r, i) => r.status === "fulfilled"
     ? runBlock(machine, dirs[i], r.value, key)
     : el("li", { class: "none" }, `${dirs[i]}: could not be loaded (${r.reason.message})`)));
   const loaded = runs.filter((r) => r.status === "fulfilled").map((r) => r.value);
@@ -202,28 +209,28 @@ async function fillBox(box, data, tab, machine, key, col) {
   command.replaceWith(withCommand ? el("pre", { class: "command" }, el("code", {}, withCommand.cases[key].command))
     : el("p", { class: "none" }, "No command recorded."));
   const levels = loaded.map((run) => run.cases?.[key]?.levels).find((lv) => lv?.length);
-  if (levels) box.append(el("h3", {}, "AMG levels"), levelsTable(levels));
+  if (levels) put(box, el("h3", {}, "AMG levels"), levelsTable(levels));
 }
 
 function renderHeatmap(root, data, tab) {
   const params = state.route.params;
   const ids = Object.keys(data.machines);
   const machine = ids.includes(params.machine) ? params.machine : ids[0];
-  root.append(el("h2", {}, "Changes by commit"));
+  put(root, el("h2", {}, "Changes by commit"));
   if (ids.length > 1) {
-    root.append(el("p", { class: "machines" }, "Machine: ", ids.map((id) => el("a", {
+    put(root, el("p", { class: "machines" }, "Machine: ", ids.map((id) => el("a", {
       href: formatHash(tab, { ...params, machine: id, cell: undefined }),
       "aria-current": id === machine ? "true" : undefined,
     }, machineLabel(id)))));
   }
   const model = heatmapModel(data, machine, params);
   if (!model.rows.length || !model.columns.length) {
-    root.append(el("p", { class: "none" }, "No cases to show for this selection."));
+    put(root, el("p", { class: "none" }, "No cases to show for this selection."));
     return;
   }
   const [selKey, selCol] = (params.cell ?? "").split(/@(?=[^@]*$)/);
   const box = el("section", { class: "clickbox", "aria-live": "polite" });
-  root.append(
+  put(root,
     el("p", { class: "legend" }, `Colour: change against the case's own history; ${model.legend}. A dot marks a changed iteration count.`),
     el("div", { class: "scroll" }, el("table", { class: "heatmap" },
       el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "case"),
@@ -238,7 +245,7 @@ function renderHeatmap(root, data, tab) {
         }, cell.dot ? "•" : ""))))))),
     box);
   if (selKey && selCol !== undefined) fillBox(box, data, tab, machine, selKey, Number(selCol));
-  else box.append(el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
+  else put(box, el("p", { class: "none" }, "Click a cell for the numbers, the node, the energy and the command."));
 }
 
 function select(label, name, options, current, tab, params) {
@@ -282,34 +289,34 @@ function renderCharts(root, data, tab) {
   const y = params.values === "pct" && hasPct ? "pct" : ["time", "gbs", "gflops"].includes(params.values) ? params.values : hasPct ? "pct" : "time";
   const yOptions = [...(hasPct ? [["pct", "% of node bandwidth"]] : []), ["time", "time"], ["gbs", "GB/s"], ["gflops", "GFLOP/s"]];
 
-  root.append(el("h2", {}, "This week, against a matrix property"));
+  put(root, el("h2", {}, "This week, against a matrix property"));
   const points = (data.latest?.[machine]?.points ?? []).filter((p) => shown.some((c) => c.key === p.key));
   const model = x ? scatterModel(points, shown, { x, y }) : null;
   if (!model || !model.dots.length) {
-    root.append(el("p", { class: "none" }, "No cases with a matrix property and a result this week for this selection."));
+    put(root, el("p", { class: "none" }, "No cases with a matrix property and a result this week for this selection."));
   } else {
     const frame = chartFrame(model, "This week, against a matrix property", x, model.yLabel, 640, 320);
-    frame.append(svg("g", {}, model.dots.map((d) => marker("circle", d.cx, d.cy, 0, d.title, { faint: d.faint }))));
-    root.append(
+    put(frame, svg("g", {}, model.dots.map((d) => marker("circle", d.cx, d.cy, 0, d.title, { faint: d.faint }))));
+    put(root,
       el("div", { class: "filters" }, select("x axis", "x", props.keys.map((k) => [k, k]), x, tab, params),
         select("y axis", "values", yOptions, y, tab, params)),
       el("p", { class: "legend" }, `${machineLabel(machine)}, this week; faint dots: the previous column. The x axis is logarithmic.`),
       frame);
   }
 
-  root.append(el("h2", {}, "Roofline, this week"));
+  put(root, el("h2", {}, "Roofline, this week"));
   const rf = rooflineModel(data.latest, state.meta.machines, data.cases);
   if (!rf.dots.length) {
-    root.append(el("p", { class: "none" }, "No results with a known flops-per-byte this week."));
+    put(root, el("p", { class: "none" }, "No results with a known flops-per-byte this week."));
     return;
   }
   const order = Object.keys(state.meta.machines);
   const frame = chartFrame(rf, "Roofline, this week", "intensity (flop per byte)", "GFLOP/s", 640, 360);
-  frame.append(svg("g", {},
+  put(frame, svg("g", {},
     rf.ceilings.map((c) => svg("polyline", { class: `ceiling m${order.indexOf(c.machine)}`, points: c.points, fill: "none" },
       svg("title", {}, `${machineLabel(c.machine)} ceiling`))),
     rf.dots.map((d) => marker(SERIES[order.indexOf(d.machine)] ?? "circle", d.cx, d.cy, order.indexOf(d.machine), d.title))));
-  root.append(
+  put(root,
     el("p", { class: "legend" }, order.map((id, i) => `${i === 0 ? "circles" : "squares"}: ${machineLabel(id)}`).join("; ")
       + ". Lines: measured triad bandwidth times intensity, up to the fp64 peak."),
     frame);
@@ -330,14 +337,14 @@ function renderBasicFilters(root, data) {
   const operation = operations.includes(params.operation) ? params.operation : "spmv";
   const formats = [...new Set(data.cases.filter((c) => c.labels.operation === "spmv").map((c) => c.labels.format))];
   const format = formats.includes(params.format) ? params.format : "csr";
-  root.append(el("div", { class: "filters" },
+  put(root, el("div", { class: "filters" },
     select("operation", "operation", operations.map((o) => [o, o]), operation, "basic", params),
     operation === "spmv" ? select("format", "format", formats.map((f) => [f, f]), format, "basic", params) : null));
 }
 
 function renderSolverTable(root, data) {
   const machine = machineOf(data);
-  root.append(el("h2", {}, "This week"),
+  put(root, el("h2", {}, "This week"),
     el("p", { class: "legend" }, `${machineLabel(machine)}, the latest column; times are per iteration.`),
     table(["solver", "stencil", "iterations", "time per iteration", "bandwidth", "of node bandwidth", "residual"],
       solverRows(data, machine).map((r) => [r.solver, r.stencil, num(r.iterations, String),
@@ -364,7 +371,7 @@ function parameterList(value, path, changed, seen) {
 function renderSettings(root, data, names) {
   const known = names.filter((n) => data.settings?.[n]);
   if (!known.length) return;
-  root.append(el("h2", {}, "Settings"),
+  put(root, el("h2", {}, "Settings"),
     el("p", { class: "legend" }, "The parameters of the latest run. Changed values are marked."),
     known.map((name) => {
       const { parameters, changed = [] } = data.settings[name];
@@ -385,7 +392,7 @@ function renderPreconditionerTable(root, data, tab) {
   const machine = machineOf(data);
   const matrices = [...new Set(data.cases.map((c) => c.labels.matrix))];
   const matrix = matrices.includes(params.matrix) ? params.matrix : matrices[0];
-  root.append(el("h2", {}, "This week"),
+  put(root, el("h2", {}, "This week"),
     el("div", { class: "filters" }, select("matrix", "matrix", matrices.map((m) => [m, m]), matrix, tab, params)),
     el("p", { class: "legend" }, `${machineLabel(machine)}, the latest column.`),
     table(["preconditioner", "generate", "apply", "storage", "levels", "state"],
@@ -438,7 +445,7 @@ function renderTriad(m) {
   else {
     const nodes = [...new Set(m.triad.map((t) => t.node))];
     const frame = chartFrame(model, "Node bandwidth over time", "run", "triad", 480, 160);
-    frame.append(svg("g", {}, model.dots.map((d) => svg("circle", { class: `dot ${d.cls}`, cx: d.cx, cy: d.cy, r: 4.5 }, svg("title", {}, d.title)))));
+    put(frame, svg("g", {}, model.dots.map((d) => svg("circle", { class: `dot ${d.cls}`, cx: d.cx, cy: d.cy, r: 4.5 }, svg("title", {}, d.title)))));
     out.push(frame, el("p", { class: "legend" }, "Colour is the node: ",
       nodes.map((n, i) => el("span", { class: "key" }, el("span", { class: `swatch n${i % 6}` }), n)), ". Only runs with a measured triad are shown."));
   }
@@ -479,7 +486,7 @@ async function renderMachines(root, token) {
   const ids = Object.keys(data.machines);
   const column = (title, build) => [el("h2", {}, title),
     el("div", { class: "machine-grid" }, ids.map((id) => el("section", { class: "machine" }, el("h3", {}, machineLabel(id)), build(id, data.machines[id]))))];
-  root.append(
+  put(root,
     column("Setup", (id, m) => renderSetup(m.setup)),
     column("Node bandwidth over time", (id, m) => renderTriad(m)),
     column("Runs and energy", (id, m) => renderEnergy(id, m)));
@@ -502,7 +509,7 @@ async function render() {
   renderTabs();
   const scrollY = window.scrollY;
   const root = document.getElementById("view");
-  root.replaceChildren();
+  replace(root);
   if (tab === "machines") {
     await renderMachines(root, token);
     return;

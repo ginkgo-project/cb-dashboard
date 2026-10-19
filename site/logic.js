@@ -96,6 +96,12 @@ export function flagText(flag, c, machineLabel) {
   return [what, caseLabel(c), machineLabel].join(DOT);
 }
 
+// The children to append: nested arrays flattened, null, undefined and false
+// dropped, so a condition or a map can be passed as a child.
+export function flatChildren(children) {
+  return children.flat(Infinity).filter((c) => c !== undefined && c !== null && c !== false);
+}
+
 // One render at a time: each render takes a token, and after any await it
 // may touch the page only while its token is still the latest.
 export function renderTokens() {
