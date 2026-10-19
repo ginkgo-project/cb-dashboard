@@ -131,3 +131,25 @@ Slurm stopped the job with SIGTERM (time limit or `scancel`).
 
 Replace `<user>` with your cluster user name. `$SCRATCH` would expand on the
 laptop, so the remote paths are written out.
+
+## Dashboard
+
+`python -m dashboard build` reads the runs under `results/` whose `run.json` is
+tracked by git, together with `dashboard/machines.toml` (per-machine peaks),
+`dashboard/models.py` and `dashboard/frozen.json`, and writes the page data to
+`site/data/`. `--ginkgo PATH` points it at a Ginkgo checkout. To look at the
+page locally:
+
+    python -m dashboard build
+    python3 -m http.server -d site 8000
+
+After committing a run with new cases, run `python -m dashboard freeze` and
+commit the updated `dashboard/frozen.json`.
+
+The models in `dashboard/models.py` (bytes and flops per case) are fixed per
+benchmark: the history is recomputed from them at every build, so correcting a
+model changes every past point. Change one only to fix an error.
+
+`site/data/` is generated and git-ignored. On every push to `main`,
+`.github/workflows/deploy.yml` runs the tests, builds the data and deploys
+`site/` to GitHub Pages at `cb.gko-project.org` (`site/CNAME`).
