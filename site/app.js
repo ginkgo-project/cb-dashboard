@@ -2,7 +2,7 @@
 // through textContent (the el helper), so node names, errors and reasons
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
-  rowFilter, scatterProps, scatterModel, rooflineModel, solverRows, preconditionerRows } from "./logic.js";
+  rowFilter, scatterProps, scatterModel, rooflineModel, childPath, solverRows, preconditionerRows } from "./logic.js";
 
 // tabs: the tab files, loaded on the first visit of the tab
 const state = { meta: null, tabs: {}, runs: {}, route: { tab: "basic", params: {} } };
@@ -345,12 +345,12 @@ function renderSolverTable(root, data) {
         num(r.residual, (v) => v.toExponential(2))]), "this-week"));
 }
 
-// parameters as a nested list; a changed path (dotted) is marked; seen collects the paths shown
+// parameters as a nested list; a changed path (a.b for keys, a[0] for list items, as the build writes it) is marked; seen collects the paths shown
 function parameterList(value, path, changed, seen) {
   if (value === null || typeof value !== "object") return null;
   const entries = Array.isArray(value) ? value.map((v, i) => [String(i), v]) : Object.entries(value);
   return el("ul", { class: "params" }, entries.map(([name, v]) => {
-    const here = path ? `${path}.${name}` : name;
+    const here = childPath(path, name, Array.isArray(value));
     seen.add(here);
     const mark = changed.get(here);
     const nested = parameterList(v, here, changed, seen);

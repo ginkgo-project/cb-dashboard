@@ -304,3 +304,14 @@ test("preconditionerRows: a disabled preconditioner has a state and null numbers
   assert.deepEqual(rows[1], { preconditioner: "ilu", generateMs: null, applyMs: null, storageMb: null, levels: null, state: "disabled" });
   assert.deepEqual(logic.preconditionerRows(precData, "m1", "zzz"), []);
 });
+
+test("parameterPaths: paths as the build writes them", () => {
+  const params = { coarsest_solver: [{ criteria: [{ max_iters: 5 }] }], storage_optimization: [0, 1], empty: {} };
+  const leaves = logic.parameterPaths(params);
+  assert.deepEqual(leaves.map((l) => l.path), ["coarsest_solver[0].criteria[0].max_iters", "storage_optimization[0]", "storage_optimization[1]", "empty"]);
+  const changed = new Map([["coarsest_solver[0].criteria[0].max_iters", { before: 4, after: 5 }], ["storage_optimization[1]", { before: 0, after: 1 }]]);
+  assert.deepEqual(leaves.filter((l) => changed.has(l.path)).map((l) => l.path),
+    ["coarsest_solver[0].criteria[0].max_iters", "storage_optimization[1]"]);
+  assert.equal(logic.childPath("", "a", false), "a");
+  assert.equal(logic.childPath("a", "0", true), "a[0]");
+});

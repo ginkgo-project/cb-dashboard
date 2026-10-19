@@ -352,3 +352,18 @@ export function preconditionerRows(tabData, machine, matrix) {
     };
   });
 }
+
+// The path of a child, as the build writes it: a.b for keys, a[0] for list items.
+export function childPath(path, key, isArray) {
+  if (isArray) return `${path}[${key}]`;
+  return path ? `${path}.${key}` : String(key);
+}
+
+// The leaves of a parameter tree with their paths; empty dicts and lists are leaves.
+export function parameterPaths(value, path = "") {
+  const isArray = Array.isArray(value);
+  if (value !== null && typeof value === "object" && Object.keys(value).length) {
+    return Object.entries(value).flatMap(([k, v]) => parameterPaths(v, childPath(path, k, isArray)));
+  }
+  return [{ path, value }];
+}
