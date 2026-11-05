@@ -146,7 +146,7 @@ run: its invocations are `not_available`, hatched on the dashboard.
 ### Copy back
 
     rsync -a daint:/ritom/scratch/cscs/<user>/cb/results/daint-gh200/ results/daint-gh200/
-    rsync -a beverin:/capstor/scratch/cscs/<user>/cb/results/beverin-mi300a/ results/beverin-mi300a/
+    rsync -a beverin:/ritom/scratch/cscs/<user>/cb/results/beverin-mi300a/ results/beverin-mi300a/
 
 Replace `<user>` with your cluster user name. `$SCRATCH` would expand on the
 laptop, so the remote paths are written out.
