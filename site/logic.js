@@ -89,10 +89,11 @@ export function caseLabel(c) {
   }
 }
 
-const STATUS_FLAGS = { new_failure: "new failure", new_not_available: "now not available", new_missing: "now missing" };
+const STATUS_FLAGS = { new_failure: "new failure", new_not_available: "now not available", new_missing: "now missing", new_ok: "now working" };
 
 // The badge before the flag text: the direction of a speed change, or
-// "status" for a new failure, not available or missing, which the text names.
+// "status" for a new failure, not available, missing or working, which the
+// text names.
 export function flagBadge(state) {
   return state === "slower" || state === "faster" ? state : "status";
 }

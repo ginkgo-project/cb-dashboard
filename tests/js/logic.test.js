@@ -420,6 +420,7 @@ test("flagText: a case now not available or missing", () => {
   const c = { group: "spmv", labels: { operation: "spmv", format: "csr", matrix: "cage15" } };
   assert.equal(logic.flagText({ state: "new_not_available" }, c, "Daint GH200"), "now not available · SpMV csr · cage15 · Daint GH200");
   assert.equal(logic.flagText({ state: "new_missing" }, c, "Daint GH200"), "now missing · SpMV csr · cage15 · Daint GH200");
+  assert.equal(logic.flagText({ state: "new_ok", change: 0.2, band: 0.03 }, c, "Daint GH200"), "now working · SpMV csr · cage15 · Daint GH200");
 });
 
 test("baselineText: the median of the previous N columns, and the previous column", () => {
@@ -433,9 +434,9 @@ test("baselineText: the median of the previous N columns, and the previous colum
 });
 test("flagBadge: speed or status, so the badge never repeats the flag text", () => {
   const c = { group: "spmv", labels: { operation: "spmv", format: "csr", matrix: "cage15" } };
-  assert.deepEqual(["new_failure", "new_not_available", "new_missing", "slower", "faster"].map(logic.flagBadge),
-    ["status", "status", "status", "slower", "faster"]);
-  for (const state of ["new_failure", "new_not_available", "new_missing", "slower", "faster"]) {
+  assert.deepEqual(["new_failure", "new_not_available", "new_missing", "new_ok", "slower", "faster"].map(logic.flagBadge),
+    ["status", "status", "status", "status", "slower", "faster"]);
+  for (const state of ["new_failure", "new_not_available", "new_missing", "new_ok", "slower", "faster"]) {
     const text = logic.flagText({ state, change: 0.1, band: 0.03 }, c, "Daint GH200");
     assert.ok(!text.includes(logic.flagBadge(state)), text);
   }

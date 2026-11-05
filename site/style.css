@@ -95,7 +95,7 @@ td.number { text-align: right; white-space: nowrap; }
 .flags li { padding: 3px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 .flag { display: inline-block; min-width: 4.5rem; margin-right: 8px; border-radius: 4px; padding: 0 6px; font-size: 0.75rem; font-weight: 600; color: var(--on-status); text-align: center; }
 .flag.slower, .flag.new_failure { background: var(--fail); }
-.flag.faster { background: var(--ok); }
+.flag.faster, .flag.new_ok { background: var(--ok); }
 .flag.new_not_available, .flag.new_missing { background: var(--cancel); }
 .detail { margin: 12px 0; }
 .detail summary { cursor: pointer; font-weight: 600; }

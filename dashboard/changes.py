@@ -14,6 +14,10 @@ NOT_OK_ORDER = ("not_available", "failed", "disabled", "missing")
 # a case that is now in one of these states, after another state in the
 # column before, is flagged as new
 NEW_STATES = {"not_available": "new_not_available", "missing": "new_missing"}
+# a measured case after one of these states in the column before is flagged
+# as now working; not after disabled, since enabling a case is a setting
+NOT_WORKING = ("failed", "not_available", "missing")
+MEASURED = ("history", "same", "slower", "faster")
 
 
 @dataclass
@@ -162,8 +166,9 @@ def _compare(cell: Cell, detail: dict, kind: str, prev: list[dict]) -> None:
 
 
 def flags(cells: dict[str, dict[str, list[Cell | None]]]) -> list[Flag]:
-    """New failures, cases now not available or missing, slower, faster."""
-    new_failures, slower, faster = [], [], []
+    """New failures, cases now not available, missing or working, slower,
+    faster."""
+    new_failures, now_ok, slower, faster = [], [], [], []
     new_states: dict[str, list[Flag]] = {s: [] for s in NEW_STATES.values()}
     for machine, by_key in cells.items():
         for key, row in by_key.items():
@@ -183,6 +188,10 @@ def flags(cells: dict[str, dict[str, list[Cell | None]]]) -> list[Flag]:
                 if prev is not None and prev.state != cell.state:
                     flag.state = NEW_STATES[cell.state]
                     new_states[flag.state].append(flag)
+            elif (cell.state in MEASURED and prev is not None
+                    and prev.state in NOT_WORKING):
+                flag.state = "new_ok"
+                now_ok.append(flag)
             elif cell.state == "slower":
                 slower.append(flag)
             elif cell.state == "faster":
@@ -190,7 +199,7 @@ def flags(cells: dict[str, dict[str, list[Cell | None]]]) -> list[Flag]:
     slower.sort(key=lambda f: f.change)
     faster.sort(key=lambda f: -f.change)
     return [*new_failures, *(f for fs in new_states.values() for f in fs),
-            *slower, *faster]
+            *now_ok, *slower, *faster]
 
 
 def unchanged(cells: dict[str, dict[str, list[Cell | None]]],

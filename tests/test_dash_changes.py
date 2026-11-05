@@ -281,6 +281,26 @@ def test_new_not_available_and_missing_are_flagged():
         ("slow", "slower")]
 
 
+def test_a_case_that_started_working_is_flagged():
+    cells = {"m": {
+        "slow": [Cell("same"), Cell("slower", -0.1, 0.03)],
+        "fail": [Cell("same"), Cell("failed")],
+        "fixed": [Cell("failed"), Cell("history")],
+        "na_fixed": [Cell("not_available"), Cell("same")],
+        # the status change is the news, not the speed against older values
+        "miss_fixed": [Cell("missing"), Cell("faster", 0.2, 0.03)],
+        # enabling a case again is a machine setting, not a fix
+        "enabled": [Cell("disabled"), Cell("history")],
+        "new_case": [None, Cell("history")],
+        "first": [Cell("history")],
+    }}
+    out = flags(cells)
+    assert [(f.key, f.state) for f in out] == [
+        ("fail", "new_failure"), ("fixed", "new_ok"), ("na_fixed", "new_ok"),
+        ("miss_fixed", "new_ok"), ("slow", "slower")]
+    assert (out[3].change, out[3].band) == (0.2, 0.03)
+
+
 def test_baseline_n_counts_the_earlier_values():
     cells = series([1.0] * 11)
     assert [c.baseline_n for c in cells] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8]
