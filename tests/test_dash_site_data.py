@@ -4,9 +4,9 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from dash_fakes import write_manifest, write_run
+from dash_fakes import GROUP_NAMES, write_manifest, write_run
 
-from dashboard.__main__ import main
+from dashboard.__main__ import main, results_commit
 from dashboard.cases import Measurement
 from dashboard.changes import Point
 from dashboard.load import Column, Run
@@ -90,8 +90,11 @@ def _matrix(name, set_, roles):
             "spd": True if set_ == "fem" else None, "run_sellp": True}
 
 
-def _fake(tmp):
-    """Two machines, three columns; the Beverin solver fails in the last."""
+def _fake(tmp, before_build=None, results_commit=None):
+    """Two machines, three columns; the Beverin solver fails in the last.
+
+    `before_build(results)` can add runs before the build.
+    """
     results = tmp / "results"
     for machine in (DAINT, BEV):
         for i, (commit, date) in enumerate(COMMITS):
@@ -107,9 +110,12 @@ def _fake(tmp):
     catalog = tmp / "catalog.toml"
     catalog.write_text('[[entry]]\nname = "pp"\n'
                        'fem = {problem = "porous_pressure", size = 8}\n')
+    if before_build:
+        before_build(results)
     out = tmp / "out"
     build_site(results, manifest, catalog, out, machines=load_machines(),
-               frozen={}, script_changed=lambda a, b: False, warnings=[])
+               frozen={}, script_changed=lambda a, b: False, warnings=[],
+               results_commit=results_commit)
     return out
 
 
@@ -309,3 +315,65 @@ def test_bench_settings_from_spmv_with_the_blas_difference():
     assert _bench_settings([_invoking(blas=["-warmup", "3"])]) == {
         "warmup": "3"}
     assert _bench_settings([Run("m", "r", {"groups": {}}, {})]) is None
+
+
+def unbuilt(results, machine, name, commit, date):
+    write_run(results, machine, name, commit=commit, date=date,
+              started=f"{date}T10:00:00+00:00",
+              groups={g: {"status": "skipped", "reason": "build failed"}
+                      for g in GROUP_NAMES},
+              triad=None, extra={"build": {"error": "CalledProcessError: cmake"},
+                                 "finished": f"{date}T10:05:00+00:00"})
+
+
+def test_an_unbuilt_newest_run_is_not_a_column_and_warns(tmp_path):
+    out = _fake(tmp_path, lambda res: unbuilt(res, DAINT, "2026-10-22_c4c4c4c4c4",
+                                              "c4" * 20, "2026-10-22"))
+    assert len(_read(out, "basic.json")["machines"][DAINT]["columns"]) == 3
+    (tmp_path / "plain").mkdir()
+    plain = _fake(tmp_path / "plain")
+    for tab in TABS:
+        assert _read(out, f"{tab}.json")["flags"] == _read(plain, f"{tab}.json")["flags"]
+    meta = _read(out, "meta.json")
+    assert any(w.startswith(f"{DAINT}: origin/develop at c4c4c4c4c4 did not build")
+               for w in meta["warnings"])
+    assert meta["machines"][DAINT]["last_run"]["dir"] == "2026-10-22_c4c4c4c4c4"
+    assert meta["machines"][DAINT]["last_run"]["status"] == "failed"
+    assert (out / "runs" / DAINT / "2026-10-22_c4c4c4c4c4.json").is_file()
+
+
+def test_an_older_unbuilt_run_gives_no_warning(tmp_path):
+    out = _fake(tmp_path, lambda res: unbuilt(res, DAINT, "2026-10-02_c9c9c9c9c9",
+                                              "c9" * 20, "2026-10-02"))
+    assert len(_read(out, "basic.json")["machines"][DAINT]["columns"]) == 3
+    assert not any("did not build" in w for w in _read(out, "meta.json")["warnings"])
+
+
+def test_run_detail_has_the_ci_job(tmp_path):
+    ci = {"job_id": 9, "job_url": "https://gitlab.com/j/9", "pipeline_id": 7,
+          "pipeline_url": "https://gitlab.com/p/7"}
+
+    def with_ci(results):
+        rec_path = results / DAINT / "2026-10-15_c3c3c3c3c3" / "run.json"
+        rec = json.loads(rec_path.read_text())
+        rec_path.write_text(json.dumps({**rec, "ci": ci}))
+
+    out = _fake(tmp_path, with_ci)
+    assert _read(out, f"runs/{DAINT}/2026-10-15_c3c3c3c3c3.json")["ci"] == ci
+    assert "ci" not in _read(out, f"runs/{BEV}/2026-10-15_c3c3c3c3c3.json")
+
+
+def test_results_commit(tmp_path):
+    assert results_commit(tmp_path) is None
+    git = ["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t",
+           "-c", "commit.gpgsign=false"]
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "f").write_text("x")
+    subprocess.run(git + ["add", "f"], check=True)
+    subprocess.run(git + ["commit", "-q", "-m", "m"], check=True)
+    head = subprocess.run(git + ["rev-parse", "HEAD"], check=True, capture_output=True,
+                          text=True).stdout.strip()
+    assert results_commit(tmp_path) == head
+    (tmp_path / "site").mkdir()
+    out = _fake(tmp_path / "site", results_commit="abc")
+    assert _read(out, "meta.json")["results_commit"] == "abc"

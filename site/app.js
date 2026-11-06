@@ -147,6 +147,7 @@ function runBlock(machine, dir, run, key) {
   return el("li", {},
     el("strong", {}, dir), ` · node ${run.node ?? "unknown"} · ${triad}`,
     el("br"), `commit ${shortSha(run.ginkgo?.commit)} on ${run.ginkgo?.ref ?? "unknown ref"}`,
+    run.ci?.job_url ? [" · ", el("a", { href: run.ci.job_url }, "CI job")] : null,
     el("br"), joules == null ? "no energy recorded"
       : `energy ${Math.round(joules)} J${watts(joules, inv.seconds)} (whole benchmark run, including loading)`);
 }

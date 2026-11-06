@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,6 +28,16 @@ def _freeze(args) -> int:
     return 0
 
 
+def results_commit(path: Path) -> str | None:
+    """The commit checked out in the results work tree, None outside one."""
+    try:
+        r = subprocess.run(["git", "-C", str(path), "rev-parse", "HEAD"],
+                           capture_output=True, text=True)
+    except OSError:
+        return None
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
 def _build(args) -> int:
     results = Path(args.results)
     runs = load_runs(results)
@@ -39,7 +50,8 @@ def _build(args) -> int:
     out = Path(args.out)
     build_site(results, Path(args.manifest), Path(args.catalog), out,
                machines=load_machines(), frozen=frozen,
-               script_changed=git_script_changed(REPO), warnings=warnings)
+               script_changed=git_script_changed(REPO), warnings=warnings,
+               results_commit=results_commit(results))
     files = sorted(out.rglob("*.json"))
     size = sum(f.stat().st_size for f in files)
     counts = json.loads((out / "meta.json").read_text())["flag_counts"]

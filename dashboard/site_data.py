@@ -291,7 +291,7 @@ def _run_detail(run: Run, points: dict[str, Point]) -> dict:
     return _drop_none({
         "machine": run.machine, "dir": run.dir, "node": rec.get("node"),
         "started": rec.get("started"), "finished": rec.get("finished"),
-        "ginkgo": rec.get("ginkgo"), "triad": run.triad,
+        "ginkgo": rec.get("ginkgo"), "triad": run.triad, "ci": rec.get("ci"),
         "invocations": invs, "cases": cases})
 
 
@@ -434,22 +434,43 @@ def _machine_history(runs: list[Run]) -> dict:
             "nodes": nodes, "groups": groups, "runs": history}
 
 
+def _unbuilt(run: Run) -> bool:
+    """A run whose build failed or was killed: it measured nothing."""
+    return bool((run.record.get("build") or {}).get("error"))
+
+
+def _unbuilt_warnings(runs: list[Run]) -> list[str]:
+    """One warning per machine whose newest run did not build."""
+    out = []
+    for machine in sorted({r.machine for r in runs}):
+        newest = max((r for r in runs if r.machine == machine), key=lambda r: r.started)
+        if _unbuilt(newest):
+            out.append(f"{machine}: {newest.ref} at {newest.commit[:10]} did not build "
+                       f"({newest.record['build']['error']}); the page shows the last "
+                       "commit that did")
+    return out
+
+
 # --- the build ---------------------------------------------------------------
 
 def build_site(results: Path, manifest: Path, catalog: Path, out: Path, *,
                machines: dict, frozen: dict,
                script_changed: Callable[[str, str], bool],
-               warnings: list[str]) -> None:
+               warnings: list[str], results_commit: str | None = None) -> None:
     """Write meta.json, the tab files, machines.json and runs/<m>/<dir>.json.
 
-    Warnings found here are appended to `warnings`.
+    Warnings found here are appended to `warnings`. A run whose build failed
+    is not a column; it is a warning while it is the machine's newest run.
+    `results_commit` is the commit of the results the page is built from.
     """
     out = Path(out)
     runs = load_runs(Path(results))
     for name in sorted({r.machine for r in runs} - set(machines)):
         warnings.append(f"{name}: not in dashboard/machines.toml; "
                         "its runs are left out")
-    runs = [r for r in runs if r.machine in machines]
+    all_runs = [r for r in runs if r.machine in machines]
+    runs = [r for r in all_runs if not _unbuilt(r)]
+    warnings += _unbuilt_warnings(all_runs)
     man = json.loads(Path(manifest).read_text())
     matrices = {e["name"]: e for e in man.get("matrices") or []}
     with open(catalog, "rb") as f:
@@ -521,11 +542,11 @@ def build_site(results: Path, manifest: Path, catalog: Path, out: Path, *,
 
     meta_machines, history = {}, {}
     for name, (_, pts) in known.items():
-        mruns = sorted((r for r in runs if r.machine == name),
+        mruns = sorted((r for r in all_runs if r.machine == name),
                        key=lambda r: r.started)
         for r in mruns:
             _write(out / "runs" / name / f"{r.dir}.json",
-                   _run_detail(r, pts[r.dir]))
+                   _run_detail(r, pts.get(r.dir, {})))
         last = mruns[-1]
         meta_machines[name] = {
             **{k: machines[name][k] for k in _MACHINE_KEYS},
@@ -540,4 +561,4 @@ def build_site(results: Path, manifest: Path, catalog: Path, out: Path, *,
     _write(out / "meta.json", {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "machines": meta_machines, "flag_counts": flag_counts,
-        "warnings": warnings})
+        "warnings": warnings, "results_commit": results_commit})
