@@ -1,0 +1,14 @@
+This is Ginkgo 2.0.0 (develop)
+    running with core module 2.0.0 (develop)
+    the reference module is  2.0.0 (develop)
+    the OpenMP    module is  2.0.0 (develop)
+    the CUDA      module is  2.0.0 (develop)
+    the HIP       module is  not compiled
+    the DPCPP     module is  not compiled
+Running on CudaExecutor on device 0 (NVIDIA GH200 120GB) with host OmpExecutor (64 threads)
+Running with 1 warm iterations and 5 running iterations
+The random seed for right hand sides is 42
+Running with preconditioners: ic-syncfree
+Running test case /capstor/store/cscs/userlab/d131/cb/matrices/fem/curl_curl.bin
+Matrix is of size (3142601, 3142601), 50968793
+	Running preconditioner: ic-syncfree

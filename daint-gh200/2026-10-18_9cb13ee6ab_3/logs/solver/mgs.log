@@ -1,0 +1,30 @@
+This is Ginkgo 2.0.0 (develop)
+    running with core module 2.0.0 (develop)
+    the reference module is  2.0.0 (develop)
+    the OpenMP    module is  2.0.0 (develop)
+    the CUDA      module is  2.0.0 (develop)
+    the HIP       module is  not compiled
+    the DPCPP     module is  not compiled
+Running on CudaExecutor on device 0 (NVIDIA GH200 120GB) with host OmpExecutor (64 threads)
+Running with 1 warm iterations and 5 running iterations
+The random seed for right hand sides is 42
+Running cg,bicgstab,gmres,ir with 1000 iterations and residual goal of 1.000000e-10
+The number of right hand sides is 1
+Running test case stencil(8000000, 5pt)
+Matrix is of size (7997584, 7997584)
+	Running solver: cg-jacobi
+	Running solver: bicgstab-jacobi
+	Running solver: gmres-jacobi
+	Running solver: ir-jacobi
+Running test case stencil(8000000, 7pt)
+Matrix is of size (8000000, 8000000)
+	Running solver: cg-jacobi
+	Running solver: bicgstab-jacobi
+	Running solver: gmres-jacobi
+	Running solver: ir-jacobi
+Running test case stencil(8000000, 27pt)
+Matrix is of size (8000000, 8000000)
+	Running solver: cg-jacobi
+	Running solver: bicgstab-jacobi
+	Running solver: gmres-jacobi
+	Running solver: ir-jacobi
