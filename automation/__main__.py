@@ -5,7 +5,8 @@ import importlib
 import os
 import sys
 
-COMMANDS = {"trigger": "start the CSCS benchmark pipeline for a commit"}
+COMMANDS = {"trigger": "start the CSCS benchmark pipeline for a commit",
+            "ingest": "import finished benchmark jobs into the results branch"}
 
 
 def main(argv: list[str] | None = None) -> int:
