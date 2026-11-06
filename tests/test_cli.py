@@ -419,3 +419,41 @@ def test_ci_sh_needs_the_ci_variables(tmp_path):
     r = subprocess.run(["bench/ci.sh", "daint-gh200"], cwd=REPO, capture_output=True,
                        text=True, env=env)
     assert r.returncode != 0 and "CI_COMMIT_SHA" in r.stderr
+
+
+def test_ci_sh_copies_a_run_killed_by_the_time_limit(tmp_path):
+    """Slurm sends SIGTERM to every process of the job at its time limit."""
+    import time
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fakes = {
+        # uenv image inspect: there; uenv run --view=default U -- cmd...: cmd
+        "uenv": '#!/bin/sh\n[ "$1" = image ] && exit 0\nshift 3\n[ "$1" = -- ] && shift\nexec "$@"\n',
+        "flock": '#!/bin/sh\nshift\nexec "$@"\n',
+        # the harness: writes the run, then waits for SIGTERM like a long group
+        "python": ('#!/usr/bin/env bash\n'
+                   '[ "$3" = uenv ] && { echo fake/uenv; exit 0; }\n'
+                   'prev=; for a in "$@"; do [ "$prev" = --path-file ] && pf=$a; prev=$a; done\n'
+                   'mkdir -p "$RUN_DIR"; echo running > "$RUN_DIR/run.json"; echo "$RUN_DIR" > "$pf"\n'
+                   'trap \'echo killed > "$RUN_DIR/run.json"; exit 143\' TERM\n'
+                   'touch "$READY"; while true; do sleep 0.1; done\n'),
+    }
+    for name, text in fakes.items():
+        (bin_dir / name).write_text(text)
+        (bin_dir / name).chmod(0o755)
+    project, ready = tmp_path / "project", tmp_path / "ready"
+    run_dir = tmp_path / "scratch" / "cb" / "results" / "daint-gh200" / "2026-11-06_aaaaaaaaaa"
+    env = sh_env(PATH=f"{bin_dir}:{os.environ['PATH']}", CB_PYTHON=str(bin_dir / "python"),
+                 CI_COMMIT_SHA="a" * 40, CI_PROJECT_DIR=str(project), RUN_DIR=str(run_dir),
+                 READY=str(ready))
+    p = subprocess.Popen(["bench/ci.sh", "daint-gh200"], cwd=REPO, env=env,
+                         start_new_session=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    for _ in range(100):
+        if ready.exists():
+            break
+        time.sleep(0.1)
+    assert ready.exists(), p.stderr.read() if p.poll() is not None else "not ready"
+    os.killpg(p.pid, signal.SIGTERM)
+    assert p.wait(timeout=10) == 143
+    copied = project / "results" / "daint-gh200" / run_dir.name / "run.json"
+    assert copied.read_text().strip() == "killed"

@@ -38,6 +38,10 @@ run flock "$SCRATCH/.ginkgo-ci-uenv-pull.lock" bash -c \
 
 PATH_FILE="$(mktemp)"
 trap 'rm -f "$PATH_FILE"' EXIT
+# At the time limit Slurm sends SIGTERM to every process of the job. The
+# harness then writes its run.json; this script outlives it (a trap runs after
+# the foreground command ends) to copy that run before the SIGKILL.
+trap 'echo "ci.sh: SIGTERM, copying the run" >&2' TERM
 status=0
 run uenv run --view=default "$UENV" -- "$PYTHON" -m bench run "$MACHINE" \
   --ref "$CI_COMMIT_SHA" --record-ref "${CB_REF:-$CI_COMMIT_SHA}" --force \
