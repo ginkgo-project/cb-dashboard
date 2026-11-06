@@ -190,3 +190,36 @@ def test_ensure_clone_waits_for_lock(tmp_path, monkeypatch):
     p.wait()
     with clone_lock(clone):
         pass
+
+
+def test_clone_owned_by_another_account(tmp_path, monkeypatch):
+    # The CSCS CI's service account uses the maintainer's clone, which git
+    # refuses as "dubious ownership" unless the clone is a safe.directory.
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    up, c1, c2 = make_upstream(tmp_path)
+    clone = tmp_path / "clone"
+    ensure_clone(str(up), clone)
+    c3 = commit(up, "c", "2026-03-01T12:00:00+00:00")
+    monkeypatch.setenv("GIT_TEST_ASSUME_DIFFERENT_OWNER", "1")
+    # the upstream is GitHub in production, here a local repository
+    gitconfig = tmp_path / "gitconfig"
+    gitconfig.write_text(f"[safe]\n\tdirectory = {up / '.git'}\n")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(gitconfig))
+    ensure_clone(str(up), clone)
+    assert resolve(clone).sha == c3
+    assert lacks(clone, c3, {"old": c1}) == set()
+    wt = tmp_path / "worktrees" / "m"
+    prepare_worktree(clone, wt, c1)
+    assert git(wt, "rev-parse", "HEAD") == c1
+
+
+def test_git_errors_reach_stderr(tmp_path, monkeypatch, capsys):
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    up, c1, c2 = make_upstream(tmp_path)
+    clone = tmp_path / "clone"
+    ensure_clone(str(up), clone)
+    with pytest.raises(subprocess.CalledProcessError):
+        resolve(clone, "origin/missing")
+    assert "fatal:" in capsys.readouterr().err

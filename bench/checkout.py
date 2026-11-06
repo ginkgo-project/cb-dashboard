@@ -4,6 +4,7 @@ from __future__ import annotations
 import fcntl
 import shutil
 import subprocess
+import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,10 +19,22 @@ class Commit:
     develop_base: str
 
 
+def _safe(clone: Path) -> tuple[str, str]:
+    """Lets git use the shared clone when another account owns it, as the
+    maintainer's does for the CSCS CI's service account (else "dubious
+    ownership")."""
+    return ("-c", f"safe.directory={clone.resolve()}")
+
+
 def _git(*args: str, cwd: Path | None = None) -> str:
+    """git in `cwd` (the shared clone) or with -C; its stderr is printed on failure."""
     r = subprocess.run(
-        ["git", *args], cwd=cwd, check=True, capture_output=True, text=True
+        ["git", *(_safe(cwd) if cwd else ()), *args], cwd=cwd,
+        capture_output=True, text=True,
     )
+    if r.returncode:
+        sys.stderr.write(r.stderr)
+        raise subprocess.CalledProcessError(r.returncode, r.args, r.stdout, r.stderr)
     return r.stdout.strip()
 
 
@@ -58,7 +71,7 @@ def lacks(clone: Path, sha: str, added: dict[str, str]) -> set[str]:
     """The names in `added` whose commit is not an ancestor of `sha`."""
     out = set()
     for name, commit in added.items():
-        r = subprocess.run(["git", "merge-base", "--is-ancestor", commit, sha],
+        r = subprocess.run(["git", *_safe(clone), "merge-base", "--is-ancestor", commit, sha],
                            cwd=clone, capture_output=True, text=True)
         if r.returncode == 1:
             out.add(name)
