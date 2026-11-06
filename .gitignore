@@ -5,3 +5,5 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 site/data/
+# the results branch, checked out here as a worktree (README, "Results")
+/results/

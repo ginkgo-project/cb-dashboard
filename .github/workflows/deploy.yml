@@ -1,30 +1,84 @@
-name: Test and deploy
+name: Import, test and deploy
 
-# Tests the dashboard, builds site/data/ from the tracked runs under results/,
-# checks the page in a headless browser and deploys site/ to GitHub Pages. A
-# failed step deploys nothing, so the page keeps the last good version.
+# Hourly, imports finished runs of Ginkgo's CSCS CI pipeline "benchmark" into
+# the results branch (python -m automation ingest). On a push to main, a
+# dispatch, or when the results branch differs from the one the live page was
+# built from, it tests the dashboard, builds site/data/ from main and the
+# results branch, checks the page in a headless browser and deploys site/ to
+# GitHub Pages. A failed step deploys nothing, so the page keeps the last good
+# version.
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "23 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  PAGE_URL: https://cb.gko-project.org
+  # the gitlab.com mirror of the pipeline,
+  # cscs-ci/ci-testing/webhook-ci/mirrors/<project_id>/<pipeline_id>;
+  # the import is skipped while this repository variable is not set
+  BENCHMARK_PROJECT: ${{ vars.CSCS_CI_BENCHMARK_PROJECT }}
+
 jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      deploy: ${{ steps.stale.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: results
+          path: results
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Import new benchmark runs
+        if: github.event_name != 'push' && env.BENCHMARK_PROJECT != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git -C results config user.name "github-actions[bot]"
+          git -C results config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python -m automation ingest --results results --project "$BENCHMARK_PROJECT"
+          # a run pushed by hand meanwhile: the commits only add directories
+          git -C results push || { git -C results pull --rebase && git -C results push; }
+      - name: Does the live page lag behind the results?
+        id: stale
+        run: |
+          head=$(git -C results rev-parse HEAD)
+          live=$(curl -fsS "$PAGE_URL/data/meta.json" | jq -r '.results_commit // ""' || true)
+          echo "results branch $head, live page ${live:-unknown}"
+          if [ "${{ github.event_name }}" != schedule ] || [ "$live" != "$head" ]; then
+            echo deploy=true >> "$GITHUB_OUTPUT"
+          else
+            echo deploy=false >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: import
+    if: needs.import.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     steps:
       # full history: setup changes compare script versions with git
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: results
+          path: results
       - name: Check out Ginkgo develop
         uses: actions/checkout@v4
         with:
@@ -40,7 +94,7 @@ jobs:
       - run: pip install pytest
       - name: Tests
         run: |
-          python -m pytest -q tests/test_dash_*.py
+          python -m pytest -q tests/test_dash_*.py tests/test_automation_*.py
           node --test tests/js/*.test.js
       - name: Build the page data
         run: python -m dashboard build --ginkgo ginkgo
@@ -54,6 +108,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
