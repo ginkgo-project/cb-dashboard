@@ -43,7 +43,7 @@ override `--webgraph-cmd` if it differs. Check: twitter-2010 has 1,468,365,182 a
 Edit the `fem = {problem, size}` entries in `datasets/catalog.toml` so each FEM
 matrix has 20-100M nonzeros. Test on a compute node:
 
-    srun -A d131 -p normal -N1 --exclusive -t 01:00:00 \
+    srun -A <account> -p normal -N1 --exclusive -t 01:00:00 \
       $CB_ROOT/venv/daint-gh200/bin/python -m datasets build --root $CB_ROOT \
       --manifest $SCRATCH/cb/tuning-manifest.json --only <fem names>
 
@@ -112,9 +112,9 @@ nothing to do, 1 on a build failure, 2 on an architecture mismatch, 143 when
 Slurm stopped the job with SIGTERM (time limit or `scancel`). The jobs of one
 machine and account share its worktree (`$CB_ROOT/worktrees/<user>/<machine>`)
 and build directory (`$SCRATCH` is per account), so they are submitted with
-`--dependency=singleton` and run one after the other. The CSCS CI's service
-account has worktrees of its own. The job runs with `umask 0002`, because the
-clone and `state/` are shared with that account.
+`--dependency=singleton` and run one after the other. The job runs with
+`umask 0002`, so the shared clone and `state/` stay writable for the other
+accounts that run benchmarks.
 
 ### Older Ginkgo versions
 
@@ -157,7 +157,7 @@ results branch (see "Results"), so commit and push the new run there:
 
     git -C results add <machine>/<dir>
     git -C results commit -m "results: <machine> <sha10>"
-    git -C results push github results
+    git -C results push origin results
 
 ## Results
 
@@ -165,7 +165,7 @@ The runs are on the orphan branch `results`, whose root holds
 `<machine>/<date>_<sha10>[_n]/`. Main has only the code. In a checkout of main,
 the branch is the worktree `results/`, which main ignores:
 
-    git fetch github results
+    git fetch origin results
     git worktree add results results
 
 Only full runs of develop go on the branch: the weekly ones arrive
@@ -202,15 +202,15 @@ runs the tests, builds the data from main and the `results` branch, and deploys
 
 ## Weekly automation
 
-1. **Trigger:** `.github/workflows/benchmark.yml` in Ginkgo runs Monday and
-   Thursday at 03:17 UTC. It runs `python -m automation trigger` from this
-   repository, with develop's head. For the machines without a run of that
+1. **Trigger:** `.github/workflows/benchmark.yml` in Ginkgo runs twice a week.
+   It runs `python -m automation trigger` from this repository, with develop's
+   head. For the machines without a run of that
    commit on the `results` branch, it starts the CSCS CI pipeline `benchmark`
    of Ginkgo with `ref: sha:<head>`.
 2. **Benchmark:** `.gitlab/cscs-benchmark.yml` in Ginkgo has one job per
    machine. It runs only when the trigger sets `CB_BENCHMARK=1`. It clones
-   this repository and runs `bench/ci.sh <machine>` as the service account,
-   with the shared clone, the venv and the per-account build.
+   this repository and runs `bench/ci.sh <machine>`, with the same clone, venv
+   and build setup as a manual run.
 3. **Import:** the hourly run of `deploy.yml` runs
    `python -m automation ingest`. It finds the finished jobs on gitlab.com,
    where their artifacts are public. It checks each run: a single run
@@ -224,24 +224,15 @@ Still done by hand: bisects, pull request and history runs (`submit.sh`), and
 `python -m automation trigger --sha <sha> --dry-run` prints what would be
 triggered without sending anything.
 
-### One-time setup
+### Configuration
 
-1. **The d131 store:** group d131, group-writable, setgid directories, and
-   `core.sharedRepository=group` on the clone. Done 2026-11-06.
-2. **The CSCS CI setup page of ginkgo-project/ginkgo:**
-   - Add a pipeline `benchmark` with the entry point
-     `.gitlab/cscs-benchmark.yml`.
-   - Note the pipeline's id and the repository id. The gitlab.com mirror is
-     `cscs-ci/ci-testing/webhook-ci/mirrors/<project_id>/<pipeline_id>`.
-3. **Ginkgo's Actions secrets:** `CSCS_CI_REPOSITORY_ID` and
-   `CSCS_CI_WEBHOOK_SECRET`.
-4. **This repository's Actions variable:** `CSCS_CI_BENCHMARK_PROJECT`, set
-   to the mirror path. Until it is set, the import is skipped.
-5. **A ruleset on `results`:** no force pushes, no deletion.
-6. **The old worktrees:** remove `$CB_ROOT/worktrees/<machine>` with
-   `git -C $CB_ROOT/ginkgo worktree remove` once the per-account ones exist.
-7. **A test by hand before merging the Ginkgo PR:** a `data.yaml` with
-   `ref: pr:<n>`, `pipeline: benchmark` and the variables `CB_BENCHMARK: "1"`
-   and `CB_MACHINES: daint-gh200`, without `CB_REF`. Then
-   `curl -X POST -u '<repository_id>:<webhook_secret>' --data-binary @data.yaml https://cicd-ext-mw.cscs.ch/ci/pipeline/trigger`.
-   The run records its sha, not develop, so the import skips it.
+- **Ginkgo's CSCS CI:** a pipeline `benchmark` with the entry point
+  `.gitlab/cscs-benchmark.yml`, and the Actions secrets
+  `CSCS_CI_REPOSITORY_ID` and `CSCS_CI_WEBHOOK_SECRET` for the trigger.
+- **This repository:** the Actions variable `CSCS_CI_BENCHMARK_PROJECT`. It is
+  the pipeline's gitlab.com mirror,
+  `cscs-ci/ci-testing/webhook-ci/mirrors/<project_id>/<pipeline_id>`. The
+  import is skipped while it is not set.
+- **The store:** every account that runs benchmarks must be able to write the
+  shared clone and `state/` under `$CB_ROOT`. Use a common group, group-writable
+  setgid directories, and `git config core.sharedRepository group` on the clone.
