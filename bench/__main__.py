@@ -18,7 +18,7 @@ from bench.checkout import (DEVELOP, ensure_clone, lacks, prepare_worktree, read
 from bench.energy import snapshot as pm_counters
 from bench.groups import ADDED, GROUPS, invocations
 from bench.machine import load_machine
-from bench.record import (REPO, gpu_info, results_dir_name, run_record, script_version,
+from bench.record import (REPO, ci_info, gpu_info, results_dir_name, run_record, script_version,
                           toolchain_info)
 from bench.runner import Killed, job_deadline, run_group
 from bench.stream import measure as measure_stream
@@ -93,6 +93,10 @@ def cmd_run(args) -> int:
     script = script_version(subprocess.run, REPO)
     prepare_worktree(clone, worktree, commit.sha)
     out = _make_results_dir(m.results_dir, commit)
+    if args.path_file:  # for bench/ci.sh, which copies the run into the job's artifacts
+        Path(args.path_file).write_text(f"{out}\n")
+    ref = args.record_ref or args.ref
+    ci = ci_info(os.environ)
 
     results = {g: {"status": "pending"} if g in groups else
                {"status": "skipped", "reason": "not requested"} for g in GROUPS}
@@ -101,13 +105,15 @@ def cmd_run(args) -> int:
 
     def record(finished=None):
         info = build_info if build_info is not None else {}
-        rec = run_record(m, commit, args.ref, {"cmake_cache": info.get("cmake_cache", {})},
+        rec = run_record(m, commit, ref, {"cmake_cache": info.get("cmake_cache", {})},
                          manifest, results, started, finished, gpu=gpu, toolchain=toolchain,
                          script=script)
         rec["build"] = info
         rec["pm_counters"] = counters
         if stream_info is not None:
             rec["stream"] = stream_info
+        if ci is not None:
+            rec["ci"] = ci
         _write_json(out / "run.json", rec)
 
     def skip_pending(reason):
@@ -163,7 +169,7 @@ def cmd_run(args) -> int:
         return 128 + k.signum
     finally:
         signal.signal(signal.SIGTERM, previous)
-    if args.ref == DEVELOP and groups == GROUPS:
+    if ref == DEVELOP and groups == GROUPS:
         write_last(state, commit.sha)
     return 0
 
@@ -174,6 +180,11 @@ def main(argv=None) -> int:
     r = sub.add_parser("run")
     r.add_argument("machine")
     r.add_argument("--ref", default=DEVELOP)
+    # benchmark --ref but record this ref, e.g. a sha the CSCS CI was triggered
+    # with for develop's head
+    r.add_argument("--record-ref", default=None)
+    r.add_argument("--path-file", default=None,
+                   help="write the path of the run directory to this file")
     r.add_argument("--force", action="store_true")
     r.add_argument("--groups", default=",".join(GROUPS))
     r.add_argument("--manifest", default=str(DEFAULT_MANIFEST))

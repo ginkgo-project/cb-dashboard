@@ -325,3 +325,40 @@ def test_deadline_passed_to_groups(tmp_path, monkeypatch, manifest):
                         seen.append(deadline) or {"status": "ok", "seconds": 0.0, "invocations": []})
     assert cli.main(["run", "daint-gh200", "--manifest", str(manifest), "--groups", "blas"]) == 0
     assert seen == [12345.0]
+
+
+def test_record_ref_is_recorded_and_counts_as_develop(tmp_path, monkeypatch, manifest):
+    m, rc, _ = full_run(tmp_path, monkeypatch, manifest,
+                        ["--ref", "a" * 40, "--record-ref", "origin/develop", "--force"])
+    assert rc == 0
+    assert run_json(m)["ginkgo"]["ref"] == "origin/develop"
+    assert (m.root / "state" / m.name / "last_commit").read_text().strip() == COMMIT.sha
+
+
+def test_record_ref_defaults_to_ref(tmp_path, monkeypatch, manifest):
+    m, _, _ = full_run(tmp_path, monkeypatch, manifest, ["--ref", "origin/other"])
+    assert run_json(m)["ginkgo"]["ref"] == "origin/other"
+    assert not (m.root / "state" / m.name / "last_commit").exists()
+
+
+def test_ci_block_from_the_environment(tmp_path, monkeypatch, manifest):
+    monkeypatch.setenv("CI_JOB_ID", "42")
+    monkeypatch.setenv("CI_JOB_URL", "https://gitlab.com/x/-/jobs/42")
+    monkeypatch.setenv("CI_PIPELINE_ID", "7")
+    monkeypatch.setenv("CI_PIPELINE_URL", "https://gitlab.com/x/-/pipelines/7")
+    m, _, _ = full_run(tmp_path, monkeypatch, manifest)
+    assert run_json(m)["ci"] == {"job_id": 42, "job_url": "https://gitlab.com/x/-/jobs/42",
+                                 "pipeline_id": 7,
+                                 "pipeline_url": "https://gitlab.com/x/-/pipelines/7"}
+
+
+def test_no_ci_block_outside_ci(tmp_path, monkeypatch, manifest):
+    monkeypatch.delenv("CI_JOB_ID", raising=False)
+    m, _, _ = full_run(tmp_path, monkeypatch, manifest)
+    assert "ci" not in run_json(m)
+
+
+def test_path_file_names_the_run_directory(tmp_path, monkeypatch, manifest):
+    pf = tmp_path / "path"
+    m, _, _ = full_run(tmp_path, monkeypatch, manifest, ["--path-file", str(pf)])
+    assert pf.read_text() == f"{m.results_dir / '2026-10-16_aaaaaaaaaa'}\n"

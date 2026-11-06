@@ -5,7 +5,7 @@ from pathlib import Path
 from bench.checkout import Commit
 from bench.machine import Machine
 from bench.record import (
-    gpu_info, gpu_state, parse_nvidia_smi, parse_rocm_smi, parse_smi_query,
+    ci_info, gpu_info, gpu_state, parse_nvidia_smi, parse_rocm_smi, parse_smi_query,
     results_dir_name, run_record, toolchain_info,
 )
 
@@ -249,3 +249,9 @@ def test_gpu_state_hip_records_a_failed_query():
     s = gpu_state(machine("hip"), run=run)
     assert s["rocm-smi"] == {"card0": {"Temperature (Sensor edge) (C)": "40"}}
     assert s["partition"]["error"].startswith("CalledProcessError")
+
+
+def test_ci_info():
+    assert ci_info({}) is None
+    assert ci_info({"CI_JOB_ID": "5", "CI_PIPELINE_ID": "3"}) == {
+        "job_id": 5, "job_url": None, "pipeline_id": 3, "pipeline_url": None}

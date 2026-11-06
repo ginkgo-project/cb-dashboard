@@ -8,7 +8,7 @@ import re
 import socket
 import subprocess
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Mapping
 
 from bench.checkout import Commit
 from bench.machine import Machine
@@ -25,6 +25,16 @@ def results_dir_name(base: Path, commit: Commit) -> Path:
         path = base / f"{name}_{n}"
         n += 1
     return path
+
+
+def ci_info(env: Mapping[str, str]) -> dict | None:
+    """The GitLab CI job of this run (CSCS CI), None outside CI."""
+    if "CI_JOB_ID" not in env:
+        return None
+    pipeline = env.get("CI_PIPELINE_ID")
+    return {"job_id": int(env["CI_JOB_ID"]), "job_url": env.get("CI_JOB_URL"),
+            "pipeline_id": int(pipeline) if pipeline else None,
+            "pipeline_url": env.get("CI_PIPELINE_URL")}
 
 
 ERRORS = (ValueError, KeyError, StopIteration, IndexError,
