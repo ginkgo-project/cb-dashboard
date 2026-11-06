@@ -362,3 +362,60 @@ def test_path_file_names_the_run_directory(tmp_path, monkeypatch, manifest):
     pf = tmp_path / "path"
     m, _, _ = full_run(tmp_path, monkeypatch, manifest, ["--path-file", str(pf)])
     assert pf.read_text() == f"{m.results_dir / '2026-10-16_aaaaaaaaaa'}\n"
+
+
+def test_uenv_prints_the_machines_uenv():
+    r = subprocess.run([PY, "-m", "bench", "uenv", "beverin-mi300a"], cwd=REPO,
+                       capture_output=True, text=True, env=sh_env(), check=True)
+    assert r.stdout.strip() == "prgenv-gnu/25.07-6.3.3:v12"
+
+
+def test_worktree_per_account(tmp_path, monkeypatch, manifest):
+    seen = []
+    m = fake_machine(tmp_path)
+    patch_common(monkeypatch, m, COMMIT)
+    monkeypatch.setattr("getpass.getuser", lambda: "svc")
+    monkeypatch.setattr(cli, "prepare_worktree", lambda clone, wt, sha: seen.append(wt))
+    monkeypatch.setattr(cli, "build", lambda m, src: (seen.append(src) or
+                        {"configured": True, "seconds": 1.0, "cmake_cache": {}}))
+    monkeypatch.setattr(cli, "run_group", lambda *a, **k: {"status": "ok", "seconds": 0.0,
+                                                          "invocations": []})
+    cli.main(["run", "daint-gh200", "--manifest", str(manifest), "--groups", "blas"])
+    assert seen == [m.root / "worktrees" / "svc" / "daint-gh200"] * 2
+
+
+def test_job_sh_sets_a_group_writable_umask():
+    t = (REPO / "bench/job.sh").read_text()
+    assert t.index("umask 0002") < t.index("exec ")
+
+
+def ci_sh(tmp_path, **env):
+    project = tmp_path / "project"
+    (project / "results" / "old").mkdir(parents=True)
+    e = sh_env(CI_DRY_RUN="1", CI_COMMIT_SHA="a" * 40, CI_PROJECT_DIR=str(project), **env)
+    return project, subprocess.run(["bench/ci.sh", "daint-gh200"], cwd=REPO,
+                                   capture_output=True, text=True, env=e)
+
+
+def test_ci_sh_dry_run(tmp_path):
+    project, r = ci_sh(tmp_path, CB_REF="origin/develop")
+    assert r.returncode == 0, r.stderr
+    assert "uenv image pull prgenv-gnu/26.3:v1" in r.stdout
+    assert "uenv run --view=default prgenv-gnu/26.3:v1 -- " in r.stdout
+    assert (f"-m bench run daint-gh200 --ref {'a' * 40} --record-ref origin/develop --force"
+            in r.stdout)
+    assert not (project / "results" / "old").exists()  # left over from an earlier job
+
+
+def test_ci_sh_records_the_sha_without_cb_ref(tmp_path):
+    _, r = ci_sh(tmp_path)
+    assert r.returncode == 0, r.stderr
+    assert f"--record-ref {'a' * 40}" in r.stdout
+
+
+def test_ci_sh_needs_the_ci_variables(tmp_path):
+    env = {k: v for k, v in sh_env(CI_DRY_RUN="1").items() if not k.startswith("CI_")}
+    env["CI_DRY_RUN"] = "1"
+    r = subprocess.run(["bench/ci.sh", "daint-gh200"], cwd=REPO, capture_output=True,
+                       text=True, env=env)
+    assert r.returncode != 0 and "CI_COMMIT_SHA" in r.stderr

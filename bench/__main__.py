@@ -1,7 +1,8 @@
-"""Command line: `python -m bench run <machine>` and `python -m bench sbatch-args <machine>`."""
+"""Command line: `python -m bench run|sbatch-args|uenv <machine>`."""
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import platform
@@ -49,9 +50,18 @@ def _write_json(path: Path, data) -> None:
     os.replace(tmp, path)
 
 
+def _machine_without_scratch(name: str):
+    return load_machine(name, env={**os.environ, "SCRATCH": os.environ.get("SCRATCH", "/unused")})
+
+
 def cmd_sbatch_args(args) -> int:
-    m = load_machine(args.machine, env={**os.environ, "SCRATCH": os.environ.get("SCRATCH", "/unused")})
+    m = _machine_without_scratch(args.machine)
     print(" ".join([*m.sbatch, f"--uenv={m.uenv}"]))
+    return 0
+
+
+def cmd_uenv(args) -> int:
+    print(_machine_without_scratch(args.machine).uenv)
     return 0
 
 
@@ -78,7 +88,9 @@ def cmd_run(args) -> int:
     # CMake (libuv) then never sees its own children exit and hangs in configure.
     signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGCHLD})
     clone = m.root / "ginkgo"
-    worktree = m.root / "worktrees" / m.name
+    # one per account: the CSCS CI's service account and the maintainer run on the
+    # same store, and sbatch's singleton dependency only covers one user's jobs
+    worktree = m.root / "worktrees" / getpass.getuser() / m.name
     state = m.root / "state" / m.name
     ensure_clone(GINKGO_URL, clone)
     commit = resolve(clone, args.ref)
@@ -191,8 +203,10 @@ def main(argv=None) -> int:
     r.add_argument("--dry-run", action="store_true")
     s = sub.add_parser("sbatch-args")
     s.add_argument("machine")
+    u = sub.add_parser("uenv", help="print the uenv of the machine")
+    u.add_argument("machine")
     args = p.parse_args(argv)
-    return cmd_run(args) if args.cmd == "run" else cmd_sbatch_args(args)
+    return {"run": cmd_run, "sbatch-args": cmd_sbatch_args, "uenv": cmd_uenv}[args.cmd](args)
 
 
 if __name__ == "__main__":
