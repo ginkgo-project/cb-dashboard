@@ -114,8 +114,8 @@ def _head(src: Path) -> str | None:
         return None
 
 
-def build(m: Machine, src: Path, jobs: int = 64) -> dict:
-    """Configure if needed, then build TARGETS.
+def build(m: Machine, src: Path, jobs: int = 64, targets: list[str] = TARGETS) -> dict:
+    """Configure if needed, then build `targets` (TARGETS by default).
 
     It configures when there is no build.ninja (missing or half configured
     directory), or when the fingerprint in build_dir/cb-config.json (uenv,
@@ -142,7 +142,7 @@ def build(m: Machine, src: Path, jobs: int = 64) -> dict:
         tmp.write_text(json.dumps(fingerprint, indent=2))
         os.replace(tmp, fp_path)
     subprocess.run(
-        ["cmake", "--build", str(m.build_dir), "--parallel", str(jobs), "--target", *TARGETS],
+        ["cmake", "--build", str(m.build_dir), "--parallel", str(jobs), "--target", *targets],
         check=True, env=_cmake_env(),
     )
     return {

@@ -295,3 +295,10 @@ def test_build_beverin_detects_gcc_root(tmp_path, fakes, monkeypatch):
     m = machine("beverin-mi300a", tmp_path)
     B.build(m, Path("/src"))
     assert "--gcc-toolchain=/g" in fakes.read_text()
+
+
+def test_build_targets_parameter(tmp_path, fakes):
+    m = machine("daint-gh200", tmp_path)
+    m.build_dir.mkdir(parents=True)
+    B.build(m, Path("/src"), jobs=7, targets=["x", "y"])
+    assert fakes.read_text().splitlines()[1] == f"cmake --build {m.build_dir} --parallel 7 --target x y"

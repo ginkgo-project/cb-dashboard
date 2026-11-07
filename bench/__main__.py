@@ -1,7 +1,8 @@
-"""Command line: `python -m bench run|sbatch-args|uenv <machine>`."""
+"""Command line: `python -m bench run|distributed|sbatch-args|uenv <machine>`."""
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import getpass
 import json
 import os
@@ -10,15 +11,18 @@ import signal
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+from bench import distributed
 from bench.build import build
 from bench.checkout import (DEVELOP, ensure_clone, lacks, prepare_worktree, read_last,
                             resolve, should_run, write_last)
 from bench.energy import snapshot as pm_counters
 from bench.groups import ADDED, GROUPS, invocations
 from bench.machine import load_machine
+from bench.mpibench import build as build_mpibench
 from bench.record import (REPO, ci_info, gpu_info, results_dir_name, run_record, script_version,
                           toolchain_info)
 from bench.runner import Killed, job_deadline, run_group
@@ -48,6 +52,24 @@ def _write_json(path: Path, data) -> None:
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(data, indent=2))
     os.replace(tmp, path)
+
+
+@contextmanager
+def _sigterm_raises():
+    """Inside, the first SIGTERM raises Killed; later ones are ignored, so the
+    handling of the first (writing run.json) isn't interrupted."""
+    killed: list[int] = []
+
+    def on_sigterm(signum, frame):
+        if not killed:
+            killed.append(signum)
+            raise Killed(signum)
+
+    previous = signal.signal(signal.SIGTERM, on_sigterm)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGTERM, previous)
 
 
 def _machine_without_scratch(name: str):
@@ -133,55 +155,187 @@ def cmd_run(args) -> int:
             if r["status"] in ("pending", "running"):
                 results[g] = {"status": "skipped", "reason": reason}
 
-    killed: list[int] = []
-
-    def on_sigterm(signum, frame):
-        if not killed:  # raise once; the handling below must not be interrupted
-            killed.append(signum)
-            raise Killed(signum)
-
-    previous = signal.signal(signal.SIGTERM, on_sigterm)
     current = None
-    try:
+    with _sigterm_raises():
         try:
-            build_info = build(m, worktree)
-        except Exception as e:
-            build_info = {"error": f"{type(e).__name__}: {e}"}
-            skip_pending("build failed")
-            record(_now())
-            print(f"error: build failed: {e}", file=sys.stderr)
-            return 1
-        record()
-        stream_info = measure_stream(m, out)  # the node's bandwidth, before the groups
-        record()
-        deadline = job_deadline()
-        for g in groups:
-            current = g
-            results[g] = {"status": "running"}
-            record()
-            t = time.monotonic()
             try:
-                results[g] = run_group(g, invocations(m, manifest, [g], unavailable),
-                                       m.srun, out, deadline=deadline)
+                build_info = build(m, worktree)
             except Exception as e:
-                results[g] = {"status": "failed", "reason": f"{type(e).__name__}: {e}",
-                              "seconds": time.monotonic() - t, "invocations": []}
-            current = None
+                build_info = {"error": f"{type(e).__name__}: {e}"}
+                skip_pending("build failed")
+                record(_now())
+                print(f"error: build failed: {e}", file=sys.stderr)
+                return 1
             record()
-        record(_now())
-    except Killed as k:
-        if build_info is None:
-            build_info = {"error": "killed (SIGTERM) during the build"}
-        if current is not None:
-            results[current] = k.group_result or {"status": "killed",
-                                                  "reason": "job killed (SIGTERM)"}
-        skip_pending("job killed")
-        record(_now())
-        print(f"error: killed by signal {k.signum}; run.json written", file=sys.stderr)
-        return 128 + k.signum
-    finally:
-        signal.signal(signal.SIGTERM, previous)
+            stream_info = measure_stream(m, out)  # the node's bandwidth, before the groups
+            record()
+            deadline = job_deadline()
+            for g in groups:
+                current = g
+                results[g] = {"status": "running"}
+                record()
+                t = time.monotonic()
+                try:
+                    results[g] = run_group(g, invocations(m, manifest, [g], unavailable),
+                                           m.srun, out, deadline=deadline)
+                except Exception as e:
+                    results[g] = {"status": "failed", "reason": f"{type(e).__name__}: {e}",
+                                  "seconds": time.monotonic() - t, "invocations": []}
+                current = None
+                record()
+            record(_now())
+        except Killed as k:
+            if build_info is None:
+                build_info = {"error": "killed (SIGTERM) during the build"}
+            if current is not None:
+                results[current] = k.group_result or {"status": "killed",
+                                                      "reason": "job killed (SIGTERM)"}
+            skip_pending("job killed")
+            record(_now())
+            print(f"error: killed by signal {k.signum}; run.json written", file=sys.stderr)
+            return 128 + k.signum
     if ref == DEVELOP and groups == GROUPS:
+        write_last(state, commit.sha)
+    return 0
+
+
+def cmd_distributed(args) -> int:
+    """The weekly distributed run: the MPI benchmark, then weak scaling of the
+    distributed Ginkgo benchmarks, at each GPU count in turn, in one job."""
+    m = load_machine(args.machine)
+    d = m.distributed
+    if d is None:
+        print(f"error: {m.name} has no [distributed] settings", file=sys.stderr)
+        return 2
+    try:
+        requested = {int(n) for n in args.gpus.split(",") if n}
+    except ValueError:
+        requested = {-1}
+    bad = sorted(requested - set(distributed.GPU_COUNTS))
+    if bad:
+        print(f"error: unknown GPU counts {bad}; known: "
+              f"{', '.join(map(str, distributed.GPU_COUNTS))}", file=sys.stderr)
+        return 2
+    gpus = [n for n in distributed.GPU_COUNTS if n in requested]
+    if args.dry_run:
+        print(f"machine: {m.name}")
+        print(f"ref: {args.ref}")
+        mpibench = d.mpibench_build_dir / "mpibench"
+        for n in gpus:
+            for inv in distributed.invocations(m, n, mpibench):
+                print(f"{n} {inv.group} {inv.label} srun "
+                      f"{' '.join(distributed.srun_args(m, n))} {inv.exe} {' '.join(inv.args)}")
+        return 0
+    if platform.machine() != m.arch:
+        print(f"error: {m.name} needs {m.arch} but this host is {platform.machine()}", file=sys.stderr)
+        return 2
+    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGCHLD})  # see cmd_run
+    clone = m.root / "ginkgo"
+    # not the single-node worktree: the two kinds of job may run at once
+    worktree = m.root / "worktrees" / getpass.getuser() / f"{m.name}-distributed"
+    state = m.root / "state" / "distributed" / m.name
+    ensure_clone(GINKGO_URL, clone)
+    commit = resolve(clone, args.ref)
+    if not should_run(commit, read_last(state), args.ref, args.force):
+        print(f"nothing to do: {commit.sha} already benchmarked")
+        return 0
+    started = _now()
+    gpu, toolchain = gpu_info(m), toolchain_info(m)
+    counters = pm_counters()
+    script = script_version(subprocess.run, REPO)
+    prepare_worktree(clone, worktree, commit.sha)
+    out = _make_results_dir(d.results_dir, commit)
+    if args.path_file:
+        Path(args.path_file).write_text(f"{out}\n")
+    ref = args.record_ref or args.ref
+    ci = ci_info(os.environ)
+
+    results = {str(n): {g: {"status": "pending"} for g in distributed.GROUPS} for n in gpus}
+    build_info: dict | None = None
+    mpibench_info: dict = {}
+
+    def record(finished=None):
+        info = build_info if build_info is not None else {}
+        rec = run_record(m, commit, ref, {"cmake_cache": info.get("cmake_cache", {})},
+                         {"version": None}, {}, started, finished, gpu=gpu,
+                         toolchain=toolchain, script=script)
+        rec["kind"] = "distributed"
+        rec["distributed"] = {"gpu_counts": gpus, "gpus_per_node": d.gpus_per_node,
+                              "nodes": os.environ.get("SLURM_JOB_NODELIST"),
+                              "rows_per_gpu": distributed.ROWS_PER_GPU}
+        rec["gpus"] = results
+        rec["build"] = info
+        rec["mpibench_build"] = mpibench_info
+        rec["pm_counters"] = counters
+        if ci is not None:
+            rec["ci"] = ci
+        _write_json(out / "run.json", rec)
+
+    def skip_pending(reason):
+        for groups in results.values():
+            for g, r in groups.items():
+                if r["status"] in ("pending", "running"):
+                    groups[g] = {"status": "skipped", "reason": reason}
+
+    current = None
+    with _sigterm_raises():
+        try:
+            try:
+                # the machine's flags, then the distributed ones (a later -D wins)
+                build_info = build(dataclasses.replace(
+                    m, build_dir=d.build_dir, cmake_flags=m.cmake_flags + d.cmake_flags),
+                    worktree, targets=distributed.TARGETS)
+            except Exception as e:
+                build_info = {"error": f"{type(e).__name__}: {e}"}
+                skip_pending("build failed")
+                record(_now())
+                print(f"error: build failed: {e}", file=sys.stderr)
+                return 1
+            mpibench = None
+            try:
+                mpibench = build_mpibench(m)
+            except Exception as e:  # the Ginkgo benchmarks still run
+                mpibench_info = {"error": f"{type(e).__name__}: {e}"}
+                print(f"error: mpibench build failed: {e}", file=sys.stderr)
+            record()
+            os.environ.update(d.env)  # srun passes it on (--export=ALL)
+            deadline = job_deadline()
+            for n in gpus:
+                for g in distributed.GROUPS:
+                    if g == "mpi" and mpibench is None:
+                        results[str(n)][g] = {"status": "failed",
+                                              "reason": "mpibench build failed",
+                                              "seconds": 0.0, "invocations": []}
+                        continue
+                    current = (str(n), g)
+                    results[str(n)][g] = {"status": "running"}
+                    record()
+                    t = time.monotonic()
+                    try:
+                        invs = [i for i in distributed.invocations(m, n, mpibench)
+                                if i.group == g]
+                        results[str(n)][g] = run_group(g, invs, distributed.srun_args(m, n),
+                                                       out / f"gpus-{n}", deadline=deadline)
+                    except Exception as e:
+                        results[str(n)][g] = {"status": "failed",
+                                              "reason": f"{type(e).__name__}: {e}",
+                                              "seconds": time.monotonic() - t,
+                                              "invocations": []}
+                    current = None
+                    record()
+            record(_now())
+        except Killed as k:
+            if build_info is None:
+                build_info = {"error": "killed (SIGTERM) during the build"}
+            if current is not None:
+                n, g = current
+                results[n][g] = k.group_result or {"status": "killed",
+                                                   "reason": "job killed (SIGTERM)"}
+            skip_pending("job killed")
+            record(_now())
+            print(f"error: killed by signal {k.signum}; run.json written", file=sys.stderr)
+            return 128 + k.signum
+    if ref == DEVELOP and gpus == distributed.GPU_COUNTS:
         write_last(state, commit.sha)
     return 0
 
@@ -201,12 +355,23 @@ def main(argv=None) -> int:
     r.add_argument("--groups", default=",".join(GROUPS))
     r.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     r.add_argument("--dry-run", action="store_true")
+    dist = sub.add_parser("distributed", help="the weekly distributed run, every GPU count")
+    dist.add_argument("machine")
+    dist.add_argument("--ref", default=DEVELOP)
+    dist.add_argument("--record-ref", default=None)
+    dist.add_argument("--path-file", default=None,
+                      help="write the path of the run directory to this file")
+    dist.add_argument("--force", action="store_true")
+    dist.add_argument("--gpus", default=",".join(map(str, distributed.GPU_COUNTS)),
+                      help="comma-separated GPU counts")
+    dist.add_argument("--dry-run", action="store_true")
     s = sub.add_parser("sbatch-args")
     s.add_argument("machine")
     u = sub.add_parser("uenv", help="print the uenv of the machine")
     u.add_argument("machine")
     args = p.parse_args(argv)
-    return {"run": cmd_run, "sbatch-args": cmd_sbatch_args, "uenv": cmd_uenv}[args.cmd](args)
+    return {"run": cmd_run, "distributed": cmd_distributed, "sbatch-args": cmd_sbatch_args,
+            "uenv": cmd_uenv}[args.cmd](args)
 
 
 if __name__ == "__main__":
