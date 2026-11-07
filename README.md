@@ -236,3 +236,79 @@ triggered without sending anything.
 - **The store:** every account that runs benchmarks must be able to write the
   shared clone and `state/` under `$CB_ROOT`. Use a common group, group-writable
   setgid directories, and `git config core.sharedRepository group` on the clone.
+
+## Distributed benchmarks
+
+Once a week, a 16-node job per machine measures how Ginkgo's distributed
+operations scale from 1 to 64 GPUs. It is weak scaling: every GPU gets 256³
+rows of a 3D 7-point stencil. The operations are:
+
+- SpMV and SpGEMM (A·A);
+- CG and GMRES with a Schwarz-Jacobi preconditioner;
+- the multigrid preconditioners PGM, uniform coarsening and PMIS, with generate
+  and apply timed separately.
+
+The benchmarks are Ginkgo's distributed ones under `benchmark/*/distributed`.
+
+First, in the same allocation, `mpibench/` times `MPI_Allreduce`,
+`MPI_Alltoallv`, `MPI_Neighbor_alltoallv` and a ping-pong. It sweeps the
+message sizes, up to 2 GiB for the allreduce, on GPU buffers with GPU-aware
+MPI. It doesn't use Ginkgo, so if a benchmark gets slower together with the
+MPI operation it depends on, the cause is MPI or the network.
+
+### Run
+
+    python -m bench distributed <machine> [--gpus 1,8] [--dry-run]
+
+Inside an allocation of the machine's nodes, this builds Ginkgo with MPI and
+builds `mpibench`. Then it runs every GPU count in turn, each as `srun` steps
+on the nodes it needs. The settings are in the `[distributed]` table of
+`bench/machines/<machine>.toml`:
+
+- nodes and GPUs per node;
+- the srun flags per rank;
+- the extra CMake flags (MPI, GPU-aware MPI);
+- the environment;
+- `mpibench`'s CMake flags.
+
+It has its own build directory (`$SCRATCH/cb/build/<machine>-distributed`),
+worktree (`$CB_ROOT/worktrees/<user>/<machine>-distributed`) and state
+(`state/distributed/<machine>/`), so it can run next to a single-node job.
+
+**Results:** the runs go to `$SCRATCH/cb/results/distributed/<machine>/<dir>/`,
+with `run.json` and `gpus-<n>/<group>.json`. The groups are `mpi`, `spmv`,
+`spgemm`, `solver` and `preconditioner`.
+
+**Failures:** a failed GPU count or benchmark doesn't stop the run. It is
+recorded as failed.
+
+`mpibench` also builds and runs on its own, with host buffers, for a test:
+
+    cmake -S mpibench -B build-mpibench -DMPIBENCH_GPU=none && cmake --build build-mpibench
+    mpirun -n 4 build-mpibench/mpibench --max-allreduce-k 3 --max-alltoallv-k 2
+
+### Automation and the tab
+
+1. **Trigger:** on Saturday nights, Ginkgo's `.github/workflows/benchmark.yml`
+   runs `python -m automation trigger --distributed`. It starts the CSCS CI
+   jobs `benchmark-distributed/<machine>` (`CB_DISTRIBUTED=1`) for the
+   machines without a distributed run of develop's head.
+2. **Benchmark:** each job runs `bench/ci.sh <machine> distributed`.
+3. **Import:** the hourly import puts the runs on the `results` branch under
+   `distributed/<machine>/`.
+
+**The Distributed tab:**
+
+- **Change table:** compares two runs of a machine, by default the last two. It
+  has one row per benchmark and phase, and three rows per MPI operation (8 B,
+  128 KiB, its largest size). Each cell is the change in time at one GPU count.
+- **Colours:** slower and faster are judged against the noise of the earlier
+  weekly runs, with the same rule as the other tabs.
+- **Opening a benchmark row** shows:
+  - its time and its weak-scaling efficiency against the GPU count;
+  - the numbers;
+  - the MPI operations at the same GPU counts;
+  - for multigrid, the hierarchy;
+  - for the solvers, the iterations.
+- **Opening an MPI row** shows a change map of message size against GPU count,
+  and the time and bandwidth for one GPU count.

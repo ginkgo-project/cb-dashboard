@@ -7,3 +7,5 @@ __pycache__/
 site/data/
 # the results branch, checked out here as a worktree (README, "Results")
 /results/
+# a local test build of mpibench (README, "Distributed benchmarks")
+/build-mpibench/
