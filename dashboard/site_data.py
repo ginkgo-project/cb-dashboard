@@ -12,6 +12,7 @@ from typing import Callable
 
 from .cases import Measurement, measurements
 from .changes import Cell, Point, cells_for_case, flags, unchanged
+from .distributed import build_distributed
 from .load import GROUPS, Column, Run, columns, load_runs
 from .models import MODELS, compare_kind, cost, model_name, stencil_nonzeros
 from .reproduce import command
@@ -457,7 +458,8 @@ def build_site(results: Path, manifest: Path, catalog: Path, out: Path, *,
                machines: dict, frozen: dict,
                script_changed: Callable[[str, str], bool],
                warnings: list[str], results_commit: str | None = None) -> None:
-    """Write meta.json, the tab files, machines.json and runs/<m>/<dir>.json.
+    """Write meta.json, the tab files, machines.json, runs/<m>/<dir>.json and the
+    Distributed tab's distributed.json and distributed/<m>/<dir>.json.
 
     Warnings found here are appended to `warnings`. A run whose build failed
     is not a column; it is a warning while it is the machine's newest run.
@@ -558,6 +560,7 @@ def build_site(results: Path, manifest: Path, catalog: Path, out: Path, *,
             "nodes": _nodes(mruns)}
         history[name] = _machine_history(mruns)
     _write(out / "machines.json", {"machines": history})
+    build_distributed(results, out, warnings)  # the Distributed tab, before meta's warnings
     _write(out / "meta.json", {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "machines": meta_machines, "flag_counts": flag_counts,

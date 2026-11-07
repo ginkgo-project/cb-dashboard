@@ -377,3 +377,19 @@ def test_results_commit(tmp_path):
     (tmp_path / "site").mkdir()
     out = _fake(tmp_path / "site", results_commit="abc")
     assert _read(out, "meta.json")["results_commit"] == "abc"
+
+
+def test_build_site_writes_distributed_json(tmp_path):
+    out = _fake(tmp_path)
+    assert json.loads((out / "distributed.json").read_text()) == {"machines": {}}
+
+
+def test_build_site_includes_distributed_runs(tmp_path):
+    from test_dash_distributed import make_run
+
+    def add(results):
+        make_run(results, "2026-11-14_0aaaaaaaaa", "2026-11-14", "2026-11-14T22:00:00+00:00")
+    out = _fake(tmp_path, before_build=add)
+    data = json.loads((out / "distributed.json").read_text())
+    assert [r["dir"] for r in data["machines"]["daint-gh200"]["runs"]] == ["2026-11-14_0aaaaaaaaa"]
+    assert (out / "distributed" / "daint-gh200" / "2026-11-14_0aaaaaaaaa.json").is_file()

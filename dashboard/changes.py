@@ -139,6 +139,17 @@ def cells_for_case(cols: list[Column], key: str, kind: str,
     return cells
 
 
+def noise_band(values: list[float]) -> float | None:
+    """The relative change within which a value is unchanged, from the earlier
+    `values`: BAND_SIGMAS robust standard deviations (from the median absolute
+    deviation) of them, at least BAND_FLOOR. None with fewer than MIN_HISTORY."""
+    if len(values) < MIN_HISTORY:
+        return None
+    baseline = median(values)
+    mad = median(abs(x - baseline) for x in values)
+    return max(BAND_FLOOR, BAND_SIGMAS * 1.4826 * mad / baseline)
+
+
 def _compare(cell: Cell, detail: dict, kind: str, prev: list[dict]) -> None:
     window = prev[-BASELINE_WINDOW:]
     with_pct = [d["pct"] for d in window if d["pct"] is not None]
@@ -150,12 +161,12 @@ def _compare(cell: Cell, detail: dict, kind: str, prev: list[dict]) -> None:
         cell.raw = kind == "bandwidth"
         current, values = detail["p_raw"], [d["p_raw"] for d in window]
     cell.baseline_n = len(values)
-    if len(values) < MIN_HISTORY:
+    band = noise_band(values)
+    if band is None:
         cell.state = "history"
         return
     baseline = median(values)
-    mad = median(abs(x - baseline) for x in values)
-    cell.band = max(BAND_FLOOR, BAND_SIGMAS * 1.4826 * mad / baseline)
+    cell.band = band
     cell.change = current / baseline - 1
     if cell.change < -cell.band:
         cell.state = "slower"
