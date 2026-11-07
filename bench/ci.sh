@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: bench/ci.sh <machine>
+# Usage: bench/ci.sh <machine> [distributed]
 #
 # The body of a job of Ginkgo's CSCS CI pipeline "benchmark"
 # (.gitlab/cscs-benchmark.yml in ginkgo-project/ginkgo). It runs on the
@@ -7,6 +7,9 @@
 # with the shared clone, the venv and the per-account build of bench/job.sh,
 # and copies the run into $CI_PROJECT_DIR/results/<machine>/ for the job's
 # artifacts. The dashboard imports those (python -m automation ingest).
+# With `distributed` it runs the weekly distributed run instead (python -m bench
+# distributed, every GPU count in the job's nodes), copied into
+# $CI_PROJECT_DIR/results/distributed/<machine>/.
 #
 # CB_REF is the ref to record, origin/develop when the trigger started the job;
 # without it the run records the sha, so a test by hand is never imported.
@@ -15,7 +18,12 @@ set -euo pipefail
 # state/ and the clone are shared with the maintainer's account
 umask 0002
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MACHINE="${1:?usage: $0 <machine>}"
+MACHINE="${1:?usage: $0 <machine> [distributed]}"
+case "${2:-}" in
+  "") COMMAND=run; KIND_DIR= ;;
+  distributed) COMMAND=distributed; KIND_DIR=distributed/ ;;
+  *) echo "usage: $0 <machine> [distributed]" >&2; exit 2 ;;
+esac
 : "${CI_COMMIT_SHA:?CI_COMMIT_SHA is not set: run this in a CSCS CI job}"
 : "${CI_PROJECT_DIR:?CI_PROJECT_DIR is not set: run this in a CSCS CI job}"
 : "${SCRATCH:?SCRATCH is not set}"
@@ -43,12 +51,12 @@ trap 'rm -f "$PATH_FILE"' EXIT
 # the foreground command ends) to copy that run before the SIGKILL.
 trap 'echo "ci.sh: SIGTERM, copying the run" >&2' TERM
 status=0
-run uenv run --view=default "$UENV" -- "$PYTHON" -m bench run "$MACHINE" \
+run uenv run --view=default "$UENV" -- "$PYTHON" -m bench "$COMMAND" "$MACHINE" \
   --ref "$CI_COMMIT_SHA" --record-ref "${CB_REF:-$CI_COMMIT_SHA}" --force \
   --path-file "$PATH_FILE" || status=$?
 
 if [ -s "$PATH_FILE" ]; then
-  mkdir -p "$OUT/$MACHINE"
-  cp -r "$(cat "$PATH_FILE")" "$OUT/$MACHINE/"
+  mkdir -p "$OUT/$KIND_DIR$MACHINE"
+  cp -r "$(cat "$PATH_FILE")" "$OUT/$KIND_DIR$MACHINE/"
 fi
 exit "$status"

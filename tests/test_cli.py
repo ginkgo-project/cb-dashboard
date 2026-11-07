@@ -459,6 +459,52 @@ def test_ci_sh_copies_a_run_killed_by_the_time_limit(tmp_path):
     assert copied.read_text().strip() == "killed"
 
 
+
+def test_ci_sh_distributed_dry_run(tmp_path):
+    project = tmp_path / "project"
+    e = sh_env(CI_DRY_RUN="1", CI_COMMIT_SHA="a" * 40, CI_PROJECT_DIR=str(project),
+               CB_REF="origin/develop")
+    r = subprocess.run(["bench/ci.sh", "daint-gh200", "distributed"], cwd=REPO,
+                       capture_output=True, text=True, env=e)
+    assert r.returncode == 0, r.stderr
+    assert (f"-m bench distributed daint-gh200 --ref {'a' * 40} --record-ref origin/develop "
+            "--force" in r.stdout)
+
+
+def test_ci_sh_distributed_copies_into_distributed_dir(tmp_path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fakes = {
+        "uenv": '#!/bin/sh\n[ "$1" = image ] && exit 0\nshift 3\n[ "$1" = -- ] && shift\nexec "$@"\n',
+        "flock": '#!/bin/sh\nshift\nexec "$@"\n',
+        "python": ('#!/usr/bin/env bash\n'
+                   '[ "$3" = uenv ] && { echo fake/uenv; exit 0; }\n'
+                   '[ "$3" = distributed ] || exit 9\n'
+                   'prev=; for a in "$@"; do [ "$prev" = --path-file ] && pf=$a; prev=$a; done\n'
+                   'mkdir -p "$RUN_DIR"; echo done > "$RUN_DIR/run.json"; echo "$RUN_DIR" > "$pf"\n'),
+    }
+    for name, text in fakes.items():
+        (bin_dir / name).write_text(text)
+        (bin_dir / name).chmod(0o755)
+    project = tmp_path / "project"
+    run_dir = tmp_path / "s" / "cb" / "results" / "distributed" / "daint-gh200" / "2026-11-07_aaaaaaaaaa"
+    env = sh_env(PATH=f"{bin_dir}:{os.environ['PATH']}", CB_PYTHON=str(bin_dir / "python"),
+                 CI_COMMIT_SHA="a" * 40, CI_PROJECT_DIR=str(project), RUN_DIR=str(run_dir))
+    r = subprocess.run(["bench/ci.sh", "daint-gh200", "distributed"], cwd=REPO, env=env,
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    copied = project / "results" / "distributed" / "daint-gh200" / run_dir.name / "run.json"
+    assert copied.read_text().strip() == "done"
+    assert not (project / "results" / "daint-gh200").exists()
+
+
+def test_ci_sh_rejects_an_unknown_kind(tmp_path):
+    e = sh_env(CI_DRY_RUN="1", CI_COMMIT_SHA="a" * 40, CI_PROJECT_DIR=str(tmp_path))
+    r = subprocess.run(["bench/ci.sh", "daint-gh200", "weekly"], cwd=REPO,
+                       capture_output=True, text=True, env=e)
+    assert r.returncode != 0 and "usage" in r.stderr
+
+
 # python -m bench distributed
 
 from bench import distributed as D  # noqa: E402
