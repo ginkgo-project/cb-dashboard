@@ -8,7 +8,10 @@ exactly "null" or "undefined", or lacks its landmark: the heatmap and the
 roofline with its zoom buttons on the first three tabs, the setup on
 the machines tab, the selected cell and its click box when a cell is
 selected, and the stage filter on the preconditioners tab. Every flag
-link found on the tabs is followed too: it must show its cell. Without a
+link found on the tabs is followed too: it must show its cell. The
+distributed tab shows its change table (or that there are no runs yet); with
+runs, an opened benchmark row must show its two plots and its blocks, and an
+opened MPI row its change map and plots. Without a
 browser the test skips, unless --require-browser is given (as in CI).
 Standard library only.
 """
@@ -57,6 +60,10 @@ class Dom(HTMLParser):
 
     def handle_data(self, data):
         self.texts.append(data)
+
+    def count(self, tag, *classes) -> int:
+        return sum(1 for t, a in self.tags
+                   if t == tag and all(c in a.get("class", "").split() for c in classes))
 
     def has(self, tag, *classes, **attrs) -> bool:
         for t, a in self.tags:
@@ -124,8 +131,33 @@ STAGES = ("stage filter", lambda d: d.has("option", value="generate"))
 ROOFLINE = ("roofline with its zoom buttons",
             lambda d: d.has("svg", "chart", **{"aria-label": "Roofline, this week"})
             and d.has("div", "filters", "zoom") and d.has("clippath", id="roofline-plot"))
+DISTRIBUTED = ("distributed change table or its no-runs note",
+               lambda d: d.has("table", "heatmap", "dist") or d.has("p", "dist-none"))
+DIST_OPEN = ("opened row with its two plots and blocks",
+             lambda d: d.count("svg", "dist-chart") == 2 and d.count("section") >= 3
+             and d.has("div", "dist-blocks"))
+DIST_MPI = ("opened MPI row with its change map and plots",
+            lambda d: d.has("table", "dist-small") and d.count("svg", "dist-chart") == 2
+            and d.has("td", "selected"))
 GENERATE = ("generate rows",
             lambda d: any(t.strip().endswith("(generate)") for t in d.texts))
+
+
+def distributed_pages(site: Path) -> list:
+    """An opened benchmark row and an opened MPI row of the first machine with runs."""
+    path = site / "data" / "distributed.json"
+    data = json.loads(path.read_text()) if path.is_file() else {"machines": {}}
+    for machine, m in data["machines"].items():
+        # the smallest size: one of the change table's rows (8 B, 128 KiB, the largest)
+        mpi = sorted((k for k in m["rows"] if k.startswith("mpi/allreduce/")),
+                     key=lambda k: int(k.rsplit("/", 1)[1]))
+        q = quote(machine, safe="")
+        pages = [(f"#distributed?machine={q}&row=spmv", [DISTRIBUTED, DIST_OPEN])]
+        if mpi:
+            pages.append((f"#distributed?machine={q}&row={quote(mpi[0], safe='')}",
+                          [DISTRIBUTED, DIST_MPI]))
+        return pages
+    return []
 
 
 def default_cell(site: Path) -> str | None:
@@ -162,7 +194,8 @@ def main(argv=None) -> int:
     pages = [("#basic", [HEATMAP, ROOFLINE]), ("#solvers", [HEATMAP, ROOFLINE]),
              ("#preconditioners", [HEATMAP, STAGES, ROOFLINE]),
              ("#preconditioners?stage=generate", [HEATMAP, GENERATE]),
-             ("#machines", [SETUP])]
+             ("#distributed", [DISTRIBUTED]), ("#machines", [SETUP])]
+    pages += distributed_pages(site)
     cell = default_cell(site)
     if cell is None:
         print("FAIL: basic.json has no SpMV csr cell to select")

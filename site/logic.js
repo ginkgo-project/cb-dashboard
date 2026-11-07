@@ -1,8 +1,9 @@
 // Pure functions of the dashboard page: hash handling, number and label
 // formatting. No DOM access, so node can test them.
 
-export const TABS = ["basic", "solvers", "preconditioners", "machines"];
-export const PARAMS = ["machine", "operation", "format", "stage", "matrix", "values", "x", "cell"];
+export const TABS = ["basic", "solvers", "preconditioners", "distributed", "machines"];
+// a, b, row and n: the Distributed tab's two runs, opened row and GPU count
+export const PARAMS = ["machine", "operation", "format", "stage", "matrix", "values", "x", "cell", "a", "b", "row", "n"];
 
 // a malformed escape such as %E0 stays as typed instead of throwing
 function safeDecode(text) {

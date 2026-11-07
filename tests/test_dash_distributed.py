@@ -174,3 +174,29 @@ def test_no_distributed_runs(tmp_path):
     (tmp_path / "results").mkdir()
     data, _ = build(tmp_path / "results", tmp_path)
     assert data == {"machines": {}}
+
+
+def test_tab_in_a_browser(tmp_path, capsys):
+    """The built page with distributed runs: dom_smoke opens a benchmark and an MPI row."""
+    import shutil
+    from pathlib import Path
+
+    import dom_smoke
+    from test_dash_site_data import _fake
+    if dom_smoke.find_browser() is None:
+        pytest.skip("no browser")
+    out = _fake(tmp_path, before_build=lambda results: [
+        make_run(results, f"2026-11-{14 + 7 * i:02d}_{i}aaaaaaaaa", f"2026-11-{14 + 7 * i:02d}",
+                 f"2026-11-{14 + 7 * i:02d}T22:00:00+00:00", t=t, job=i + 1)
+        for i, t in enumerate([1e-3, 1.25e-3])])
+    site = tmp_path / "site"
+    src = Path(__file__).resolve().parent.parent / "site"
+    shutil.copytree(src, site, ignore=shutil.ignore_patterns("data"))
+    shutil.copytree(out, site / "data")
+    dom_smoke.main(["--site", str(site)])
+    # only the distributed pages: the single-node fake has too few cases for the others
+    report = [ln for ln in capsys.readouterr().out.splitlines() if "#distributed" in ln
+              or ln.startswith("     ")]
+    assert "ok   #distributed" in report
+    assert "ok   #distributed?machine=daint-gh200&row=spmv" in report
+    assert "ok   #distributed?machine=daint-gh200&row=mpi%2Fallreduce%2F8" in report, report

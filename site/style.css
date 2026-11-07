@@ -177,3 +177,35 @@ td.number { text-align: right; white-space: nowrap; }
 .swatch.n4 { background: var(--cancel); }
 .chart .dot.n5 { fill: var(--none); }
 .swatch.n5 { background: var(--none); }
+
+/* the Distributed tab */
+.dist-controls select { margin: 0 4px; }
+.heatmap.dist td { font-size: 0.8rem; min-width: 3.4rem; }
+.heatmap.dist tbody th a { color: var(--fg); text-decoration: none; }
+.heatmap.dist tr.opened th a { font-weight: 600; }
+/* only the opened row's own cell: the tables inside it keep their cell colours */
+.heatmap.dist > tbody > tr.dist-open-row > td { cursor: default; background: transparent; padding: 0; text-align: left; }
+.dist-open { margin: 4px 0 12px; width: 960px; max-width: calc(100vw - 56px); box-sizing: border-box; }
+.dist-runs code { font-size: 0.85rem; }
+.dist-plots { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-start; }
+.dist-plots > div { flex: 1 1 380px; max-width: 480px; min-width: 0; }
+.dist-chart .line { fill: none; stroke-width: 2; }
+.dist-chart .line.r1, .dist-swatch .line.r1 { stroke: var(--run); }
+.dist-chart .line.r0, .dist-swatch .line.r0 { stroke: var(--none); stroke-dasharray: 5 4; }
+.dist-swatch .line { stroke-width: 2; }
+.dist-chart .pt { stroke: var(--bg); stroke-width: 1.5; }
+.dist-chart .pt.r1 { fill: var(--run); }
+.dist-chart .pt.r0 { fill: var(--none); }
+.dist-chart .pt:hover { stroke: var(--fg); stroke-width: 2; }
+.dist-chart .nodes { stroke: var(--muted); stroke-dasharray: 2 3; }
+.heatmap.dist-strip td, .heatmap.dist-small td { font-size: 0.75rem; min-width: 2.6rem; height: 1.3rem; cursor: default; }
+.heatmap.dist-small td[class*="cell"] { cursor: pointer; }
+.dist-blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 12px; margin-top: 8px; }
+.dist-blocks section { border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px 8px; background: var(--bg); min-width: 0; }
+.dist-blocks h4 { margin: 6px 0; font-size: 0.9rem; }
+.dist-blocks .wide { grid-column: 1 / -1; }
+.dist-numbers { border-collapse: collapse; font-size: 0.8rem; }
+.dist-numbers th, .dist-numbers td { padding: 1px 8px; text-align: right; white-space: nowrap; }
+.dist-numbers thead th { color: var(--muted); font-weight: 500; }
+.dist-chips a { margin-right: 6px; }
+.dist-chips a[aria-current="true"] { font-weight: 600; color: var(--fg); }

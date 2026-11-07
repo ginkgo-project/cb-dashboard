@@ -3,6 +3,7 @@
 // cannot inject markup.
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
   flatChildren, cellLink, clickedCell, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, zoomView, panView, plotFraction, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
+import { renderDistributed } from "./distributed.js";
 
 // tabs: the tab files, loaded on the first visit of the tab; shown: the route
 // of the last rendered tab; views: the roofline view of each tab
@@ -627,6 +628,16 @@ async function render() {
   replace(root);
   if (tab === "machines") {
     await renderMachines(root, token);
+    return;
+  }
+  if (tab === "distributed") {
+    try {
+      await renderDistributed(root, { el, put, replace, svg, loadJson, formatHash, machineLabel,
+        params: state.route.params, isLatest: () => tokens.isLatest(token) });
+    } catch (error) {
+      showBanner("error", `Could not load the distributed data: ${error.message}`);
+    }
+    window.scrollTo(0, scrollY);
     return;
   }
   try {
