@@ -70,3 +70,31 @@ def test_omp_threads_fit_in_cpus_per_task(name):
     export = next(a for a in srun if a.startswith("--export="))
     threads = int(export.split("OMP_NUM_THREADS=", 1)[1].split(",")[0])
     assert export.startswith("--export=ALL,") and 0 < threads < cpus
+
+
+@pytest.mark.parametrize("name", ["daint-gh200", "beverin-mi300a"])
+def test_distributed_section_loaded(name):
+    d = load_machine(name, env={"SCRATCH": "/s"}).distributed
+    assert d.nodes == 16 and d.gpus_per_node == 4
+    assert d.env["MPICH_GPU_SUPPORT_ENABLED"] == "1"
+    assert "-DGINKGO_BUILD_MPI=ON" in d.cmake_flags
+    assert "-DGINKGO_FORCE_GPU_AWARE_MPI=ON" in d.cmake_flags
+    assert any(f.startswith("-DMPIBENCH_GPU=") for f in d.mpibench_cmake_flags)
+    assert "--ntasks=1" not in d.srun and "--gpus-per-task=1" in d.srun
+
+
+@pytest.mark.parametrize("name", ["daint-gh200", "beverin-mi300a"])
+def test_distributed_paths_differ_from_single_node(name):
+    m = load_machine(name, env={"SCRATCH": "/s"})
+    d = m.distributed
+    assert d.build_dir == Path(f"/s/cb/build/{name}-distributed")
+    assert d.mpibench_build_dir == Path(f"/s/cb/build/{name}-mpibench")
+    assert d.results_dir == Path(f"/s/cb/results/distributed/{name}")
+    assert len({d.build_dir, d.mpibench_build_dir, m.build_dir}) == 3
+    assert d.results_dir != m.results_dir
+
+
+def test_machine_without_distributed_section(tmp_path):
+    (tmp_path / "m.toml").write_text(
+        'executor = "reference"\nuenv = "u"\narch = "x86_64"\nsbatch = []\nsrun = []\n')
+    assert load_machine("m", machines_dir=tmp_path, env={"SCRATCH": "/s"}).distributed is None

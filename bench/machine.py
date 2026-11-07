@@ -12,6 +12,20 @@ DEFAULT_ROOT = "/capstor/store/cscs/userlab/d131/cb"
 
 
 @dataclass
+class Distributed:
+    """The weekly distributed run's settings (a machine file's [distributed])."""
+    nodes: int
+    gpus_per_node: int
+    srun: list[str]  # per rank; bench.distributed adds the nodes and tasks
+    cmake_flags: list[str]  # after the machine's, so a repeated -D overrides
+    env: dict[str, str]
+    mpibench_cmake_flags: list[str]
+    build_dir: Path
+    mpibench_build_dir: Path
+    results_dir: Path
+
+
+@dataclass
 class Machine:
     name: str
     executor: str
@@ -26,6 +40,7 @@ class Machine:
     results_dir: Path
     stream_cmake_flags: list[str] = field(default_factory=list)
     disabled_preconditioners: list[str] = field(default_factory=list)
+    distributed: Distributed | None = None
 
 
 def _known(machines_dir: Path) -> list[str]:
@@ -64,4 +79,21 @@ def load_machine(
         results_dir=scratch / "cb" / "results" / name,
         stream_cmake_flags=list(data.get("stream_cmake_flags", [])),
         disabled_preconditioners=list(data.get("disabled_preconditioners", [])),
+        distributed=_distributed(name, data.get("distributed"), scratch),
+    )
+
+
+def _distributed(name: str, data: dict | None, scratch: Path) -> Distributed | None:
+    if data is None:
+        return None
+    return Distributed(
+        nodes=int(data["nodes"]),
+        gpus_per_node=int(data["gpus_per_node"]),
+        srun=list(data["srun"]),
+        cmake_flags=list(data.get("cmake_flags", [])),
+        env={k: str(v) for k, v in data.get("env", {}).items()},
+        mpibench_cmake_flags=list(data.get("mpibench_cmake_flags", [])),
+        build_dir=scratch / "cb" / "build" / f"{name}-distributed",
+        mpibench_build_dir=scratch / "cb" / "build" / f"{name}-mpibench",
+        results_dir=scratch / "cb" / "results" / "distributed" / name,
     )

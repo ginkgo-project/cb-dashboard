@@ -24,3 +24,18 @@ stream_cmake_flags = [
     "-DCMAKE_CXX_COMPILER=g++",
     "-DCMAKE_CUDA_HOST_COMPILER=g++",
 ]
+
+# The weekly distributed run (python -m bench distributed): one job of 16 nodes
+# runs every GPU count from 1 to 64, one rank per GPU.
+[distributed]
+nodes = 16
+gpus_per_node = 4
+# per rank: the single-node srun without --ntasks
+srun = ["--gpus-per-task=1", "--cpus-per-task=72", "--cpu-bind=cores",
+        "--export=ALL,OMP_NUM_THREADS=64"]
+cmake_flags = ["-DGINKGO_BUILD_MPI=ON", "-DGINKGO_FORCE_GPU_AWARE_MPI=ON"]
+# mpibench only calls the CUDA runtime, from plain C++
+mpibench_cmake_flags = ["-DMPIBENCH_GPU=cuda", "-DCMAKE_CXX_COMPILER=g++"]
+
+[distributed.env]
+MPICH_GPU_SUPPORT_ENABLED = "1"
