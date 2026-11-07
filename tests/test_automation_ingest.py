@@ -223,3 +223,75 @@ def test_dry_run_commits_nothing(repo, gitlab, capsys):
     assert run_ingest(repo, "--dry-run") == 0
     assert "would import job 9" in capsys.readouterr().out
     assert len(log(repo)) == 1 and not (repo / "daint-gh200").exists()
+
+
+# distributed runs: jobs benchmark-distributed/<machine>, runs in distributed/<machine>/
+
+from bench.distributed import GPU_COUNTS, GROUPS as DGROUPS  # noqa: E402
+
+
+def drecord(machine="daint-gh200", job=19, counts=GPU_COUNTS):
+    return {"machine": machine, "kind": "distributed",
+            "ginkgo": {"commit": SHA, "ref": "origin/develop"}, "groups": {},
+            "gpus": {str(n): {g: {"status": "ok"} for g in DGROUPS} for n in counts},
+            "ci": {"job_id": job}}
+
+
+def dgood(machine="daint-gh200", name=NAME, rec=None) -> bytes:
+    rec = rec or drecord(machine)
+    base = f"results/distributed/{machine}/{name}"
+    return zip_of({f"{base}/run.json": json.dumps(rec).encode(),
+                   f"{base}/gpus-1/spmv.json": b"[]"})
+
+
+def test_select_distributed_jobs():
+    jobs = [{"id": 1, "name": "benchmark/daint-gh200", "status": "success"},
+            {"id": 2, "name": "benchmark-distributed/daint-gh200", "status": "failed"},
+            {"id": 3, "name": "benchmark-distributed/elsewhere", "status": "success"}]
+    assert [j["id"] for j in select_jobs(jobs, ["daint-gh200"], set())] == [1, 2]
+
+
+def test_unpack_distributed_layout():
+    name, files = unpack(dgood(), "daint-gh200", 10**6, "distributed")
+    assert name == NAME and set(files) == {"run.json", "gpus-1/spmv.json"}
+    with pytest.raises(Rejected, match="results/distributed/daint-gh200/<run>/"):
+        unpack(good(), "daint-gh200", 10**6, "distributed")
+    with pytest.raises(Rejected):
+        unpack(dgood(), "daint-gh200", 10**6)
+
+
+def test_accept_distributed_needs_every_gpu_count():
+    assert accept(drecord(), "daint-gh200", lambda sha: True) is None
+    reason = accept(drecord(counts=[1, 2, 4]), "daint-gh200", lambda sha: True)
+    assert reason == "GPU counts not run: 8, 16, 32, 64"
+    # failed or killed counts are still a run of every count, shown as such
+    rec = drecord()
+    rec["gpus"]["64"] = {g: {"status": "skipped", "reason": "job killed"} for g in DGROUPS}
+    assert accept(rec, "daint-gh200", lambda sha: True) is None
+
+
+def test_place_distributed(tmp_path):
+    from dashboard.load import load_runs
+    path = place(tmp_path, "daint-gh200", NAME, {"run.json": json.dumps(drecord()).encode()},
+                 "distributed")
+    assert path == tmp_path / "distributed" / "daint-gh200" / NAME
+    assert load_runs(tmp_path) == []  # the single-node dashboard doesn't see it
+
+
+def test_imported_ids_include_distributed(tmp_path):
+    place(tmp_path, "daint-gh200", NAME, {"run.json": json.dumps(record(job=9)).encode()})
+    place(tmp_path, "daint-gh200", NAME, {"run.json": json.dumps(drecord(job=19)).encode()},
+          "distributed")
+    assert imported_job_ids(tmp_path) == {9, 19}
+
+
+def test_main_imports_a_distributed_job(repo, gitlab):
+    gitlab["jobs"] = [{"id": 19, "name": "benchmark-distributed/daint-gh200",
+                       "status": "success"}]
+    gitlab["zips"][19] = dgood()
+    assert run_ingest(repo) == 0
+    assert log(repo)[0] == "results: distributed daint-gh200 655362e804, ci job 19"
+    assert (repo / "distributed" / "daint-gh200" / NAME / "gpus-1" / "spmv.json").exists()
+    assert not (repo / "daint-gh200").exists()
+    assert run_ingest(repo) == 0
+    assert len(log(repo)) == 2  # not imported again

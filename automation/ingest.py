@@ -4,7 +4,9 @@ The jobs' artifacts are on gitlab.com, in the pipeline's mirror project, and
 anyone can read them. Each finished job that is not imported yet is
 downloaded and checked. If it is a full run of a develop commit, it is
 committed to the work tree of the results branch as <machine>/<dir>/, one
-commit per run. Nothing is pushed: .github/workflows/deploy.yml does that.
+commit per run; a job of the weekly distributed run (benchmark-distributed/)
+as distributed/<machine>/<dir>/. Nothing is pushed:
+.github/workflows/deploy.yml does that.
 
 The artifacts are data. They are checked member by member, never executed,
 and never extracted blindly.
@@ -26,11 +28,13 @@ from urllib.parse import quote
 from automation.http import HTTPError, URLError, download, get_json
 from automation.trigger import MACHINES
 from bench.checkout import DEVELOP
+from bench.distributed import GPU_COUNTS
 
 GITLAB = "https://gitlab.com/api/v4"
 COMPARE = "https://api.github.com/repos/ginkgo-project/ginkgo/compare/{sha}...develop"
 RUN_NAME = re.compile(r"(\d{4}-\d{2}-\d{2}_[0-9a-f]{10})(_\d+)?")
-JOB_PREFIX = "benchmark/"
+# the job name's prefix, and the directory of its runs on the results branch
+JOB_PREFIXES = {"benchmark/": "", "benchmark-distributed/": "distributed"}
 FINISHED = ("success", "failed")  # a failed job still has its run.json
 NETWORK = (HTTPError, URLError, OSError, ValueError)
 
@@ -42,7 +46,8 @@ class Rejected(Exception):
 def imported_job_ids(results: Path) -> set[int]:
     """The CI job ids recorded in the runs on the results branch."""
     ids = set()
-    for p in Path(results).glob("*/*/run.json"):
+    runs = [*Path(results).glob("*/*/run.json"), *Path(results).glob("distributed/*/*/run.json")]
+    for p in runs:
         try:
             rec = json.loads(p.read_text())
         except (OSError, ValueError):
@@ -55,13 +60,23 @@ def imported_job_ids(results: Path) -> set[int]:
 
 def select_jobs(jobs: list[dict], machines: list[str], imported: set[int]) -> list[dict]:
     """The finished benchmark jobs of known machines not imported yet, in order."""
-    names = {f"{JOB_PREFIX}{m}" for m in machines}
+    names = {f"{prefix}{m}" for prefix in JOB_PREFIXES for m in machines}
     return [j for j in jobs if j.get("name") in names and j.get("status") in FINISHED
             and j.get("id") not in imported]
 
 
-def unpack(data: bytes, machine: str, limit: int) -> tuple[str, dict[str, bytes]]:
-    """The run directory name and its files, by path inside it, from a job's artifacts."""
+def job_kind(name: str) -> tuple[str, str]:
+    """The subdirectory ("" or "distributed") and the machine of a job's name."""
+    for prefix, subdir in JOB_PREFIXES.items():
+        if name.startswith(prefix):
+            return subdir, name[len(prefix):]
+    raise ValueError(f"not a benchmark job: {name}")
+
+
+def unpack(data: bytes, machine: str, limit: int,
+           subdir: str = "") -> tuple[str, dict[str, bytes]]:
+    """The run directory name and its files, by path inside it, from a job's
+    artifacts, which hold results/[<subdir>/]<machine>/<run>/."""
     try:
         zf = zipfile.ZipFile(io.BytesIO(data))
     except zipfile.BadZipFile as e:
@@ -69,7 +84,8 @@ def unpack(data: bytes, machine: str, limit: int) -> tuple[str, dict[str, bytes]
     members = [i for i in zf.infolist() if not i.is_dir()]
     if sum(i.file_size for i in members) > limit:
         raise Rejected(f"more than {limit} bytes unpacked")
-    prefix = ("results", machine)
+    prefix = ("results", *PurePosixPath(subdir).parts, machine)
+    where = "/".join(prefix)
     dirs, files = set(), {}
     for info in members:
         name = info.filename
@@ -78,10 +94,10 @@ def unpack(data: bytes, machine: str, limit: int) -> tuple[str, dict[str, bytes]
         parts = PurePosixPath(name).parts
         if name.startswith("/") or "\\" in name or ".." in parts:
             raise Rejected(f"{name}: a path outside the run directory")
-        if parts[:2] != prefix or len(parts) < 4:
-            raise Rejected(f"{name}: not in results/{machine}/<run>/")
-        dirs.add(parts[2])
-        files["/".join(parts[3:])] = zf.read(info)
+        if parts[:len(prefix)] != prefix or len(parts) < len(prefix) + 2:
+            raise Rejected(f"{name}: not in {where}/<run>/")
+        dirs.add(parts[len(prefix)])
+        files["/".join(parts[len(prefix) + 1:])] = zf.read(info)
     if len(dirs) != 1:
         raise Rejected(f"{len(dirs)} run directories, not one")
     (run,) = dirs
@@ -105,6 +121,12 @@ def accept(record: dict, machine: str, in_develop: Callable[[str], bool]) -> str
     ginkgo = record.get("ginkgo") or {}
     if ginkgo.get("ref") != DEVELOP:
         return f"not a develop run: ref {ginkgo.get('ref')!r}"
+    if record.get("kind") == "distributed":
+        # a subset (--gpus) isn't a weekly run; failed or killed counts are
+        gpus = record.get("gpus") or {}
+        missing = [str(n) for n in GPU_COUNTS if str(n) not in gpus]
+        if missing:
+            return f"GPU counts not run: {', '.join(missing)}"
     groups = record.get("groups") or {}
     skipped = sorted(g for g, v in groups.items() if isinstance(v, dict)
                      and v.get("status") == "skipped" and v.get("reason") == "not requested")
@@ -129,9 +151,11 @@ def in_develop(sha: str, get_json, token: str | None = None) -> bool:
     return isinstance(r, dict) and r.get("status") in ("ahead", "identical")
 
 
-def place(results: Path, machine: str, name: str, files: dict[str, bytes]) -> Path:
-    """Write the run as results/<machine>/<name>, or the first free `_n` of its base name."""
-    base = Path(results) / machine
+def place(results: Path, machine: str, name: str, files: dict[str, bytes],
+          subdir: str = "") -> Path:
+    """Write the run as results/[<subdir>/]<machine>/<name>, or the first free
+    `_n` of its base name."""
+    base = Path(results) / subdir / machine
     path = base / name
     if path.exists():
         stem = RUN_NAME.fullmatch(name).group(1)
@@ -187,11 +211,12 @@ def main(argv: list[str], env: Mapping[str, str]) -> int:
     todo = select_jobs(jobs, MACHINES, imported_job_ids(results))
     done = 0
     for job in todo:
-        machine = job["name"][len(JOB_PREFIX):]
-        what = f"job {job['id']} ({machine})"
+        subdir, machine = job_kind(job["name"])
+        where = f"{subdir}/{machine}" if subdir else machine
+        what = f"job {job['id']} ({where})"
         url = f"{GITLAB}/projects/{quote(args.project, safe='')}/jobs/{job['id']}/artifacts"
         try:
-            name, files = unpack(download(url, limit), machine, limit)
+            name, files = unpack(download(url, limit), machine, limit, subdir)
             rec = json.loads(files["run.json"])
             if (rec.get("ci") or {}).get("job_id") != job["id"]:
                 # imported_job_ids would not find it again: it would be imported every hour
@@ -207,12 +232,13 @@ def main(argv: list[str], env: Mapping[str, str]) -> int:
             _warn(f"{what}: {reason}")
             continue
         if args.dry_run:
-            print(f"would import {what}: {machine}/{name}")
+            print(f"would import {what}: {where}/{name}")
             continue
-        path = place(results, machine, name, files)
+        path = place(results, machine, name, files, subdir)
+        kind = f"{subdir} " if subdir else ""
         _commit(results, path,
-                f"results: {machine} {rec['ginkgo']['commit'][:10]}, ci job {job['id']}")
-        print(f"imported {what}: {machine}/{path.name}")
+                f"results: {kind}{machine} {rec['ginkgo']['commit'][:10]}, ci job {job['id']}")
+        print(f"imported {what}: {where}/{path.name}")
         done += 1
     print(f"{done} of {len(todo)} new jobs imported")
     return 0
