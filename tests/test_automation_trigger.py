@@ -122,3 +122,40 @@ def test_secret_is_never_printed(fake, capsys):
     assert main(["--sha", SHA], {"CSCS_CI_WEBHOOK_SECRET": "s3cr3t"}) == 2
     out = capsys.readouterr()
     assert "s3cr3t" not in out.out + out.err
+
+
+def test_body_distributed():
+    assert body(SHA, ["daint-gh200"], distributed=True) == {
+        "ref": f"sha:{SHA}", "pipeline": "benchmark",
+        "variables": {"CB_DISTRIBUTED": "1", "CB_MACHINES": "daint-gh200",
+                      "CB_REF": "origin/develop"}}
+
+
+def test_distributed_uses_the_distributed_listing(fake):
+    fake["dirs"]["distributed/daint-gh200"] = [f"2026-11-07_{SHA[:10]}"]
+    assert main(["--sha", SHA, "--distributed"], ENV) == 0
+    [(_, data, _)] = fake["posts"]
+    v = json.loads(data)["variables"]
+    assert v == {"CB_DISTRIBUTED": "1", "CB_MACHINES": "beverin-mi300a",
+                 "CB_REF": "origin/develop"}
+
+
+def test_a_single_node_run_does_not_count_as_distributed(fake):
+    # the fake has a single-node run of SHA on daint, no distributed one
+    assert main(["--sha", SHA, "--distributed"], ENV) == 0
+    [(_, data, _)] = fake["posts"]
+    assert json.loads(data)["variables"]["CB_MACHINES"] == "beverin-mi300a,daint-gh200"
+
+
+def test_distributed_nothing_to_do(fake, capsys):
+    for m in MACHINES:
+        fake["dirs"][f"distributed/{m}"] = [f"2026-11-07_{SHA[:10]}"]
+    assert main(["--sha", SHA, "--distributed"], ENV) == 0
+    assert "nothing to do" in capsys.readouterr().out and fake["posts"] == []
+
+
+def test_distributed_dry_run(fake, capsys):
+    assert main(["--sha", SHA, "--distributed", "--dry-run"], ENV) == 0
+    out = capsys.readouterr().out
+    assert "CB_DISTRIBUTED" in out and "distributed" in out.splitlines()[0]
+    assert fake["posts"] == []

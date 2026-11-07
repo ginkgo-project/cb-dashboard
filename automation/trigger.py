@@ -2,8 +2,9 @@
 
 Only on the machines without a run of it on cb-dashboard's results branch,
 unless forced. Run by .github/workflows/benchmark.yml in ginkgo-project/ginkgo,
-twice a week, with develop's head. The CSCS credentials come from the
-environment and are never printed.
+twice a week, with develop's head; with --distributed, on Saturdays, for the
+distributed jobs, whose runs are under distributed/<machine>/. The CSCS
+credentials come from the environment and are never printed.
 """
 from __future__ import annotations
 
@@ -20,7 +21,7 @@ from bench.machine import DEFAULT, _known
 MACHINES = _known(DEFAULT)
 TRIGGER_URL = "https://cicd-ext-mw.cscs.ch/ci/pipeline/trigger"
 CONTENTS = ("https://api.github.com/repos/ginkgo-project/cb-dashboard/contents/"
-            "{machine}?ref=results")
+            "{path}?ref=results")
 PIPELINE = "benchmark"
 REPOSITORY_ID, SECRET = "CSCS_CI_REPOSITORY_ID", "CSCS_CI_WEBHOOK_SECRET"
 
@@ -36,16 +37,17 @@ def pending(sha: str, listing: Callable[[str], list[str]], machines: list[str]) 
     return [m for m in machines if not has_run(listing(m), sha)]
 
 
-def body(sha: str, machines: list[str]) -> dict:
-    """The trigger request; YAML, of which JSON is a subset."""
+def body(sha: str, machines: list[str], distributed: bool = False) -> dict:
+    """The trigger request; YAML, of which JSON is a subset. CB_BENCHMARK starts
+    the single-node jobs, CB_DISTRIBUTED the distributed ones."""
+    kind = "CB_DISTRIBUTED" if distributed else "CB_BENCHMARK"
     return {"ref": f"sha:{sha}", "pipeline": PIPELINE,
-            "variables": {"CB_BENCHMARK": "1", "CB_MACHINES": ",".join(machines),
-                          "CB_REF": DEVELOP}}
+            "variables": {kind: "1", "CB_MACHINES": ",".join(machines), "CB_REF": DEVELOP}}
 
 
-def _listing(machine: str, token: str | None) -> list[str]:
+def _listing(path: str, token: str | None) -> list[str]:
     try:
-        entries = get_json(CONTENTS.format(machine=machine), token)
+        entries = get_json(CONTENTS.format(path=path), token)
     except HTTPError as e:
         if e.code == 404:  # no run on this machine yet
             return []
@@ -60,6 +62,8 @@ def main(argv: list[str], env: Mapping[str, str]) -> int:
     p.add_argument("--machines", default=",".join(MACHINES), help="comma-separated")
     p.add_argument("--force", action="store_true", help="also if the results have a run")
     p.add_argument("--dry-run", action="store_true", help="print the request, send nothing")
+    p.add_argument("--distributed", action="store_true",
+                   help="the distributed jobs, checked against distributed/<machine>/")
     args = p.parse_args(argv)
     if not re.fullmatch(r"[0-9a-f]{40}", args.sha):
         print(f"error: --sha must be a full commit sha, not {args.sha!r}", file=sys.stderr)
@@ -71,17 +75,19 @@ def main(argv: list[str], env: Mapping[str, str]) -> int:
         return 2
     machines = [m for m in MACHINES if m in asked]
     short = args.sha[:10]
+    prefix, what = ("distributed/", "distributed ") if args.distributed else ("", "")
     try:
         if not args.force:
             token = env.get("GITHUB_TOKEN") or None
-            todo = pending(args.sha, lambda m: _listing(m, token), machines)
+            todo = pending(args.sha, lambda m: _listing(prefix + m, token), machines)
             if not todo:
-                print(f"nothing to do: {short} has runs on {', '.join(machines)}")
+                print(f"nothing to do: {short} has {what}runs on {', '.join(machines)}")
                 return 0
             machines = todo
-        data = body(args.sha, machines)
+        data = body(args.sha, machines, distributed=args.distributed)
         if args.dry_run:
-            print(f"would trigger {PIPELINE} for {short} on {', '.join(machines)}:")
+            print(f"would trigger {PIPELINE} ({what or 'single-node '}jobs) for {short} on "
+                  f"{', '.join(machines)}:")
             print(json.dumps(data, indent=2))
             return 0
         missing = [k for k in (REPOSITORY_ID, SECRET) if not env.get(k)]
