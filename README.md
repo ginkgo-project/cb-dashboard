@@ -228,7 +228,12 @@ triggered without sending anything.
 
 - **Ginkgo's CSCS CI:** a pipeline `benchmark` with the entry point
   `.gitlab/cscs-benchmark.yml`, and the Actions secrets
-  `CSCS_CI_REPOSITORY_ID` and `CSCS_CI_WEBHOOK_SECRET` for the trigger.
+  `CSCS_CI_REPOSITORY_ID` and `CSCS_CI_WEBHOOK_SECRET` for the trigger. Give
+  the pipeline its own list of CI-enabled branches, naming a branch that
+  doesn't exist. An empty list means the global one, so a push to develop
+  would start the pipeline without the trigger's variables: it has no jobs
+  then, and its status fails with "The resulting pipeline would have been
+  empty".
 - **This repository:** the Actions variable `CSCS_CI_BENCHMARK_PROJECT`. It is
   the pipeline's gitlab.com mirror,
   `cscs-ci/ci-testing/webhook-ci/mirrors/<project_id>/<pipeline_id>`. The
