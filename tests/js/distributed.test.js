@@ -145,6 +145,18 @@ test("pickRun: a dir in the hash, else the default", () => {
   assert.equal(D.pickRun(runs, undefined, null), null);
 });
 
+test("logPlot: every labelEvery-th x label and the last, never two side by side", () => {
+  const labelled = (count) => D.logPlot([Array(count).fill(1)], {
+    width: 440, height: 250, xLabels: Array.from({ length: count }, (_, i) => `s${i}`), labelEvery: 3,
+  }).xTicks.flatMap((t, i) => (t.label ? [i] : []));
+  // the ping-pong's 14 sizes: 12 would sit next to the last
+  assert.deepEqual(labelled(14), [0, 3, 6, 9, 13]);
+  // allreduce's 15 and alltoallv's 12 keep a gap of one
+  assert.deepEqual(labelled(15), [0, 3, 6, 9, 12, 14]);
+  assert.deepEqual(labelled(12), [0, 3, 6, 9, 11]);
+  assert.deepEqual(labelled(13), [0, 3, 6, 9, 12]);
+});
+
 test("logPlot: ticks inside the range and one path per series", () => {
   const m = D.logPlot([[1e-3, 2e-3, null], [1e-3, 3e-3, 4e-3]], { width: 300, height: 200 });
   assert.equal(m.paths.length, 2);

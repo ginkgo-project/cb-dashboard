@@ -258,7 +258,10 @@ export function logPlot(series, { width, height, xLabels, labelEvery = 1, unit =
     }
   }
   const labels = xLabels ?? Array.from({ length: count }, (_, i) => String(i));
-  const xTicks = labels.map((text, i) => ({ pos: xs(i), label: i % labelEvery === 0 || i === count - 1 ? text : "" }));
+  // every labelEvery-th label and the last; a regular one too close to the last
+  // (less than half a step) gives way, so that the two don't overlap
+  const shown = (i) => i === count - 1 || (i % labelEvery === 0 && count - 1 - i >= labelEvery / 2);
+  const xTicks = labels.map((text, i) => ({ pos: xs(i), label: shown(i) ? text : "" }));
   const paths = series.map((s, index) => ({
     index,
     points: s.map((v, i) => (v === null || v === undefined || (!linear && v <= 0) ? null : [xs(i), yOf(v), v, i]))
