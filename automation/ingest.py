@@ -43,9 +43,20 @@ class Rejected(Exception):
     """An artifact that is not a run to import."""
 
 
+REMOVED = "removed-jobs.txt"
+
+
 def imported_job_ids(results: Path) -> set[int]:
-    """The CI job ids recorded in the runs on the results branch."""
+    """The CI job ids recorded in the runs on the results branch, and those in
+    its removed-jobs.txt: runs taken out on purpose, one job id per line, which
+    are otherwise imported again while their pipeline is recent."""
     ids = set()
+    removed = Path(results) / REMOVED
+    if removed.exists():
+        for line in removed.read_text().splitlines():
+            word = line.split("#", 1)[0].strip()
+            if word:
+                ids.add(int(word))
     runs = [*Path(results).glob("*/*/run.json"), *Path(results).glob("distributed/*/*/run.json")]
     for p in runs:
         try:

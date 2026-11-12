@@ -173,6 +173,11 @@ automatically (see "Weekly automation"), and manual runs are committed by
 hand. Each run's `logs/` stays out of git (`results/.gitignore`). The logs of
 the CSCS CI runs are in the job artifacts for 30 days.
 
+To take out an imported run, delete its directory and add its CI job id
+(`ci.job_id` in its `run.json`) to `removed-jobs.txt` at the branch's root, one
+per line, `#` starting a comment. Otherwise the import takes it again while
+its pipeline is recent.
+
 ## Dashboard
 
 `python -m dashboard build` reads the runs under `results/` whose `run.json` is

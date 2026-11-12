@@ -285,6 +285,28 @@ def test_imported_ids_include_distributed(tmp_path):
     assert imported_job_ids(tmp_path) == {9, 19}
 
 
+def test_imported_ids_include_removed_jobs(tmp_path):
+    (tmp_path / "removed-jobs.txt").write_text(
+        "# runs taken out on purpose\n\n17951331418  # every rank but the first had no GPU\n")
+    place(tmp_path, "daint-gh200", NAME, {"run.json": json.dumps(record(job=9)).encode()})
+    assert imported_job_ids(tmp_path) == {9, 17951331418}
+
+
+def test_a_removed_run_is_not_imported_again(repo, gitlab):
+    gitlab["jobs"] = [{"id": 19, "name": "benchmark-distributed/daint-gh200",
+                       "status": "success"}]
+    gitlab["zips"][19] = dgood()
+    assert run_ingest(repo) == 0
+    git = ["git", "-C", str(repo)]
+    subprocess.run([*git, "rm", "-q", "-r", f"distributed/daint-gh200/{NAME}"], check=True)
+    (repo / "removed-jobs.txt").write_text("19  # failed\n")
+    subprocess.run([*git, "add", "removed-jobs.txt"], check=True)
+    subprocess.run([*git, "commit", "-q", "-m", "remove"], check=True)
+    assert run_ingest(repo) == 0
+    assert log(repo)[0] == "remove"
+    assert not (repo / "distributed" / "daint-gh200" / NAME).exists()
+
+
 def test_main_imports_a_distributed_job(repo, gitlab):
     gitlab["jobs"] = [{"id": 19, "name": "benchmark-distributed/daint-gh200",
                        "status": "success"}]
