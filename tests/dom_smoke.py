@@ -136,9 +136,11 @@ DISTRIBUTED = ("distributed change table or its no-runs note",
 DIST_OPEN = ("opened row with its two plots and blocks",
              lambda d: d.count("svg", "dist-chart") == 2 and d.count("section") >= 3
              and d.has("div", "dist-blocks"))
+# the plots: time against GPUs (with the ideal line), and time and bandwidth
+# against the message size
 DIST_MPI = ("opened MPI row with its change map and plots",
-            lambda d: d.has("table", "dist-small") and d.count("svg", "dist-chart") == 2
-            and d.has("td", "selected"))
+            lambda d: d.has("table", "dist-small") and d.count("svg", "dist-chart") == 3
+            and d.has("polyline", "line", "ideal") and d.has("td", "selected"))
 GENERATE = ("generate rows",
             lambda d: any(t.strip().endswith("(generate)") for t in d.texts))
 
