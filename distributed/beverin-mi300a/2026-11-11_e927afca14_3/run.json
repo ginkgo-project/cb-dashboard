@@ -1,0 +1,2475 @@
+{
+  "machine": "beverin-mi300a",
+  "node": "nid002346",
+  "gpu": {
+    "gpu": "Aqua Vanjaram [Instinct MI300A]",
+    "driver": "6.12.12",
+    "clocks": {
+      "sclk_mhz": 101,
+      "mclk_mhz": 1300,
+      "fclk_mhz": 2000
+    },
+    "binding": {
+      "srun": [
+        "srun",
+        "--ntasks=1",
+        "--gpus-per-task=1",
+        "--cpus-per-task=24",
+        "--hint=nomultithread",
+        "--export=ALL,OMP_NUM_THREADS=20"
+      ],
+      "visible_devices": "0",
+      "cpus": "0-23"
+    }
+  },
+  "toolchain": {
+    "g++": "g++ (Spack GCC) 13.4.0",
+    "clang++": "AMD clang version 18.0.0git",
+    "cmake": "cmake version 3.31.9"
+  },
+  "uenv": "prgenv-gnu/25.07-6.3.3:v12",
+  "cmake_cache": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CXX_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/g++",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_CXX_FLAGS_DEBUG": "-g",
+    "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_C_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/gcc",
+    "CMAKE_EXE_LINKER_FLAGS": "",
+    "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_HIP_COMPILER": "/user-environment/env/default/bin/clang++",
+    "CMAKE_HIP_FLAGS": "--gcc-toolchain=/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn",
+    "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_HIP_FLAGS_DEBUG": "-g -O",
+    "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_HIP_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_HIP_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_HIP_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_MODULE_LINKER_FLAGS": "",
+    "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_SHARED_LINKER_FLAGS": "",
+    "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_STATIC_LINKER_FLAGS": "",
+    "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+    "GINKGO_BUILD_BENCHMARKS": "ON",
+    "GINKGO_BUILD_CUDA": "OFF",
+    "GINKGO_BUILD_DOC": "OFF",
+    "GINKGO_BUILD_EXAMPLES": "OFF",
+    "GINKGO_BUILD_HIP": "ON",
+    "GINKGO_BUILD_MPI": "ON",
+    "GINKGO_BUILD_OMP": "ON",
+    "GINKGO_BUILD_PAPI_SDE": "OFF",
+    "GINKGO_BUILD_REFERENCE": "ON",
+    "GINKGO_BUILD_SYCL": "OFF",
+    "GINKGO_BUILD_TESTS": "OFF",
+    "GINKGO_BUILD_UMPIRE": "OFF",
+    "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+    "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+    "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+    "GINKGO_CUDA_ARCHITECTURES": "Auto",
+    "GINKGO_DEVEL_TOOLS": "OFF",
+    "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+    "GINKGO_ENABLE_BFLOAT16": "OFF",
+    "GINKGO_ENABLE_HALF": "OFF",
+    "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+    "GINKGO_FAST_TESTS": "OFF",
+    "GINKGO_FORCE_GPU_AWARE_MPI": "ON",
+    "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+    "GINKGO_INSTALL_RPATH": "ON",
+    "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+    "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+    "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+    "GINKGO_MIXED_PRECISION": "OFF",
+    "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+    "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+    "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+    "GINKGO_VERBOSE_LEVEL": "1",
+    "GINKGO_WITH_CCACHE": "ON",
+    "GINKGO_WITH_CLANG_TIDY": "OFF",
+    "GINKGO_WITH_IWYU": "OFF"
+  },
+  "ginkgo": {
+    "commit": "e927afca14bbe02a3af3d86ed60cf04d98b23a82",
+    "commit_date": "2026-11-11",
+    "develop_base": "e927afca14bbe02a3af3d86ed60cf04d98b23a82",
+    "ref": "origin/develop"
+  },
+  "dataset_version": null,
+  "script_version": "4942353397452243af03765c381545542112aece",
+  "started": "2026-11-12T12:04:50+00:00",
+  "finished": "2026-11-12T12:50:26+00:00",
+  "groups": {},
+  "kind": "distributed",
+  "distributed": {
+    "gpu_counts": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "gpus_per_node": 4,
+    "nodes": null,
+    "rows_per_gpu": 16777216
+  },
+  "gpus": {
+    "1": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 4.20324287499534,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 821,
+              "accel1_energy": 702,
+              "accel2_energy": 809,
+              "accel3_energy": 681,
+              "capped_energy": 0,
+              "energy": 3407,
+              "overshoot_energy": 0
+            },
+            "seconds": 4.196819453994976
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 13.322752677981043,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2512,
+              "accel1_energy": 2204,
+              "accel2_energy": 2542,
+              "accel3_energy": 2118,
+              "capped_energy": 0,
+              "energy": 10542,
+              "overshoot_energy": 0
+            },
+            "seconds": 13.31570482198731
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 42.08834864900564,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8248,
+              "accel1_energy": 7164,
+              "accel2_energy": 8207,
+              "accel3_energy": 6979,
+              "capped_energy": 0,
+              "energy": 34336,
+              "overshoot_energy": 0
+            },
+            "seconds": 42.07782838400453
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 126.94250612700125,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 11934,
+              "accel1_energy": 10420,
+              "accel2_energy": 11896,
+              "accel3_energy": 10155,
+              "capped_energy": 0,
+              "energy": 49914,
+              "overshoot_energy": 0
+            },
+            "seconds": 61.40042984599131
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 12539,
+              "accel1_energy": 10866,
+              "accel2_energy": 12410,
+              "accel3_energy": 10621,
+              "capped_energy": 0,
+              "energy": 52103,
+              "overshoot_energy": 0
+            },
+            "seconds": 64.62661899998784
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 208.6405079200049,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 7133,
+              "accel1_energy": 6175,
+              "accel2_energy": 7087,
+              "accel3_energy": 6064,
+              "capped_energy": 0,
+              "energy": 29660,
+              "overshoot_energy": 0
+            },
+            "seconds": 36.62418256900855
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 13702,
+              "accel1_energy": 11880,
+              "accel2_energy": 13648,
+              "accel3_energy": 11542,
+              "capped_energy": 0,
+              "energy": 57120,
+              "overshoot_energy": 0
+            },
+            "seconds": 70.99941931501962
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 19591,
+              "accel1_energy": 17138,
+              "accel2_energy": 19429,
+              "accel3_energy": 16599,
+              "capped_energy": 0,
+              "energy": 81791,
+              "overshoot_energy": 0
+            },
+            "seconds": 101.0073824999854
+          }
+        ]
+      }
+    },
+    "2": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 5.154718948993832,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 982,
+              "accel1_energy": 858,
+              "accel2_energy": 986,
+              "accel3_energy": 844,
+              "capped_energy": 0,
+              "energy": 4134,
+              "overshoot_energy": 0
+            },
+            "seconds": 5.148689019988524
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.71834151900839,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2501,
+              "accel1_energy": 2196,
+              "accel2_energy": 2483,
+              "accel3_energy": 2112,
+              "capped_energy": 0,
+              "energy": 10439,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.711502574005863
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 42.58749342901865,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8180,
+              "accel1_energy": 7149,
+              "accel2_energy": 8146,
+              "accel3_energy": 6930,
+              "capped_energy": 0,
+              "energy": 34227,
+              "overshoot_energy": 0
+            },
+            "seconds": 42.57647786301095
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 145.11499827701482,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 19807,
+              "accel1_energy": 17933,
+              "accel2_energy": 12812,
+              "accel3_energy": 10847,
+              "capped_energy": 0,
+              "energy": 67829,
+              "overshoot_energy": 0
+            },
+            "seconds": 66.39015389300766
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 15211,
+              "accel1_energy": 13303,
+              "accel2_energy": 15116,
+              "accel3_energy": 12860,
+              "capped_energy": 0,
+              "energy": 63762,
+              "overshoot_energy": 0
+            },
+            "seconds": 78.70674804301234
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 164.97596448799595,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 5202,
+              "accel1_energy": 4615,
+              "accel2_energy": 5181,
+              "accel3_energy": 4448,
+              "capped_energy": 0,
+              "energy": 21815,
+              "overshoot_energy": 0
+            },
+            "seconds": 26.738565543986624
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6584,
+              "accel1_energy": 5831,
+              "accel2_energy": 6540,
+              "accel3_energy": 5618,
+              "capped_energy": 0,
+              "energy": 27541,
+              "overshoot_energy": 0
+            },
+            "seconds": 34.00975980598014
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20151,
+              "accel1_energy": 17472,
+              "accel2_energy": 19949,
+              "accel3_energy": 16992,
+              "capped_energy": 0,
+              "energy": 83835,
+              "overshoot_energy": 0
+            },
+            "seconds": 104.21885599000962
+          }
+        ]
+      }
+    },
+    "4": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 5.407844732020749,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1112,
+              "accel1_energy": 962,
+              "accel2_energy": 1109,
+              "accel3_energy": 937,
+              "capped_energy": 0,
+              "energy": 4632,
+              "overshoot_energy": 0
+            },
+            "seconds": 5.402825673023472
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 11.510702377010603,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2211,
+              "accel1_energy": 1932,
+              "accel2_energy": 2229,
+              "accel3_energy": 1875,
+              "capped_energy": 0,
+              "energy": 9250,
+              "overshoot_energy": 0
+            },
+            "seconds": 11.503768454975216
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 41.72625721397344,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8156,
+              "accel1_energy": 7135,
+              "accel2_energy": 8043,
+              "accel3_energy": 6833,
+              "capped_energy": 0,
+              "energy": 33915,
+              "overshoot_energy": 0
+            },
+            "seconds": 41.71756240801187
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 130.28364591198624,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 11958,
+              "accel1_energy": 10541,
+              "accel2_energy": 11997,
+              "accel3_energy": 10175,
+              "capped_energy": 0,
+              "energy": 50172,
+              "overshoot_energy": 0
+            },
+            "seconds": 62.0311582100112
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 13220,
+              "accel1_energy": 11545,
+              "accel2_energy": 13161,
+              "accel3_energy": 11230,
+              "capped_energy": 0,
+              "energy": 55293,
+              "overshoot_energy": 0
+            },
+            "seconds": 68.24342309098574
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 162.4536959489924,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 4600,
+              "accel1_energy": 3981,
+              "accel2_energy": 4603,
+              "accel3_energy": 3950,
+              "capped_energy": 0,
+              "energy": 19159,
+              "overshoot_energy": 0
+            },
+            "seconds": 23.885100009007147
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6549,
+              "accel1_energy": 5785,
+              "accel2_energy": 6534,
+              "accel3_energy": 5510,
+              "capped_energy": 0,
+              "energy": 27368,
+              "overshoot_energy": 0
+            },
+            "seconds": 33.65563408602611
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20288,
+              "accel1_energy": 17805,
+              "accel2_energy": 20167,
+              "accel3_energy": 16977,
+              "capped_energy": 0,
+              "energy": 84605,
+              "overshoot_energy": 0
+            },
+            "seconds": 104.71150769299129
+          }
+        ]
+      }
+    },
+    "8": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 8.271367273991928,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4",
+              "--pingpong"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1574,
+              "accel1_energy": 1369,
+              "accel2_energy": 1546,
+              "accel3_energy": 1310,
+              "capped_energy": 0,
+              "energy": 6728,
+              "overshoot_energy": 0
+            },
+            "seconds": 8.263974886998767
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.835927885986166,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2812,
+              "accel1_energy": 2471,
+              "accel2_energy": 2841,
+              "accel3_energy": 2493,
+              "capped_energy": 0,
+              "energy": 11358,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.828695809992496
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 42.20346059498843,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 9920,
+              "accel1_energy": 8855,
+              "accel2_energy": 9721,
+              "accel3_energy": 8497,
+              "capped_energy": 0,
+              "energy": 41562,
+              "overshoot_energy": 0
+            },
+            "seconds": 42.1947045190027
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 141.7921674560057,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 12735,
+              "accel1_energy": 11076,
+              "accel2_energy": 12668,
+              "accel3_energy": 10825,
+              "capped_energy": 0,
+              "energy": 53074,
+              "overshoot_energy": 0
+            },
+            "seconds": 65.6733754099987
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 14857,
+              "accel1_energy": 12857,
+              "accel2_energy": 14655,
+              "accel3_energy": 12542,
+              "capped_energy": 0,
+              "energy": 61830,
+              "overshoot_energy": 0
+            },
+            "seconds": 76.10938582301605
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 165.74439786799485,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 5638,
+              "accel1_energy": 4964,
+              "accel2_energy": 5564,
+              "accel3_energy": 4758,
+              "capped_energy": 0,
+              "energy": 23239,
+              "overshoot_energy": 0
+            },
+            "seconds": 28.751767445995938
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 5892,
+              "accel1_energy": 5128,
+              "accel2_energy": 5812,
+              "accel3_energy": 4960,
+              "capped_energy": 0,
+              "energy": 24500,
+              "overshoot_energy": 0
+            },
+            "seconds": 30.34951524398639
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20712,
+              "accel1_energy": 18027,
+              "accel2_energy": 20568,
+              "accel3_energy": 17514,
+              "capped_energy": 0,
+              "energy": 86290,
+              "overshoot_energy": 0
+            },
+            "seconds": 106.63371419301257
+          }
+        ]
+      }
+    },
+    "16": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 7.262714366981527,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1429,
+              "accel1_energy": 1215,
+              "accel2_energy": 1390,
+              "accel3_energy": 1175,
+              "capped_energy": 0,
+              "energy": 5866,
+              "overshoot_energy": 0
+            },
+            "seconds": 7.256753611000022
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.766866833000677,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2731,
+              "accel1_energy": 2421,
+              "accel2_energy": 2719,
+              "accel3_energy": 2331,
+              "capped_energy": 0,
+              "energy": 11406,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.759879818011541
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 43.49897489900468,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8385,
+              "accel1_energy": 7359,
+              "accel2_energy": 8375,
+              "accel3_energy": 7130,
+              "capped_energy": 0,
+              "energy": 35183,
+              "overshoot_energy": 0
+            },
+            "seconds": 43.48730985599104
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 180.7008701020095,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 14545,
+              "accel1_energy": 12681,
+              "accel2_energy": 14340,
+              "accel3_energy": 12223,
+              "capped_energy": 0,
+              "energy": 60428,
+              "overshoot_energy": 0
+            },
+            "seconds": 74.37017900901265
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20542,
+              "accel1_energy": 17767,
+              "accel2_energy": 20317,
+              "accel3_energy": 17255,
+              "capped_energy": 0,
+              "energy": 85225,
+              "overshoot_energy": 0
+            },
+            "seconds": 105.4573999250133
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 179.11260859301547,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 7500,
+              "accel1_energy": 6776,
+              "accel2_energy": 7622,
+              "accel3_energy": 6830,
+              "capped_energy": 0,
+              "energy": 31481,
+              "overshoot_energy": 0
+            },
+            "seconds": 29.12269719399046
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8233,
+              "accel1_energy": 7312,
+              "accel2_energy": 8249,
+              "accel3_energy": 6991,
+              "capped_energy": 0,
+              "energy": 34685,
+              "overshoot_energy": 0
+            },
+            "seconds": 42.5182748149964
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20830,
+              "accel1_energy": 18333,
+              "accel2_energy": 20784,
+              "accel3_energy": 17753,
+              "capped_energy": 0,
+              "energy": 87212,
+              "overshoot_energy": 0
+            },
+            "seconds": 107.46198574500158
+          }
+        ]
+      }
+    },
+    "32": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 8.610546640993562,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1946,
+              "accel1_energy": 1738,
+              "accel2_energy": 1927,
+              "accel3_energy": 1669,
+              "capped_energy": 0,
+              "energy": 8078,
+              "overshoot_energy": 0
+            },
+            "seconds": 8.60291192799923
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 13.223924032994546,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2901,
+              "accel1_energy": 2528,
+              "accel2_energy": 2918,
+              "accel3_energy": 2462,
+              "capped_energy": 0,
+              "energy": 12136,
+              "overshoot_energy": 0
+            },
+            "seconds": 13.21764274299494
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 44.038888719980605,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8515,
+              "accel1_energy": 7445,
+              "accel2_energy": 8469,
+              "accel3_energy": 7188,
+              "capped_energy": 0,
+              "energy": 35617,
+              "overshoot_energy": 0
+            },
+            "seconds": 44.03065069299191
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 151.66042763800942,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20784,
+              "accel1_energy": 18776,
+              "accel2_energy": 20301,
+              "accel3_energy": 18185,
+              "capped_energy": 0,
+              "energy": 87295,
+              "overshoot_energy": 0
+            },
+            "seconds": 69.53206272999523
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 16022,
+              "accel1_energy": 13911,
+              "accel2_energy": 15889,
+              "accel3_energy": 13521,
+              "capped_energy": 0,
+              "energy": 66717,
+              "overshoot_energy": 0
+            },
+            "seconds": 82.11884022201411
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 184.71980519100907,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 7176,
+              "accel1_energy": 7046,
+              "accel2_energy": 7589,
+              "accel3_energy": 6670,
+              "capped_energy": 0,
+              "energy": 31103,
+              "overshoot_energy": 0
+            },
+            "seconds": 28.99130368200713
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 7925,
+              "accel1_energy": 6918,
+              "accel2_energy": 7923,
+              "accel3_energy": 6716,
+              "capped_energy": 0,
+              "energy": 33249,
+              "overshoot_energy": 0
+            },
+            "seconds": 40.874290881009074
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 28074,
+              "accel1_energy": 25540,
+              "accel2_energy": 27897,
+              "accel3_energy": 24230,
+              "capped_energy": 0,
+              "energy": 118147,
+              "overshoot_energy": 0
+            },
+            "seconds": 114.8453226069978
+          }
+        ]
+      }
+    },
+    "64": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 10.36878315199283,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2452,
+              "accel1_energy": 2152,
+              "accel2_energy": 2385,
+              "accel3_energy": 2086,
+              "capped_energy": 0,
+              "energy": 10150,
+              "overshoot_energy": 0
+            },
+            "seconds": 10.362739862990566
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 13.273855959996581,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2885,
+              "accel1_energy": 2553,
+              "accel2_energy": 2850,
+              "accel3_energy": 2458,
+              "capped_energy": 0,
+              "energy": 12198,
+              "overshoot_energy": 0
+            },
+            "seconds": 13.267368467000779
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "ok",
+        "seconds": 49.730589615995996,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 11258,
+              "accel1_energy": 9902,
+              "accel2_energy": 11289,
+              "accel3_energy": 9650,
+              "capped_energy": 0,
+              "energy": 47505,
+              "overshoot_energy": 0
+            },
+            "seconds": 49.7211079079716
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 146.08795616400312,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 19495,
+              "accel1_energy": 17459,
+              "accel2_energy": 19087,
+              "accel3_energy": 17039,
+              "capped_energy": 0,
+              "energy": 82445,
+              "overshoot_energy": 0
+            },
+            "seconds": 66.744028584013
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 27389,
+              "accel1_energy": 25214,
+              "accel2_energy": 26897,
+              "accel3_energy": 24723,
+              "capped_energy": 0,
+              "energy": 114904,
+              "overshoot_energy": 0
+            },
+            "seconds": 79.33327261600061
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 185.88552695399267,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8292,
+              "accel1_energy": 7597,
+              "accel2_energy": 8419,
+              "accel3_energy": 7510,
+              "capped_energy": 0,
+              "energy": 35899,
+              "overshoot_energy": 0
+            },
+            "seconds": 33.06661722200806
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8424,
+              "accel1_energy": 7890,
+              "accel2_energy": 8345,
+              "accel3_energy": 7291,
+              "capped_energy": 0,
+              "energy": 34813,
+              "overshoot_energy": 0
+            },
+            "seconds": 34.52067070300109
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 29123,
+              "accel1_energy": 26017,
+              "accel2_energy": 28919,
+              "accel3_energy": 25411,
+              "capped_energy": 0,
+              "energy": 121176,
+              "overshoot_energy": 0
+            },
+            "seconds": 118.2826720509911
+          }
+        ]
+      }
+    }
+  },
+  "build": {
+    "configured": false,
+    "fresh": false,
+    "seconds": 1.718830801983131,
+    "cmake_cache": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_CXX_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/g++",
+      "CMAKE_CXX_FLAGS": "",
+      "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_CXX_FLAGS_DEBUG": "-g",
+      "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_C_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/gcc",
+      "CMAKE_EXE_LINKER_FLAGS": "",
+      "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_HIP_COMPILER": "/user-environment/env/default/bin/clang++",
+      "CMAKE_HIP_FLAGS": "--gcc-toolchain=/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn",
+      "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_HIP_FLAGS_DEBUG": "-g -O",
+      "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_HIP_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_HIP_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_HIP_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_MODULE_LINKER_FLAGS": "",
+      "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_SHARED_LINKER_FLAGS": "",
+      "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_STATIC_LINKER_FLAGS": "",
+      "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+      "GINKGO_BUILD_BENCHMARKS": "ON",
+      "GINKGO_BUILD_CUDA": "OFF",
+      "GINKGO_BUILD_DOC": "OFF",
+      "GINKGO_BUILD_EXAMPLES": "OFF",
+      "GINKGO_BUILD_HIP": "ON",
+      "GINKGO_BUILD_MPI": "ON",
+      "GINKGO_BUILD_OMP": "ON",
+      "GINKGO_BUILD_PAPI_SDE": "OFF",
+      "GINKGO_BUILD_REFERENCE": "ON",
+      "GINKGO_BUILD_SYCL": "OFF",
+      "GINKGO_BUILD_TESTS": "OFF",
+      "GINKGO_BUILD_UMPIRE": "OFF",
+      "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+      "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+      "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+      "GINKGO_CUDA_ARCHITECTURES": "Auto",
+      "GINKGO_DEVEL_TOOLS": "OFF",
+      "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+      "GINKGO_ENABLE_BFLOAT16": "OFF",
+      "GINKGO_ENABLE_HALF": "OFF",
+      "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+      "GINKGO_FAST_TESTS": "OFF",
+      "GINKGO_FORCE_GPU_AWARE_MPI": "ON",
+      "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+      "GINKGO_INSTALL_RPATH": "ON",
+      "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+      "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+      "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+      "GINKGO_MIXED_PRECISION": "OFF",
+      "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+      "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+      "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+      "GINKGO_VERBOSE_LEVEL": "1",
+      "GINKGO_WITH_CCACHE": "ON",
+      "GINKGO_WITH_CLANG_TIDY": "OFF",
+      "GINKGO_WITH_IWYU": "OFF"
+    }
+  },
+  "mpibench_build": {},
+  "pm_counters": {
+    "accel0_energy": "1809971756 J 6747612317367 us",
+    "accel0_power": "182 W 6747612317367 us",
+    "accel0_power_cap": "0 W",
+    "accel1_energy": "1497062700 J 6747612317367 us",
+    "accel1_power": "165 W 6747612317367 us",
+    "accel1_power_cap": "0 W",
+    "accel2_energy": "1609307546 J 6747612317367 us",
+    "accel2_power": "198 W 6747612317367 us",
+    "accel2_power_cap": "0 W",
+    "accel3_energy": "1408944367 J 6747612317367 us",
+    "accel3_power": "157 W 6747612317367 us",
+    "accel3_power_cap": "0 W",
+    "capped_energy": "10287335 J 6747612317367 us",
+    "energy": "7028447771 J 6747612317367 us",
+    "freshness": "52194103",
+    "generation": "31",
+    "overshoot": "13020",
+    "overshoot_energy": "983134 J 6747612317367 us",
+    "power": "798 W 6747612317367 us",
+    "power_cap": "2894 W",
+    "raw_scan_hz": "10",
+    "startup": "1787737840025742",
+    "version": "3"
+  },
+  "ci": {
+    "job_id": 17965484410,
+    "job_url": "https://gitlab.com/cscs-ci/ci-testing/webhook-ci/mirrors/5475236486706868/8339430553009009/-/jobs/17965484410",
+    "pipeline_id": 3059056130,
+    "pipeline_url": "https://gitlab.com/cscs-ci/ci-testing/webhook-ci/mirrors/5475236486706868/8339430553009009/-/pipelines/3059056130"
+  }
+}
