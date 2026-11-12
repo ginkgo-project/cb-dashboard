@@ -1,0 +1,2286 @@
+{
+  "machine": "beverin-mi300a",
+  "node": "nid002346",
+  "gpu": {
+    "gpu": "Aqua Vanjaram [Instinct MI300A]",
+    "driver": "6.12.12",
+    "clocks": {
+      "sclk_mhz": 96,
+      "mclk_mhz": 1300,
+      "fclk_mhz": 2000
+    },
+    "binding": {
+      "srun": [
+        "srun",
+        "--ntasks=1",
+        "--gpus-per-task=1",
+        "--cpus-per-task=24",
+        "--hint=nomultithread",
+        "--export=ALL,OMP_NUM_THREADS=20"
+      ],
+      "visible_devices": "0",
+      "cpus": "0-23"
+    }
+  },
+  "toolchain": {
+    "g++": "g++ (Spack GCC) 13.4.0",
+    "clang++": "AMD clang version 18.0.0git",
+    "cmake": "cmake version 3.31.9"
+  },
+  "uenv": "prgenv-gnu/25.07-6.3.3:v12",
+  "cmake_cache": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CXX_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/g++",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_CXX_FLAGS_DEBUG": "-g",
+    "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_C_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/gcc",
+    "CMAKE_EXE_LINKER_FLAGS": "",
+    "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_HIP_COMPILER": "/user-environment/env/default/bin/clang++",
+    "CMAKE_HIP_FLAGS": "--gcc-toolchain=/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn",
+    "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_HIP_FLAGS_DEBUG": "-g -O",
+    "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_HIP_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_HIP_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_HIP_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_MODULE_LINKER_FLAGS": "",
+    "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_SHARED_LINKER_FLAGS": "",
+    "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_STATIC_LINKER_FLAGS": "",
+    "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+    "GINKGO_BUILD_BENCHMARKS": "ON",
+    "GINKGO_BUILD_CUDA": "OFF",
+    "GINKGO_BUILD_DOC": "OFF",
+    "GINKGO_BUILD_EXAMPLES": "OFF",
+    "GINKGO_BUILD_HIP": "ON",
+    "GINKGO_BUILD_HWLOC": "OFF",
+    "GINKGO_BUILD_MPI": "ON",
+    "GINKGO_BUILD_OMP": "ON",
+    "GINKGO_BUILD_PAPI_SDE": "OFF",
+    "GINKGO_BUILD_REFERENCE": "ON",
+    "GINKGO_BUILD_SYCL": "OFF",
+    "GINKGO_BUILD_TESTS": "OFF",
+    "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+    "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+    "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+    "GINKGO_CUDA_ARCHITECTURES": "Auto",
+    "GINKGO_DEVEL_TOOLS": "OFF",
+    "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+    "GINKGO_ENABLE_BFLOAT16": "OFF",
+    "GINKGO_ENABLE_HALF": "OFF",
+    "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+    "GINKGO_FAST_TESTS": "OFF",
+    "GINKGO_FORCE_GPU_AWARE_MPI": "ON",
+    "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+    "GINKGO_INSTALL_RPATH": "ON",
+    "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+    "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+    "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+    "GINKGO_MIXED_PRECISION": "OFF",
+    "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+    "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+    "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+    "GINKGO_VERBOSE_LEVEL": "1",
+    "GINKGO_WITH_CCACHE": "ON",
+    "GINKGO_WITH_CLANG_TIDY": "OFF",
+    "GINKGO_WITH_IWYU": "OFF"
+  },
+  "ginkgo": {
+    "commit": "9a87bb8e01f2a94d5e48d5d8a92b6e9d46624443",
+    "commit_date": "2025-12-15",
+    "develop_base": "4a3b5eb700bfd6057fbe1b01b7cb55e314df0dfa",
+    "ref": "origin/cb/v1.11.0-distributed"
+  },
+  "dataset_version": null,
+  "script_version": "1f1a054be07c5c849c15b10365473585e8e6b3d4",
+  "started": "2026-11-12T14:05:29+00:00",
+  "finished": "2026-11-12T14:34:28+00:00",
+  "groups": {},
+  "kind": "distributed",
+  "distributed": {
+    "gpu_counts": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "gpus_per_node": 4,
+    "nodes": null,
+    "rows_per_gpu": 16777216
+  },
+  "gpus": {
+    "1": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 4.251588592975168,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 862,
+              "accel1_energy": 785,
+              "accel2_energy": 865,
+              "accel3_energy": 740,
+              "capped_energy": 0,
+              "energy": 3661,
+              "overshoot_energy": 0
+            },
+            "seconds": 4.246020246995613
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.814111327985302,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2481,
+              "accel1_energy": 2159,
+              "accel2_energy": 2486,
+              "accel3_energy": 2085,
+              "capped_energy": 0,
+              "energy": 10308,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.808437191997655
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.004416566982399672,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 1.1490978067740798e-05
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 125.02648199201212,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 11851,
+              "accel1_energy": 10225,
+              "accel2_energy": 11809,
+              "accel3_energy": 9904,
+              "capped_energy": 0,
+              "energy": 49186,
+              "overshoot_energy": 0
+            },
+            "seconds": 61.18440054199891
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 12402,
+              "accel1_energy": 10846,
+              "accel2_energy": 12399,
+              "accel3_energy": 10648,
+              "capped_energy": 0,
+              "energy": 51945,
+              "overshoot_energy": 0
+            },
+            "seconds": 63.83395824499894
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 31.86472220599535,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6138,
+              "accel1_energy": 5336,
+              "accel2_energy": 6118,
+              "accel3_energy": 5273,
+              "capped_energy": 0,
+              "energy": 25700,
+              "overshoot_energy": 0
+            },
+            "seconds": 31.856748079997487
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 1.6080011846497655e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 3.990018740296364e-06
+          }
+        ]
+      }
+    },
+    "2": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 4.955101575003937,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 996,
+              "accel1_energy": 863,
+              "accel2_energy": 987,
+              "accel3_energy": 832,
+              "capped_energy": 0,
+              "energy": 4122,
+              "overshoot_energy": 0
+            },
+            "seconds": 4.947582873981446
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 13.567836282978533,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2595,
+              "accel1_energy": 2269,
+              "accel2_energy": 2562,
+              "accel3_energy": 2214,
+              "capped_energy": 0,
+              "energy": 11062,
+              "overshoot_energy": 0
+            },
+            "seconds": 13.561259690002771
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.004122043988900259,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 1.0629999451339245e-05
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 146.19811937000486,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 13075,
+              "accel1_energy": 11302,
+              "accel2_energy": 13001,
+              "accel3_energy": 11070,
+              "capped_energy": 0,
+              "energy": 54208,
+              "overshoot_energy": 0
+            },
+            "seconds": 67.03020111599471
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 15372,
+              "accel1_energy": 13405,
+              "accel2_energy": 15257,
+              "accel3_energy": 13026,
+              "capped_energy": 0,
+              "energy": 64116,
+              "overshoot_energy": 0
+            },
+            "seconds": 79.15746657899581
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 32.16315185301937,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6251,
+              "accel1_energy": 5381,
+              "accel2_energy": 6189,
+              "accel3_energy": 5252,
+              "capped_energy": 0,
+              "energy": 25914,
+              "overshoot_energy": 0
+            },
+            "seconds": 32.157071334979264
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 1.8090009689331055e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 6.490008672699332e-06
+          }
+        ]
+      }
+    },
+    "4": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 6.107090697012609,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1207,
+              "accel1_energy": 1057,
+              "accel2_energy": 1187,
+              "accel3_energy": 1018,
+              "capped_energy": 0,
+              "energy": 5047,
+              "overshoot_energy": 0
+            },
+            "seconds": 6.101568272017175
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.178233284997987,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2566,
+              "accel1_energy": 2254,
+              "accel2_energy": 2519,
+              "accel3_energy": 2179,
+              "capped_energy": 0,
+              "energy": 10856,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.17129732799367
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.003623758995672688,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 9.059993317350745e-06
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 134.75723253699834,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 12619,
+              "accel1_energy": 10844,
+              "accel2_energy": 12470,
+              "accel3_energy": 10621,
+              "capped_energy": 0,
+              "energy": 52131,
+              "overshoot_energy": 0
+            },
+            "seconds": 64.29110388702247
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 13748,
+              "accel1_energy": 11956,
+              "accel2_energy": 13531,
+              "accel3_energy": 11562,
+              "capped_energy": 0,
+              "energy": 56983,
+              "overshoot_energy": 0
+            },
+            "seconds": 70.45543452701531
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 31.66292529599741,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6144,
+              "accel1_energy": 5341,
+              "accel2_energy": 6109,
+              "accel3_energy": 5218,
+              "capped_energy": 0,
+              "energy": 25606,
+              "overshoot_energy": 0
+            },
+            "seconds": 31.65545126798679
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 1.6129983123391867e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 5.139998393133283e-06
+          }
+        ]
+      }
+    },
+    "8": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 8.870043305010768,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4",
+              "--pingpong"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1753,
+              "accel1_energy": 1509,
+              "accel2_energy": 1745,
+              "accel3_energy": 1465,
+              "capped_energy": 0,
+              "energy": 7259,
+              "overshoot_energy": 0
+            },
+            "seconds": 8.864355861005606
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 13.017828964977525,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2494,
+              "accel1_energy": 2216,
+              "accel2_energy": 2539,
+              "accel3_energy": 2155,
+              "capped_energy": 0,
+              "energy": 10567,
+              "overshoot_energy": 0
+            },
+            "seconds": 13.011178562999703
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.004943587991874665,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 1.2529984815046191e-05
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 143.8972306700016,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 12622,
+              "accel1_energy": 10985,
+              "accel2_energy": 12587,
+              "accel3_energy": 10702,
+              "capped_energy": 0,
+              "energy": 52678,
+              "overshoot_energy": 0
+            },
+            "seconds": 65.13963449798757
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 15316,
+              "accel1_energy": 13330,
+              "accel2_energy": 15210,
+              "accel3_energy": 12939,
+              "capped_energy": 0,
+              "energy": 63784,
+              "overshoot_energy": 0
+            },
+            "seconds": 78.7494788710028
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 34.823615614004666,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6797,
+              "accel1_energy": 5879,
+              "accel2_energy": 6720,
+              "accel3_energy": 5698,
+              "capped_energy": 0,
+              "energy": 28105,
+              "overshoot_energy": 0
+            },
+            "seconds": 34.814722506998805
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 2.3289991077035666e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 5.350011633709073e-06
+          }
+        ]
+      }
+    },
+    "16": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 6.808364845026517,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1577,
+              "accel1_energy": 1376,
+              "accel2_energy": 1540,
+              "accel3_energy": 1361,
+              "capped_energy": 0,
+              "energy": 6370,
+              "overshoot_energy": 0
+            },
+            "seconds": 6.80272657200112
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.916943447024096,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2772,
+              "accel1_energy": 2478,
+              "accel2_energy": 2791,
+              "accel3_energy": 2377,
+              "capped_energy": 0,
+              "energy": 11639,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.909405737998895
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.004517103981925175,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 7.660011760890484e-06
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 180.49823813399416,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 15310,
+              "accel1_energy": 13329,
+              "accel2_energy": 15129,
+              "accel3_energy": 12856,
+              "capped_energy": 0,
+              "energy": 63839,
+              "overshoot_energy": 0
+            },
+            "seconds": 78.16589116500109
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 19878,
+              "accel1_energy": 17336,
+              "accel2_energy": 19755,
+              "accel3_energy": 16803,
+              "capped_energy": 0,
+              "energy": 82867,
+              "overshoot_energy": 0
+            },
+            "seconds": 102.32361980999121
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 35.21217310699285,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 6777,
+              "accel1_energy": 5866,
+              "accel2_energy": 6764,
+              "accel3_energy": 5829,
+              "capped_energy": 0,
+              "energy": 28308,
+              "overshoot_energy": 0
+            },
+            "seconds": 35.20610497999587
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 1.536001218482852e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 5.2600225899368525e-06
+          }
+        ]
+      }
+    },
+    "32": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 7.658514303009724,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 1875,
+              "accel1_energy": 1664,
+              "accel2_energy": 1849,
+              "accel3_energy": 1619,
+              "capped_energy": 0,
+              "energy": 7539,
+              "overshoot_energy": 0
+            },
+            "seconds": 7.653507832001196
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 13.267846971022664,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2633,
+              "accel1_energy": 2245,
+              "accel2_energy": 2575,
+              "accel3_energy": 2199,
+              "capped_energy": 0,
+              "energy": 10935,
+              "overshoot_energy": 0
+            },
+            "seconds": 13.261431130988058
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.004223843978252262,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 4.850997356697917e-06
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 151.3700169530057,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 20786,
+              "accel1_energy": 19043,
+              "accel2_energy": 20507,
+              "accel3_energy": 18420,
+              "capped_energy": 0,
+              "energy": 85842,
+              "overshoot_energy": 0
+            },
+            "seconds": 68.64373409701511
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 16053,
+              "accel1_energy": 14025,
+              "accel2_energy": 15995,
+              "accel3_energy": 13553,
+              "capped_energy": 0,
+              "energy": 67435,
+              "overshoot_energy": 0
+            },
+            "seconds": 82.71648266600096
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 35.53639125300106,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 8817,
+              "accel1_energy": 8143,
+              "accel2_energy": 8926,
+              "accel3_energy": 8168,
+              "capped_energy": 0,
+              "energy": 37763,
+              "overshoot_energy": 0
+            },
+            "seconds": 35.53001340001356
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 2.294100704602897e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 4.489993443712592e-06
+          }
+        ]
+      }
+    },
+    "64": {
+      "mpi": {
+        "status": "ok",
+        "seconds": 9.56766183199943,
+        "invocations": [
+          {
+            "label": "mpibench",
+            "args": [
+              "--ranks-per-node",
+              "4"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2243,
+              "accel1_energy": 2002,
+              "accel2_energy": 2201,
+              "accel3_energy": 1921,
+              "capped_energy": 0,
+              "energy": 9407,
+              "overshoot_energy": 0
+            },
+            "seconds": 9.56155019099242
+          }
+        ]
+      },
+      "spmv": {
+        "status": "ok",
+        "seconds": 12.765212287020404,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-formats",
+              "csr-csr"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 2779,
+              "accel1_energy": 2476,
+              "accel2_energy": 2858,
+              "accel3_energy": 2378,
+              "capped_energy": 0,
+              "energy": 11534,
+              "overshoot_energy": 0
+            },
+            "seconds": 12.758658592996653
+          }
+        ]
+      },
+      "spgemm": {
+        "status": "skipped",
+        "seconds": 0.004477498005144298,
+        "invocations": [
+          {
+            "label": "stencil",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-operations",
+              "spgemm"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (no sparse_blas_distributed)",
+            "failures": [],
+            "seconds": 1.0410003596916795e-05
+          }
+        ]
+      },
+      "solver": {
+        "status": "ok",
+        "seconds": 146.9688869509846,
+        "invocations": [
+          {
+            "label": "cg",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "cg"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 19628,
+              "accel1_energy": 17715,
+              "accel2_energy": 19322,
+              "accel3_energy": 17204,
+              "capped_energy": 0,
+              "energy": 82659,
+              "overshoot_energy": 0
+            },
+            "seconds": 67.79122346299118
+          },
+          {
+            "label": "gmres",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "schwarz-jacobi",
+              "-rel_res_goal",
+              "1e-10",
+              "-max_iters",
+              "1000",
+              "-rhs_generation",
+              "sinus",
+              "-initial_guess_generation",
+              "0",
+              "-solvers",
+              "gmres"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 27630,
+              "accel1_energy": 24953,
+              "accel2_energy": 26831,
+              "accel3_energy": 24317,
+              "capped_energy": 0,
+              "energy": 114798,
+              "overshoot_energy": 0
+            },
+            "seconds": 79.16447165102
+          }
+        ]
+      },
+      "preconditioner": {
+        "status": "ok",
+        "seconds": 39.69717542800936,
+        "invocations": [
+          {
+            "label": "mg-pgm",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pgm"
+            ],
+            "status": "ok",
+            "exit_code": 0,
+            "reason": null,
+            "failures": [],
+            "energy_j": {
+              "accel0_energy": 10182,
+              "accel1_energy": 9579,
+              "accel2_energy": 10341,
+              "accel3_energy": 8930,
+              "capped_energy": 0,
+              "energy": 42554,
+              "overshoot_energy": 0
+            },
+            "seconds": 39.68849639798282
+          },
+          {
+            "label": "mg-uniform",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-uniform"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by f804544bd0)",
+            "failures": [],
+            "seconds": 2.0130013581365347e-05
+          },
+          {
+            "label": "mg-pmis",
+            "args": [
+              "-executor",
+              "hip",
+              "-warmup",
+              "1",
+              "-repetitions",
+              "5",
+              "-gpu_timer",
+              "-repetition_growth_factor",
+              "1",
+              "-timer_method",
+              "median",
+              "-seed",
+              "42",
+              "-detailed=false",
+              "-preconditioners",
+              "mg-pmis"
+            ],
+            "status": "not_available",
+            "exit_code": null,
+            "reason": "not in this Ginkgo commit (added by 0cd07f4eaf)",
+            "failures": [],
+            "seconds": 5.7600263971835375e-06
+          }
+        ]
+      }
+    }
+  },
+  "build": {
+    "configured": true,
+    "fresh": true,
+    "seconds": 317.1368348019896,
+    "cmake_cache": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_CXX_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/g++",
+      "CMAKE_CXX_FLAGS": "",
+      "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_CXX_FLAGS_DEBUG": "-g",
+      "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_C_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/gcc",
+      "CMAKE_EXE_LINKER_FLAGS": "",
+      "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_HIP_COMPILER": "/user-environment/env/default/bin/clang++",
+      "CMAKE_HIP_FLAGS": "--gcc-toolchain=/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn",
+      "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_HIP_FLAGS_DEBUG": "-g -O",
+      "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_HIP_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_HIP_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_HIP_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_MODULE_LINKER_FLAGS": "",
+      "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_SHARED_LINKER_FLAGS": "",
+      "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_STATIC_LINKER_FLAGS": "",
+      "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+      "GINKGO_BUILD_BENCHMARKS": "ON",
+      "GINKGO_BUILD_CUDA": "OFF",
+      "GINKGO_BUILD_DOC": "OFF",
+      "GINKGO_BUILD_EXAMPLES": "OFF",
+      "GINKGO_BUILD_HIP": "ON",
+      "GINKGO_BUILD_HWLOC": "OFF",
+      "GINKGO_BUILD_MPI": "ON",
+      "GINKGO_BUILD_OMP": "ON",
+      "GINKGO_BUILD_PAPI_SDE": "OFF",
+      "GINKGO_BUILD_REFERENCE": "ON",
+      "GINKGO_BUILD_SYCL": "OFF",
+      "GINKGO_BUILD_TESTS": "OFF",
+      "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+      "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+      "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+      "GINKGO_CUDA_ARCHITECTURES": "Auto",
+      "GINKGO_DEVEL_TOOLS": "OFF",
+      "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+      "GINKGO_ENABLE_BFLOAT16": "OFF",
+      "GINKGO_ENABLE_HALF": "OFF",
+      "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+      "GINKGO_FAST_TESTS": "OFF",
+      "GINKGO_FORCE_GPU_AWARE_MPI": "ON",
+      "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+      "GINKGO_INSTALL_RPATH": "ON",
+      "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+      "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+      "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+      "GINKGO_MIXED_PRECISION": "OFF",
+      "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+      "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+      "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+      "GINKGO_VERBOSE_LEVEL": "1",
+      "GINKGO_WITH_CCACHE": "ON",
+      "GINKGO_WITH_CLANG_TIDY": "OFF",
+      "GINKGO_WITH_IWYU": "OFF"
+    }
+  },
+  "mpibench_build": {},
+  "pm_counters": {
+    "accel0_energy": "1811505269 J 6754850852445 us",
+    "accel0_power": "195 W 6754850852445 us",
+    "accel0_power_cap": "0 W",
+    "accel1_energy": "1498413233 J 6754850852445 us",
+    "accel1_power": "168 W 6754850852445 us",
+    "accel1_power_cap": "0 W",
+    "accel2_energy": "1610819957 J 6754850852445 us",
+    "accel2_power": "200 W 6754850852445 us",
+    "accel2_power_cap": "0 W",
+    "accel3_energy": "1410241939 J 6754850852445 us",
+    "accel3_power": "161 W 6754850852445 us",
+    "accel3_power_cap": "0 W",
+    "capped_energy": "10287335 J 6754850852445 us",
+    "energy": "7034824728 J 6754850852445 us",
+    "freshness": "52250265",
+    "generation": "31",
+    "overshoot": "13020",
+    "overshoot_energy": "983134 J 6754850852445 us",
+    "power": "804 W 6754850852445 us",
+    "power_cap": "2894 W",
+    "raw_scan_hz": "10",
+    "startup": "1787737840025742",
+    "version": "3"
+  },
+  "ci": {
+    "job_id": 17970661247,
+    "job_url": "https://gitlab.com/cscs-ci/ci-testing/webhook-ci/mirrors/5475236486706868/8339430553009009/-/jobs/17970661247",
+    "pipeline_id": 3059779697,
+    "pipeline_url": "https://gitlab.com/cscs-ci/ci-testing/webhook-ci/mirrors/5475236486706868/8339430553009009/-/pipelines/3059779697"
+  }
+}
