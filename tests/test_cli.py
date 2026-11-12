@@ -524,13 +524,17 @@ def fake_dist_machine(tmp_path):
 
 
 def dist_run(tmp_path, monkeypatch, argv=(), during=None, fail=None, mpibench_fails=False,
-             patches=None):
+             patches=None, wrapper=None, wrappers_seen=None):
     """Run `bench distributed` with fakes; `during(n, group)` runs inside each
-    fake group, and a group raises when `fail(n, group)`."""
+    fake group, and a group raises when `fail(n, group)`. `wrappers_seen` gets
+    the wrapper of every group."""
     m = fake_dist_machine(tmp_path)
+    if wrapper is not None:
+        m.distributed.wrapper = list(wrapper)
     patch_common(monkeypatch, m, COMMIT)
     monkeypatch.setenv("MPICH_GPU_SUPPORT_ENABLED", "0")  # restored after the test
     calls = []
+    wrappers = set()
 
     def build(bm, src, **kw):
         calls.append(("build", bm.build_dir, tuple(bm.cmake_flags), tuple(kw["targets"])))
@@ -542,9 +546,10 @@ def dist_run(tmp_path, monkeypatch, argv=(), during=None, fail=None, mpibench_fa
             raise RuntimeError("no mpicxx")
         return tmp_path / "mbuild" / "mpibench"
 
-    def rg(group, invs, srun, out, deadline=None):
+    def rg(group, invs, srun, out, deadline=None, wrapper=()):
         n = int(out.name.removeprefix("gpus-"))
         calls.append((n, group, tuple(srun[:3])))
+        wrappers.add(tuple(wrapper))
         assert {i.group for i in invs} == {group}
         out.mkdir(parents=True, exist_ok=True)
         if during:
@@ -558,6 +563,8 @@ def dist_run(tmp_path, monkeypatch, argv=(), during=None, fail=None, mpibench_fa
     for name, fake in (patches or {}).items():
         monkeypatch.setattr(cli, name, fake)
     rc = cli.main(["distributed", "daint-gh200", *argv])
+    if wrappers_seen is not None:
+        wrappers_seen |= wrappers
     return m, rc, calls
 
 
@@ -588,6 +595,19 @@ def test_distributed_full_run(tmp_path, monkeypatch):
         str(n): {g: "ok" for g in D.GROUPS} for n in D.GPU_COUNTS}
     assert dist_last(m).read_text().strip() == COMMIT.sha
     assert os.environ["MPICH_GPU_SUPPORT_ENABLED"] == "1"
+
+
+def test_distributed_groups_get_the_wrapper(tmp_path, monkeypatch, capsys):
+    seen = set()
+    w = ["env", "-u", "CUDA_VISIBLE_DEVICES"]
+    _, rc, _ = dist_run(tmp_path, monkeypatch, ["--gpus", "1,2"], wrapper=w, wrappers_seen=seen)
+    assert rc == 0 and seen == {tuple(w)}
+    m = fake_dist_machine(tmp_path)
+    m.distributed.wrapper = w
+    monkeypatch.setattr(cli, "load_machine", lambda name, **kw: m)
+    assert cli.main(["distributed", "daint-gh200", "--dry-run", "--gpus", "2"]) == 0
+    lines = [ln for ln in capsys.readouterr().out.splitlines() if " srun " in ln]
+    assert lines and all(" env -u CUDA_VISIBLE_DEVICES " in ln for ln in lines)
 
 
 def test_distributed_dry_run_lists_every_gpu_count(tmp_path, monkeypatch, capsys):

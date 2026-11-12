@@ -83,6 +83,15 @@ def test_distributed_section_loaded(name):
     assert "--ntasks=1" not in d.srun and "--gpus-per-task=1" in d.srun
 
 
+def test_distributed_wrapper():
+    # HIP reads CUDA_VISIBLE_DEVICES and GPU_DEVICE_ORDINAL after ROCR_VISIBLE_DEVICES,
+    # so Slurm's per-rank values would leave every rank but the first without a GPU
+    bev = load_machine("beverin-mi300a", env={"SCRATCH": "/s"}).distributed
+    assert bev.wrapper == ["env", "-u", "CUDA_VISIBLE_DEVICES", "-u", "GPU_DEVICE_ORDINAL"]
+    # CUDA reads only CUDA_VISIBLE_DEVICES
+    assert load_machine("daint-gh200", env={"SCRATCH": "/s"}).distributed.wrapper == []
+
+
 @pytest.mark.parametrize("name", ["daint-gh200", "beverin-mi300a"])
 def test_distributed_paths_differ_from_single_node(name):
     m = load_machine(name, env={"SCRATCH": "/s"})

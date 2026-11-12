@@ -160,10 +160,12 @@ def _aggregate(records: list[dict]) -> str:
 
 def run_group(group: str, invs: list[Invocation], srun: list[str], out_dir: Path,
               deadline: float | None = None,
-              energy: Callable[[], dict[str, int]] = read_energy) -> dict:
+              energy: Callable[[], dict[str, int]] = read_energy,
+              wrapper: list[str] | tuple[str, ...] = ()) -> dict:
     """Run the invocations of one group.
 
-    `deadline` is the job's end as a Unix time, or None if unknown. An
+    `wrapper` is a command each rank runs the benchmark through, after srun's
+    options. `deadline` is the job's end as a Unix time, or None if unknown. An
     invocation whose timeout doesn't fit before it is skipped. `energy` reads the
     node's counters; each invocation that ran gets the joules used in "energy_j",
     if the node has any.
@@ -180,6 +182,7 @@ def run_group(group: str, invs: list[Invocation], srun: list[str], out_dir: Path
         for inv in invs:
             t = time.monotonic()
             prefix = ["srun", *srun, f"--time={srun_time_minutes(inv.timeout_s)}"] if srun else []
+            prefix += wrapper
             try:
                 if inv.unavailable is not None:
                     data, st = [], {"status": "not_available", "exit_code": None,

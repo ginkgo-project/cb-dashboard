@@ -23,6 +23,8 @@ class Distributed:
     build_dir: Path
     mpibench_build_dir: Path
     results_dir: Path
+    # the command each rank runs its benchmark through, after srun's options
+    wrapper: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -96,4 +98,5 @@ def _distributed(name: str, data: dict | None, scratch: Path) -> Distributed | N
         build_dir=scratch / "cb" / "build" / f"{name}-distributed",
         mpibench_build_dir=scratch / "cb" / "build" / f"{name}-mpibench",
         results_dir=scratch / "cb" / "results" / "distributed" / name,
+        wrapper=list(data.get("wrapper", [])),
     )

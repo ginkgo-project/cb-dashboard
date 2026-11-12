@@ -224,7 +224,8 @@ def cmd_distributed(args) -> int:
         for n in gpus:
             for inv in distributed.invocations(m, n, mpibench):
                 print(f"{n} {inv.group} {inv.label} srun "
-                      f"{' '.join(distributed.srun_args(m, n))} {inv.exe} {' '.join(inv.args)}")
+                      f"{' '.join([*distributed.srun_args(m, n), *d.wrapper])} "
+                      f"{inv.exe} {' '.join(inv.args)}")
         return 0
     if platform.machine() != m.arch:
         print(f"error: {m.name} needs {m.arch} but this host is {platform.machine()}", file=sys.stderr)
@@ -315,7 +316,8 @@ def cmd_distributed(args) -> int:
                         invs = [i for i in distributed.invocations(m, n, mpibench)
                                 if i.group == g]
                         results[str(n)][g] = run_group(g, invs, distributed.srun_args(m, n),
-                                                       out / f"gpus-{n}", deadline=deadline)
+                                                       out / f"gpus-{n}", deadline=deadline,
+                                                       wrapper=d.wrapper)
                     except Exception as e:
                         results[str(n)][g] = {"status": "failed",
                                               "reason": f"{type(e).__name__}: {e}",

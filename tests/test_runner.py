@@ -238,6 +238,32 @@ os.execv(args[i], args[i:])''')
     assert [runner.srun_time_minutes(t) for t in (60, 61, 900, 3600)] == [2, 3, 16, 61]
 
 
+def test_wrapper_runs_the_benchmark_in_each_rank(tmp_path, monkeypatch):
+    # as on Beverin: HIP would also read the rank's CUDA_VISIBLE_DEVICES from Slurm
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    log = tmp_path / "srun.args"
+    fake(bindir, "srun", f'''import os
+args = sys.argv[1:]
+i = 0
+while args[i].startswith("-"):
+    i += 1
+open({str(log)!r}, "w").write(" ".join(args[:i]))
+os.execvp(args[i], args[i:])''')
+    monkeypatch.setenv("PATH", f"{bindir}:{os.environ['PATH']}")
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "1")
+    seen = tmp_path / "seen"
+    ok = fake(tmp_path, "ok", f'''import os
+open({str(seen)!r}, "w").write(repr(os.environ.get("CUDA_VISIBLE_DEVICES")))
+print("[]")''')
+    r = run_group("g", [inv(ok)], ["--ntasks=2"], tmp_path / "out",
+                  wrapper=["env", "-u", "CUDA_VISIBLE_DEVICES"])
+    assert r["status"] == "ok"
+    assert log.read_text() == "--ntasks=2 --time=2"
+    assert seen.read_text() == "None"
+    assert r["invocations"][0]["args"] == ["-a", "1"]
+
+
 def test_not_enough_job_time_skips(tmp_path):
     marker = tmp_path / "started"
     short = fake(tmp_path, "short", 'print("[]")')
