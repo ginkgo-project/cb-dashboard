@@ -1,0 +1,1 @@
+[{"size": 536870912, "stencil": "7pt", "comm_pattern": "stencil", "optimal": {"spmv": "csr-csr"}, "sparse_blas": {"spgemm": {"time": 5.530393891, "repetitions": 5, "repetition_times": [5.630361208, 5.566705318, 5.501935549, 5.467235712, 5.530393891], "nonzeros_out": 13406443983, "completed": true}}, "rows": 537367797, "cols": 537367797, "nonzeros": 3757608765}]
