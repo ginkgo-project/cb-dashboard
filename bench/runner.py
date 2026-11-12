@@ -236,6 +236,24 @@ def parse_time_left(text: str) -> int | None:
     return int(m.group(1) or 0) * 86400 + h * 3600 + mins * 60 + s
 
 
+def job_nodes(env: Mapping[str, str] = os.environ, run: Callable = subprocess.run) -> str | None:
+    """The job's nodes in Slurm's form, e.g. nid[005419,005428-005430]:
+    SLURM_JOB_NODELIST, else squeue (the CI jobs set only SLURM_JOB_ID); None
+    if unknown."""
+    nodes = env.get("SLURM_JOB_NODELIST", "").strip()
+    if nodes:
+        return nodes
+    job = env.get("SLURM_JOB_ID", "").strip()
+    if not job:
+        return None
+    try:
+        out = run(["squeue", "-h", "-j", job, "-o", "%N"], capture_output=True, text=True,
+                  check=True, timeout=60).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.strip().splitlines()[0] if out.strip() else None
+
+
 def job_deadline(env: Mapping[str, str] = os.environ, run: Callable = subprocess.run,
                  now: Callable[[], float] = time.time) -> float | None:
     """The job's end as a Unix time: SLURM_JOB_END_TIME, else squeue; None if unknown."""

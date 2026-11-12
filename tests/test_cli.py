@@ -71,6 +71,7 @@ def patch_common(monkeypatch, m, commit):
     monkeypatch.setattr(cli, "gpu_info", lambda m: {"gpu": "g"})
     monkeypatch.setattr(cli, "toolchain_info", lambda m: {"g++": "x"})
     monkeypatch.setattr(cli, "job_deadline", lambda: None)
+    monkeypatch.setattr(cli, "job_nodes", lambda: None)
     monkeypatch.setattr(cli, "measure_stream", lambda m, out: STREAM)
     monkeypatch.setattr(cli, "pm_counters", lambda: {"energy": "1 J"})
     versions = iter(["v1", "v2"])  # HEAD moves if the repository is synced mid-run
@@ -600,6 +601,13 @@ def test_distributed_full_run(tmp_path, monkeypatch):
         str(n): {g: "ok" for g in D.GROUPS} for n in D.GPU_COUNTS}
     assert dist_last(m).read_text().strip() == COMMIT.sha
     assert os.environ["MPICH_GPU_SUPPORT_ENABLED"] == "1"
+
+
+def test_distributed_records_the_nodes(tmp_path, monkeypatch):
+    m, rc, _ = dist_run(tmp_path, monkeypatch, ["--gpus", "1"],
+                        patches={"job_nodes": lambda: "nid[001-016]"})
+    assert rc == 0
+    assert dist_json(m)["distributed"]["nodes"] == "nid[001-016]"
 
 
 def test_distributed_skips_what_the_commit_lacks(tmp_path, monkeypatch):

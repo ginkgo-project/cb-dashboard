@@ -327,6 +327,29 @@ def test_job_deadline_sources():
     assert runner.job_deadline({"SLURM_JOB_ID": "42"}, run=broken) is None
 
 
+def test_job_nodes_sources():
+    # the CI jobs have SLURM_JOB_ID but not SLURM_JOB_NODELIST
+    def no_run(cmd, **kw):
+        raise AssertionError("ran squeue")
+    assert runner.job_nodes({"SLURM_JOB_NODELIST": "nid[1-2]"}, run=no_run) == "nid[1-2]"
+    assert runner.job_nodes({}, run=no_run) is None
+    calls = []
+
+    def squeue(cmd, **kw):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, "nid[005419,005428-005430]\n", "")
+    assert runner.job_nodes({"SLURM_JOB_ID": "42"}, run=squeue) == "nid[005419,005428-005430]"
+    assert calls == [["squeue", "-h", "-j", "42", "-o", "%N"]]
+
+    def broken(cmd, **kw):
+        raise OSError("no squeue")
+    assert runner.job_nodes({"SLURM_JOB_ID": "42"}, run=broken) is None
+
+    def empty(cmd, **kw):
+        return subprocess.CompletedProcess(cmd, 0, "\n", "")
+    assert runner.job_nodes({"SLURM_JOB_ID": "42"}, run=empty) is None
+
+
 def test_energy_used_by_each_invocation_that_ran(tmp_path):
     readings = iter([{"energy": 100, "accel0_energy": 10}, {"energy": 160, "accel0_energy": 40},
                      {"energy": 200, "accel0_energy": 50}, {"energy": 205, "accel0_energy": 51}])

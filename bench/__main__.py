@@ -25,7 +25,7 @@ from bench.machine import load_machine
 from bench.mpibench import build as build_mpibench
 from bench.record import (REPO, ci_info, gpu_info, results_dir_name, run_record, script_version,
                           toolchain_info)
-from bench.runner import Killed, job_deadline, run_group
+from bench.runner import Killed, job_deadline, job_nodes, run_group
 from bench.stream import measure as measure_stream
 
 GINKGO_URL = "https://github.com/ginkgo-project/ginkgo.git"
@@ -254,6 +254,7 @@ def cmd_distributed(args) -> int:
         Path(args.path_file).write_text(f"{out}\n")
     ref = args.record_ref or args.ref
     ci = ci_info(os.environ)
+    nodes = job_nodes()
 
     results = {str(n): {g: {"status": "pending"} for g in distributed.GROUPS} for n in gpus}
     build_info: dict | None = None
@@ -266,7 +267,7 @@ def cmd_distributed(args) -> int:
                          toolchain=toolchain, script=script)
         rec["kind"] = "distributed"
         rec["distributed"] = {"gpu_counts": gpus, "gpus_per_node": d.gpus_per_node,
-                              "nodes": os.environ.get("SLURM_JOB_NODELIST"),
+                              "nodes": nodes,
                               "rows_per_gpu": distributed.ROWS_PER_GPU}
         rec["gpus"] = results
         rec["build"] = info
