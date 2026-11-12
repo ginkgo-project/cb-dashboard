@@ -524,11 +524,14 @@ def fake_dist_machine(tmp_path):
 
 
 def dist_run(tmp_path, monkeypatch, argv=(), during=None, fail=None, mpibench_fails=False,
-             patches=None, wrapper=None, wrappers_seen=None):
+             patches=None, wrapper=None, wrappers_seen=None, invs_seen=None,
+             missing_targets=frozenset()):
     """Run `bench distributed` with fakes; `during(n, group)` runs inside each
     fake group, and a group raises when `fail(n, group)`. `wrappers_seen` gets
-    the wrapper of every group."""
+    the wrapper of every group, `invs_seen` its invocations. The fake checkout
+    has every target but `missing_targets`."""
     m = fake_dist_machine(tmp_path)
+    monkeypatch.setattr(D, "missing_targets", lambda worktree: set(missing_targets))
     if wrapper is not None:
         m.distributed.wrapper = list(wrapper)
     patch_common(monkeypatch, m, COMMIT)
@@ -550,6 +553,8 @@ def dist_run(tmp_path, monkeypatch, argv=(), during=None, fail=None, mpibench_fa
         n = int(out.name.removeprefix("gpus-"))
         calls.append((n, group, tuple(srun[:3])))
         wrappers.add(tuple(wrapper))
+        if invs_seen is not None:
+            invs_seen.extend(invs)
         assert {i.group for i in invs} == {group}
         out.mkdir(parents=True, exist_ok=True)
         if during:
@@ -595,6 +600,19 @@ def test_distributed_full_run(tmp_path, monkeypatch):
         str(n): {g: "ok" for g in D.GROUPS} for n in D.GPU_COUNTS}
     assert dist_last(m).read_text().strip() == COMMIT.sha
     assert os.environ["MPICH_GPU_SUPPORT_ENABLED"] == "1"
+
+
+def test_distributed_skips_what_the_commit_lacks(tmp_path, monkeypatch):
+    # as on v1.11.0: no distributed SpGEMM benchmark, no PMIS or uniform coarsening
+    asked, invs = [], []
+    _, rc, calls = dist_run(tmp_path, monkeypatch, ["--gpus", "1"], invs_seen=invs,
+                            missing_targets={"sparse_blas_distributed"}, patches={
+        "lacks": lambda clone, sha, added: asked.append(set(added)) or {"mg-uniform", "mg-pmis"}})
+    assert rc == 0
+    assert asked == [{"mg-uniform", "mg-pmis"}]
+    assert calls[0][3] == tuple(t for t in D.TARGETS if t != "sparse_blas_distributed")
+    assert {(i.group, i.label) for i in invs if i.unavailable} == {
+        ("spgemm", "stencil"), ("preconditioner", "mg-uniform"), ("preconditioner", "mg-pmis")}
 
 
 def test_distributed_groups_get_the_wrapper(tmp_path, monkeypatch, capsys):

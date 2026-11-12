@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Collection
 from pathlib import Path
 
-from bench.groups import MIN, TIMEOUTS, Invocation, _base
+from bench.groups import ADDED, MIN, TIMEOUTS, Invocation, _base
 from bench.machine import Machine
 
 GPU_COUNTS = [1, 2, 4, 8, 16, 32, 64]
@@ -16,6 +17,8 @@ TARGETS = ["spmv_distributed", "sparse_blas_distributed", "solver_distributed",
            "preconditioner_distributed"]
 SOLVERS = ["cg", "gmres"]
 PRECONDITIONERS = ["mg-pgm", "mg-uniform", "mg-pmis"]
+# the newer ones, which a Ginkgo commit without their develop merge lacks
+PRECONDITIONERS_ADDED = {p: ADDED[p] for p in PRECONDITIONERS if p in ADDED}
 # the solvers' preconditioner: the solver benchmark names each solver
 # <solver>-<preconditioner> in its output
 SOLVER_PRECONDITIONER = "schwarz-jacobi"
@@ -51,25 +54,45 @@ def exe(m: Machine, target: str) -> Path:
     return _settings(m).build_dir / "benchmark" / name / "distributed" / target
 
 
-def invocations(m: Machine, n: int, mpibench: Path) -> list[Invocation]:
-    """Every invocation at n GPUs, in GROUPS order."""
+def missing_targets(worktree: Path) -> set[str]:
+    """The TARGETS whose benchmark the Ginkgo checkout lacks, e.g. the
+    distributed SpGEMM on v1.11.0."""
+    return {t for t in TARGETS
+            if not (worktree / "benchmark" / t.removesuffix("_distributed")
+                    / "distributed").is_dir()}
+
+
+def invocations(m: Machine, n: int, mpibench: Path,
+                unavailable: Collection[str] = ()) -> list[Invocation]:
+    """Every invocation at n GPUs, in GROUPS order. `unavailable`: the TARGETS
+    and PRECONDITIONERS the Ginkgo commit lacks; their invocations aren't run."""
+    def na(target: str, precond: str | None = None) -> str | None:
+        if target in unavailable:
+            return f"not in this Ginkgo commit (no {target})"
+        if precond in unavailable:
+            return f"not in this Ginkgo commit (added by {ADDED[precond][:10]})"
+        return None
+
     stdin = json.dumps(case(n))
     mpi_args = ["--ranks-per-node", str(_settings(m).gpus_per_node)]
     if n == PINGPONG_GPUS:
         mpi_args.append("--pingpong")
     out = [Invocation("mpi", "mpibench", mpibench, mpi_args, None, TIMEOUT_MPI)]
     out.append(Invocation("spmv", "stencil", exe(m, "spmv_distributed"),
-                          _base(m) + ["-formats", "csr-csr"], stdin, TIMEOUTS["spmv"]))
+                          _base(m) + ["-formats", "csr-csr"], stdin, TIMEOUTS["spmv"],
+                          unavailable=na("spmv_distributed")))
     out.append(Invocation("spgemm", "stencil", exe(m, "sparse_blas_distributed"),
-                          _base(m) + ["-operations", "spgemm"], stdin, TIMEOUTS["spgemm"]))
+                          _base(m) + ["-operations", "spgemm"], stdin, TIMEOUTS["spgemm"],
+                          unavailable=na("sparse_blas_distributed")))
     for s in SOLVERS:
         out.append(Invocation("solver", s, exe(m, "solver_distributed"),
                               _base(m) + ["-detailed=false"] + SOLVER_SETTINGS + ["-solvers", s],
-                              stdin, TIMEOUTS["solver"]))
+                              stdin, TIMEOUTS["solver"], unavailable=na("solver_distributed")))
     for p in PRECONDITIONERS:
         out.append(Invocation("preconditioner", p, exe(m, "preconditioner_distributed"),
                               _base(m) + ["-detailed=false", "-preconditioners", p],
-                              stdin, TIMEOUTS["preconditioner"]))
+                              stdin, TIMEOUTS["preconditioner"],
+                              unavailable=na("preconditioner_distributed", p)))
     return out
 
 

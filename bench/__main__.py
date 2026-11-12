@@ -245,6 +245,10 @@ def cmd_distributed(args) -> int:
     counters = pm_counters()
     script = script_version(subprocess.run, REPO)
     prepare_worktree(clone, worktree, commit.sha)
+    # e.g. on an older release: what it lacks isn't built or run
+    unavailable = (distributed.missing_targets(worktree)
+                   | lacks(clone, commit.sha, distributed.PRECONDITIONERS_ADDED))
+    targets = [t for t in distributed.TARGETS if t not in unavailable]
     out = _make_results_dir(d.results_dir, commit)
     if args.path_file:
         Path(args.path_file).write_text(f"{out}\n")
@@ -285,7 +289,7 @@ def cmd_distributed(args) -> int:
                 # the machine's flags, then the distributed ones (a later -D wins)
                 build_info = build(dataclasses.replace(
                     m, build_dir=d.build_dir, cmake_flags=m.cmake_flags + d.cmake_flags),
-                    worktree, targets=distributed.TARGETS)
+                    worktree, targets=targets)
             except Exception as e:
                 build_info = {"error": f"{type(e).__name__}: {e}"}
                 skip_pending("build failed")
@@ -313,7 +317,7 @@ def cmd_distributed(args) -> int:
                     record()
                     t = time.monotonic()
                     try:
-                        invs = [i for i in distributed.invocations(m, n, mpibench)
+                        invs = [i for i in distributed.invocations(m, n, mpibench, unavailable)
                                 if i.group == g]
                         results[str(n)][g] = run_group(g, invs, distributed.srun_args(m, n),
                                                        out / f"gpus-{n}", deadline=deadline,

@@ -47,6 +47,25 @@ def test_exe(m):
             == b / "benchmark/preconditioner/distributed/preconditioner_distributed")
 
 
+def test_missing_targets(tmp_path):
+    # as the v1.11.0 port: no distributed SpGEMM
+    for name in ("spmv", "solver", "preconditioner"):
+        (tmp_path / "benchmark" / name / "distributed").mkdir(parents=True)
+    assert distributed.missing_targets(tmp_path) == {"sparse_blas_distributed"}
+    assert distributed.missing_targets(tmp_path / "none") == set(distributed.TARGETS)
+
+
+def test_unavailable_invocations(m):
+    invs = distributed.invocations(m, 2, Path("/mb/mpibench"),
+                                   unavailable={"sparse_blas_distributed", "mg-pmis"})
+    na = {(i.group, i.label): i.unavailable for i in invs if i.unavailable}
+    assert set(na) == {("spgemm", "stencil"), ("preconditioner", "mg-pmis")}
+    assert na[("spgemm", "stencil")] == "not in this Ginkgo commit (no sparse_blas_distributed)"
+    assert na[("preconditioner", "mg-pmis")].startswith(
+        "not in this Ginkgo commit (added by 0cd07f4eaf")
+    assert distributed.PRECONDITIONERS_ADDED.keys() == {"mg-uniform", "mg-pmis"}
+
+
 @pytest.mark.parametrize("n", [1, 8, 64])
 def test_invocations_per_gpu_count(m, n):
     mpibench = Path("/mb/mpibench")
