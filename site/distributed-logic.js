@@ -160,6 +160,49 @@ export function defaultPair(runs) {
   return [runs.length - 2, runs.length - 1];
 }
 
+// The most face neighbours a rank has on the non-periodic 3D grid of n ranks
+// that mpibench's neighbor alltoallv uses: MPI_Dims_create's balanced dims,
+// which for the powers of two of GPU_COUNTS grow the smallest dim each time.
+export function maxNeighbors(n) {
+  const factors = [];
+  for (let rest = n, p = 2; rest > 1;) {
+    if (rest % p === 0) {
+      factors.push(p);
+      rest /= p;
+    } else {
+      p += 1;
+    }
+  }
+  const dims = [1, 1, 1];
+  for (const f of factors.reverse()) {
+    dims.sort((x, y) => x - y);
+    dims[0] *= f;
+  }
+  return dims.reduce((sum, d) => sum + (d > 2 ? 2 : d === 2 ? 1 : 0), 0);
+}
+
+// the blocks of the message size each rank sends, by operation
+const SENT = {
+  allreduce: () => 1,
+  alltoallv: (n) => n - 1,
+  neighbor_alltoallv: maxNeighbors,
+};
+
+// the GPU count the ideal starts from: the first across nodes (2 nodes). Within
+// a node the GPUs talk over their own links (NVLink, Infinity Fabric), which says
+// little about the network.
+export const MPI_IDEAL_BASE = 8;
+
+// The ideal time of an MPI operation at each GPU count, for one message size:
+// the time at MPI_IDEAL_BASE GPUs scaled by the data each rank sends. Null
+// where there's none (fewer GPUs, ping-pong, no time at the base).
+export function mpiIdeal(op, times) {
+  const sent = SENT[op];
+  const base = times[GPU_COUNTS.indexOf(MPI_IDEAL_BASE)];
+  return GPU_COUNTS.map((n) => (sent && base && n >= MPI_IDEAL_BASE
+    ? (base * sent(n)) / sent(MPI_IDEAL_BASE) : null));
+}
+
 // one line per compared run (a is null without an earlier run): the nodes of
 // its job, to tell a change of the network apart from a change of placement
 export function nodeLines(runs, a, b) {

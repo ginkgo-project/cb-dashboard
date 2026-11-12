@@ -108,6 +108,23 @@ test("defaultPair", () => {
   assert.deepEqual(D.defaultPair([{}, {}, {}]), [1, 2]);
 });
 
+test("maxNeighbors: the busiest rank of mpibench's non-periodic 3D grid", () => {
+  // the grids are 2x1x1, 2x2x1, 2x2x2, 4x2x2, 4x4x2 and 4x4x4
+  assert.deepEqual(D.GPU_COUNTS.map(D.maxNeighbors), [0, 1, 2, 3, 4, 5, 6]);
+});
+
+test("mpiIdeal: the 8-GPU time scaled by the data each rank sends", () => {
+  const none = [null, null, null];
+  assert.deepEqual(D.mpiIdeal("allreduce", [1, 2, 3, 4, 5, 6, 7]), [...none, 4, 4, 4, 4]);
+  // one block to each other rank: 7 at 8 GPUs
+  assert.deepEqual(D.mpiIdeal("alltoallv", [1, 2, 3, 7, 5, 6, 7]), [...none, 7, 15, 31, 63]);
+  // one block to each neighbour: 3 at 8 GPUs
+  assert.deepEqual(D.mpiIdeal("neighbor_alltoallv", [1, 2, 3, 3, 5, 6, 7]), [...none, 3, 4, 5, 6]);
+  // ping-pong runs at one GPU count only; without an 8-GPU time there's no base
+  assert.deepEqual(D.mpiIdeal("pingpong_inter", [1, 2, 3, 4, 5, 6, 7]), Array(7).fill(null));
+  assert.deepEqual(D.mpiIdeal("alltoallv", [1, 2, 3, null, 5, 6, 7]), Array(7).fill(null));
+});
+
 test("nodeLines: the nodes of the compared runs, the earlier one first", () => {
   const runs = [
     { date: "2025-12-15", commit: "9a87bb8e01f2", nodes: "nid[002346,002348]" },

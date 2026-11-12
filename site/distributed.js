@@ -4,7 +4,7 @@
 // row opens). The DOM helpers come from app.js, so all text goes through text
 // nodes there too.
 import { GPU_COUNTS, GPUS_PER_NODE, changeTable, defaultPair, efficiency, efficiencyAxis, formatBytes, formatRate,
-  logPlot, mpiMap, mpiParts, nodeLines, pickRun, rowLabel } from "./distributed-logic.js";
+  logPlot, MPI_IDEAL_BASE, mpiIdeal, mpiMap, mpiParts, nodeLines, pickRun, rowLabel } from "./distributed-logic.js";
 import { formatValue } from "./logic.js";
 
 const cache = { data: null, runs: new Map() };
@@ -14,6 +14,8 @@ const fmtNum = (v, digits = 0) => (v === null || v === undefined ? "–"
   : Number(v).toLocaleString("en", { maximumFractionDigits: digits, minimumFractionDigits: digits }));
 const fmtEff = (v) => (v === null || v === undefined ? "–" : `${Math.round(v * 100)}%`);
 const shortSha = (sha) => (sha || "").slice(0, 7);
+// the index in GPU_COUNTS of the first count across nodes
+const ACROSS = GPU_COUNTS.indexOf(2 * GPUS_PER_NODE);
 
 async function runDetail(ui, machine, dir) {
   const key = `${machine}/${dir}`;
@@ -96,19 +98,22 @@ function runLine(ui, m, ia, ib) {
   return el("p", { class: "dist-runs" }, one(ib), ia === null ? " · no earlier run" : [" against ", one(ia)]);
 }
 
-function legendLine(ui, m, ia, ib) {
+function legendLine(ui, m, ia, ib, ideal = null) {
   const { el, svg } = ui;
   const sw = (cls) => svg("svg", { class: "dist-swatch", width: 22, height: 8, "aria-hidden": "true" },
     svg("line", { class: `line ${cls}`, x1: 0, x2: 22, y1: 4, y2: 4 }));
   return el("p", { class: "legend" }, sw("r1"), ` ${m.runs[ib].date}`,
-    ia === null ? null : ["  ", sw("r0"), ` ${m.runs[ia].date}`]);
+    ia === null ? null : ["  ", sw("r0"), ` ${m.runs[ia].date}`],
+    ideal === null ? null : ["  ", sw("ideal"), ` ${ideal}`]);
 }
 
-// one plot: `model` from logPlot; the series are [earlier run, later run]
-function plot(ui, model, title, yLabel, xLabel, pointLabel, nodeLine) {
+// one plot: `model` from logPlot; the series are [earlier run, later run] and
+// optionally an ideal line, drawn without points
+function plot(ui, model, title, yLabel, xLabel, pointLabel, nodesAt = null) {
   const { svg } = ui;
   const { plot: p, size } = model;
-  const nodes = nodeLine ? (model.x(2) + model.x(3)) / 2 : null;
+  // nodesAt: the x index of the first GPU count across nodes, or null
+  const nodes = nodesAt === null ? null : (model.x(nodesAt - 1) + model.x(nodesAt)) / 2;
   return svg("svg", { class: "chart dist-chart", viewBox: `0 0 ${size.width} ${size.height}`, role: "img", "aria-label": title },
     svg("title", {}, title),
     model.yTicks.map((t) => [
@@ -121,10 +126,10 @@ function plot(ui, model, title, yLabel, xLabel, pointLabel, nodeLine) {
       svg("line", { class: "nodes", x1: nodes, x2: nodes, y1: p.y1, y2: p.y0 }),
       svg("text", { class: "tick", x: nodes + 4, y: p.y1 + 10 }, "2+ nodes")],
     model.paths.map((path) => {
-      const cls = path.index === 1 ? "r1" : "r0";
+      const cls = ["r0", "r1", "ideal"][path.index];
       return [
         svg("polyline", { class: `line ${cls}`, points: path.points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ") }),
-        path.points.map(([x, y, v, i]) => svg("circle", { class: `pt ${cls}`, cx: x.toFixed(1), cy: y.toFixed(1), r: 4 },
+        cls === "ideal" ? null : path.points.map(([x, y, v, i]) => svg("circle", { class: `pt ${cls}`, cx: x.toFixed(1), cy: y.toFixed(1), r: 4 },
           svg("title", {}, pointLabel(v, i, path.index))))];
     }));
 }
@@ -152,10 +157,10 @@ async function openBenchmark(box, ui, { m, machine, ia, ib, row, rows }) {
       + `${fmtNum(g1.rows)} rows and ${fmtNum(g1.nonzeros)} nonzeros per GPU · ${GPUS_PER_NODE} GPUs per node`),
     runLine(ui, m, ia, ib), legendLine(ui, m, ia, ib),
     el("div", { class: "dist-plots" },
-      el("div", {}, plot(ui, timeModel, `${row.label}: time`, "time, log", "GPUs", label, true),
+      el("div", {}, plot(ui, timeModel, `${row.label}: time`, "time, log", "GPUs", label, ACROSS),
         el("table", { class: "heatmap dist-strip" }, el("tbody", {}, el("tr", {}, el("th", { scope: "row" }, "change"),
           row.cells.map((c) => el("td", { class: c.cls, title: c.title }, c.text)))))),
-      el("div", {}, plot(ui, effModel, `${row.label}: weak-scaling efficiency`, "efficiency, per row", "GPUs", effLabel, true))),
+      el("div", {}, plot(ui, effModel, `${row.label}: weak-scaling efficiency`, "efficiency, per row", "GPUs", effLabel, ACROSS))),
     el("div", { class: "dist-blocks" },
       block(ui, "The numbers", numbersTable(ui, m, ia, ib, tA, tB, eA, eB), "wide"),
       block(ui, "MPI at the same GPU counts", mpiTable(ui, rows), "wide"),
@@ -231,24 +236,39 @@ function openMpi(box, ui, { m, ia, ib, row, link }) {
   const size = { width: 440, height: 250 };
   const date = (s) => m.runs[s === 1 ? ib : ia].date;
   const opName = rowLabel(row.key).split(",")[0];
+  // this message size against the GPU count, with the ideal of the later run;
+  // from 2 GPUs, since 1 GPU doesn't communicate
+  const { bytes } = mpiParts(row.key);
+  const gA = series(m.rows[row.key], ia).slice(1);
+  const gB = series(m.rows[row.key], ib);
+  const ideal = mpiIdeal(op, gB).slice(1);
+  gB.shift();
+  const scaled = { allreduce: "the same data", alltoallv: "× (GPUs − 1)", neighbor_alltoallv: "× neighbours (3 to 6)" };
+  const across = ideal.some((v) => v !== null) ? [
+    legendLine(ui, m, ia, ib, `ideal: ${MPI_IDEAL_BASE} GPUs, ${scaled[op]}`),
+    plot(ui, logPlot([gA, gB, ideal], { ...size, xLabels: N.slice(1) }), `${opName}, ${formatBytes(bytes)}: time against GPUs`,
+      "time, log", "GPUs", (v, i, s) => `${GPU_COUNTS[i + 1]} GPUs, ${date(s)}: ${fmtTime(v)}`, ACROSS - 1),
+    el("p", { class: "legend" }, `${formatBytes(bytes)} per rank. The ideal is the time at ${MPI_IDEAL_BASE} GPUs, `
+      + "the first across nodes, scaled by the data each rank sends. Above it, the network doesn't keep up; "
+      + "small messages can stay below it, since their latency overlaps.")] : null;
   put(box,
     el("p", {}, el("strong", {}, opName), `, on GPU buffers: the change of each message size (per rank) at each GPU count.`),
     runLine(ui, m, ia, ib),
     el("div", { class: "dist-plots" },
-      el("div", { class: "scroll" }, el("table", { class: "heatmap dist-small" },
+      el("div", {}, el("div", { class: "scroll" }, el("table", { class: "heatmap dist-small" },
         el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "size \\ GPUs"), N.map((g) => el("th", { scope: "col" }, g)))),
         el("tbody", {}, map.rows.map((r) => el("tr", {}, el("th", { scope: "row" }, formatBytes(r.bytes)),
           r.cells.map((c, i) => el("td", {
             class: `${c.cls}${i === at ? " selected" : ""}`, title: c.title,
             onclick: () => { location.hash = link({ n: String(GPU_COUNTS[i]) }); },
-          }, c.text))))))),
+          }, c.text))))))), across),
       el("div", {},
         el("p", { class: "dist-chips" }, "GPUs: ", withData.map((g) => el("a", {
           href: link({ n: String(g) }), "aria-current": g === n ? "true" : undefined }, String(g)))),
         legendLine(ui, m, ia, ib),
         plot(ui, logPlot([tA, tB], { ...size, xLabels, labelEvery: 3 }), `${opName} at ${n} GPUs: time`, "time, log",
-          "message size", (v, i, s) => `${xLabels[i]}, ${date(s)}: ${fmtTime(v)}`, false),
+          "message size", (v, i, s) => `${xLabels[i]}, ${date(s)}: ${fmtTime(v)}`),
         plot(ui, logPlot([bw(tA), bw(tB)], { ...size, xLabels, labelEvery: 3, format: formatRate }),
           `${opName} at ${n} GPUs: bandwidth`, "size / time, log", "message size",
-          (v, i, s) => `${xLabels[i]}, ${date(s)}: ${formatRate(v)}`, false))));
+          (v, i, s) => `${xLabels[i]}, ${date(s)}: ${formatRate(v)}`))));
 }

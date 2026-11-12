@@ -195,6 +195,7 @@ td.number { text-align: right; white-space: nowrap; }
 .dist-chart .line.r1, .dist-swatch .line.r1 { stroke: var(--run); }
 .dist-chart .line.r0, .dist-swatch .line.r0 { stroke: var(--none); stroke-dasharray: 5 4; }
 .dist-swatch .line { stroke-width: 2; }
+.dist-chart .line.ideal, .dist-swatch .line.ideal { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 1 4; stroke-linecap: round; }
 .dist-chart .pt { stroke: var(--bg); stroke-width: 1.5; }
 .dist-chart .pt.r1 { fill: var(--run); }
 .dist-chart .pt.r0 { fill: var(--none); }
