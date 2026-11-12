@@ -19,8 +19,10 @@ def build(m: Machine, jobs: int = 16) -> Path:
     gcc_root = detect_gcc_root() if m.needs_gcc_root else None
     flags = [f.replace("{gcc_root}", str(gcc_root)) if gcc_root else f
              for f in d.mpibench_cmake_flags]
-    subprocess.run(["cmake", "-S", str(SOURCE), "-B", str(d.mpibench_build_dir), *flags],
-                   check=True, env=_cmake_env())
+    # --fresh: each CI job may clone this repository into another runner
+    # directory, and CMake refuses a cache made from another source path
+    subprocess.run(["cmake", "--fresh", "-S", str(SOURCE), "-B", str(d.mpibench_build_dir),
+                    *flags], check=True, env=_cmake_env())
     subprocess.run(["cmake", "--build", str(d.mpibench_build_dir), "--parallel", str(jobs)],
                    check=True, env=_cmake_env())
     return d.mpibench_build_dir / "mpibench"

@@ -21,6 +21,20 @@ def test_build_with_host_buffers(tmp_path):
                           capture_output=True).returncode == 0
 
 
+@pytest.mark.skipif(not all(shutil.which(t) for t in ("mpicxx", "cmake")),
+                    reason="needs MPI and CMake")
+def test_build_dir_survives_a_moved_source(tmp_path, monkeypatch):
+    # each CI job may clone cb-dashboard into another runner directory
+    m = load_machine("daint-gh200", env={"SCRATCH": str(tmp_path)})
+    m = dataclasses.replace(m, distributed=dataclasses.replace(
+        m.distributed, mpibench_cmake_flags=["-DMPIBENCH_GPU=none"]))
+    for clone in ("a", "b"):
+        src = tmp_path / clone / "mpibench"
+        shutil.copytree(mpibench.SOURCE, src)
+        monkeypatch.setattr(mpibench, "SOURCE", src)
+        assert mpibench.build(m).exists()
+
+
 def test_gcc_root_is_filled_in(tmp_path, monkeypatch):
     m = load_machine("beverin-mi300a", env={"SCRATCH": str(tmp_path)})
     calls = []
