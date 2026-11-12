@@ -160,6 +160,15 @@ export function defaultPair(runs) {
   return [runs.length - 2, runs.length - 1];
 }
 
+// one line per compared run (a is null without an earlier run): the nodes of
+// its job, to tell a change of the network apart from a change of placement
+export function nodeLines(runs, a, b) {
+  return [a, b].filter((i) => i !== null && i !== undefined).map((i) => {
+    const r = runs[i];
+    return `Nodes of ${r.date} ${(r.commit || "").slice(0, 7)}: ${r.nodes || "not recorded"}`;
+  });
+}
+
 // the index of the run named in the hash, else `fallback`
 export function pickRun(runs, dir, fallback) {
   const i = runs.findIndex((r) => r.dir === dir);

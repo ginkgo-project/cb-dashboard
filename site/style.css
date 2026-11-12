@@ -180,6 +180,8 @@ td.number { text-align: right; white-space: nowrap; }
 
 /* the Distributed tab */
 .dist-controls select { margin: 0 4px; }
+/* a node list has no spaces: let it break on narrow screens */
+.dist-nodes { overflow-wrap: anywhere; }
 .heatmap.dist td { font-size: 0.8rem; min-width: 3.4rem; }
 .heatmap.dist tbody th a { color: var(--fg); text-decoration: none; }
 .heatmap.dist tr.opened th a { font-weight: 600; }

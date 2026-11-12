@@ -4,7 +4,7 @@
 // row opens). The DOM helpers come from app.js, so all text goes through text
 // nodes there too.
 import { GPU_COUNTS, GPUS_PER_NODE, changeTable, defaultPair, efficiency, efficiencyAxis, formatBytes, formatRate,
-  logPlot, mpiMap, mpiParts, pickRun, rowLabel } from "./distributed-logic.js";
+  logPlot, mpiMap, mpiParts, nodeLines, pickRun, rowLabel } from "./distributed-logic.js";
 import { formatValue } from "./logic.js";
 
 const cache = { data: null, runs: new Map() };
@@ -54,6 +54,8 @@ export async function renderDistributed(root, ui) {
   }, allowNone && current === null ? el("option", { value: "", selected: true }, "no earlier run") : null,
   m.runs.map((r, i) => el("option", { value: r.dir, selected: i === current }, runText(r))));
   put(root, el("p", { class: "dist-controls" }, "Compare ", runSelect("a", ia, true), " with ", runSelect("b", ib, false)));
+  put(root, el("p", { class: "legend dist-nodes" },
+    nodeLines(m.runs, ia, ib).flatMap((line, i) => (i ? [el("br"), line] : [line]))));
   put(root, el("p", { class: "legend" },
     "Each cell: the change in time at that GPU count, from the first run to the second; + is slower. "
     + "Red: slower, green: faster, beyond the noise band of the earlier weekly runs (at least ±3%); grey: within it. "

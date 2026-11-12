@@ -108,6 +108,19 @@ test("defaultPair", () => {
   assert.deepEqual(D.defaultPair([{}, {}, {}]), [1, 2]);
 });
 
+test("nodeLines: the nodes of the compared runs, the earlier one first", () => {
+  const runs = [
+    { date: "2025-12-15", commit: "9a87bb8e01f2", nodes: "nid[002346,002348]" },
+    { date: "2026-11-11", commit: "e927afca14bb", nodes: null },
+  ];
+  assert.deepEqual(D.nodeLines(runs, 0, 1), [
+    "Nodes of 2025-12-15 9a87bb8: nid[002346,002348]",
+    "Nodes of 2026-11-11 e927afc: not recorded",
+  ]);
+  // no earlier run
+  assert.deepEqual(D.nodeLines(runs, null, 0), ["Nodes of 2025-12-15 9a87bb8: nid[002346,002348]"]);
+});
+
 test("pickRun: a dir in the hash, else the default", () => {
   const runs = [{ dir: "x" }, { dir: "y" }, { dir: "z" }];
   assert.equal(D.pickRun(runs, "x", 2), 0);
