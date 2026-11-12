@@ -13,7 +13,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from bench.distributed import GPU_COUNTS, PRECONDITIONERS, SOLVERS
+from bench.distributed import GPU_COUNTS, PRECONDITIONERS, SOLVER_PRECONDITIONER, SOLVERS
 
 from .changes import BAND_FLOOR, BASELINE_WINDOW, noise_band
 from .load import _read_json, _tracked
@@ -63,6 +63,11 @@ def _completed(result) -> bool:
     return isinstance(result, dict) and result.get("completed") is True
 
 
+def _solver(name: str) -> str:
+    """The row name of a solver: cg for the output's cg-schwarz-jacobi."""
+    return name.removesuffix(f"-{SOLVER_PRECONDITIONER}")
+
+
 def _time(value) -> float | None:
     return value if isinstance(value, (int, float)) and value > 0 else None
 
@@ -85,8 +90,9 @@ def _measurements(run: DistRun, n: str) -> dict[str, float | None]:
             apply = r.get("apply") or {} if ok else {}
             its = apply.get("iterations")
             t = _time(apply.get("time"))
-            out[f"{name}/generate"] = gen
-            out[f"{name}/apply"] = t / its if t and isinstance(its, int) and its > 0 else None
+            out[f"{_solver(name)}/generate"] = gen
+            out[f"{_solver(name)}/apply"] = (t / its if t and isinstance(its, int) and its > 0
+                                             else None)
     for case in data.get("preconditioner") or []:
         for name, r in (case.get("preconditioner") or {}).items():
             ok = _completed(r)
@@ -161,8 +167,8 @@ def _details(run: DistRun) -> dict:
         for case in data.get("solver") or []:
             for name, r in (case.get("solver") or {}).items():
                 apply = (r.get("apply") or {}) if _completed(r) else {}
-                entry["iterations"][name] = apply.get("iterations")
-                entry["solver_time"][name] = _time(apply.get("time"))
+                entry["iterations"][_solver(name)] = apply.get("iterations")
+                entry["solver_time"][_solver(name)] = _time(apply.get("time"))
         for case in data.get("preconditioner") or []:
             fine = case.get("nonzeros")
             for name, r in (case.get("preconditioner") or {}).items():

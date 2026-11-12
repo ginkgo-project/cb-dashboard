@@ -37,9 +37,10 @@ def ginkgo_cases(n, t):
         "spmv": [{**case, "spmv": {"csr-csr": {"completed": True, "time": t}}}],
         "spgemm": [{**case, "sparse_blas": {"spgemm": {"completed": True, "time": 10 * t,
                                                        "nonzeros_out": 3 * nnz}}}],
-        "solver": [{**case, "solver": {s: {"completed": True, "generate": {"time": 2 * t},
-                                           "apply": {"time": 100 * t, "iterations": 50 + n}}}}
-                   for s in ("cg", "gmres")],
+        # the solver benchmark names a solver after it and its preconditioner
+        "solver": [{**case, "solver": {f"{s}-schwarz-jacobi": {
+            "completed": True, "generate": {"time": 2 * t},
+            "apply": {"time": 100 * t, "iterations": 50 + n}}}} for s in ("cg", "gmres")],
         "preconditioner": [{**case, "preconditioner": {p: {
             "completed": True, "generate": {"time": 5 * t}, "apply": {"time": t},
             "levels": levels}}} for p in ("mg-pgm", "mg-uniform", "mg-pmis")],

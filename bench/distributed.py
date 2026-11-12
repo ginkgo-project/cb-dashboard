@@ -16,9 +16,12 @@ TARGETS = ["spmv_distributed", "sparse_blas_distributed", "solver_distributed",
            "preconditioner_distributed"]
 SOLVERS = ["cg", "gmres"]
 PRECONDITIONERS = ["mg-pgm", "mg-uniform", "mg-pmis"]
-# the single-node solver group's settings, with a Schwarz-Jacobi preconditioner
+# the solvers' preconditioner: the solver benchmark names each solver
+# <solver>-<preconditioner> in its output
+SOLVER_PRECONDITIONER = "schwarz-jacobi"
+# the single-node solver group's settings, with that preconditioner
 SOLVER_SETTINGS = [
-    "-preconditioners", "schwarz-jacobi",
+    "-preconditioners", SOLVER_PRECONDITIONER,
     "-rel_res_goal", "1e-10", "-max_iters", "1000",
     "-rhs_generation", "sinus", "-initial_guess_generation", "0",
 ]
