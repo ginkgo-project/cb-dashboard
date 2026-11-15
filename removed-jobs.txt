@@ -1,3 +1,4 @@
 # Runs taken out on purpose, by CI job id: the import skips them (see the README of main).
 17951331418  # distributed beverin-mi300a e927afca14, 2026-11-12: every rank but the first on a node had no GPU
 17962454572  # distributed beverin-mi300a e927afca14, 2026-11-12: no MPI results (mpibench build failed), and a duplicate of _3
+18038798725  # distributed daint-gh200 796a388db0, 2026-11-15: node nid005939 had no usable GPU, every step on it failed
