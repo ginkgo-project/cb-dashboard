@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Collection
+import re
+import subprocess
+from collections.abc import Collection, Mapping
 from pathlib import Path
 
 from bench.groups import ADDED, MIN, TIMEOUTS, Invocation, _base
 from bench.machine import Machine
+from bench.runner import srun_time_minutes
 
 GPU_COUNTS = [1, 2, 4, 8, 16, 32, 64]
 ROWS_PER_GPU = 256 ** 3
@@ -31,6 +34,10 @@ SOLVER_SETTINGS = [
 # the ping-pong runs at one GPU count only: 8 has a pair in a node and one across
 PINGPONG_GPUS = 8
 TIMEOUT_MPI = 20 * MIN
+TIMEOUT_GPU_CHECK = 5 * MIN
+# srun's line for ranks that died, e.g.
+# "srun: error: nid005939: task 4: Segmentation fault (core dumped)"
+SRUN_FAILURE = re.compile(r"^srun: error: (\S+): (tasks? [\d,-]+): (.+)$", re.M)
 
 
 def case(n: int) -> list[dict]:
@@ -46,6 +53,51 @@ def srun_args(m: Machine, n: int) -> list[str]:
     nodes = math.ceil(n / d.gpus_per_node)
     return [f"--nodes={nodes}", f"--ntasks={n}",
             f"--ntasks-per-node={min(n, d.gpus_per_node)}", *d.srun]
+
+
+def gpu_check_command(m: Machine, n: int, mpibench: Path) -> list[str]:
+    """`mpibench --check-gpus` on the ranks of n GPUs, launched as the benchmarks are."""
+    return ["srun", *srun_args(m, n), f"--time={srun_time_minutes(TIMEOUT_GPU_CHECK)}",
+            *_settings(m).wrapper, str(mpibench), "--check-gpus"]
+
+
+def gpu_check(m: Machine, n: int, mpibench: Path, env: Mapping[str, str] | None = None,
+              run=subprocess.run) -> list[str]:
+    """Check that every rank of n GPUs has a working GPU. Returns the problems,
+    one per failed rank or node, or [] if every GPU works. A rank that dies
+    before mpibench's report (e.g. in MPI_Init) is named by srun's error line."""
+    limit = (srun_time_minutes(TIMEOUT_GPU_CHECK) + 1) * MIN  # srun's own limit ends it first
+    try:
+        p = run(gpu_check_command(m, n, mpibench), capture_output=True, text=True,
+                timeout=limit, env=env)
+    except subprocess.TimeoutExpired:
+        return [f"no answer within {limit // MIN} min"]
+    except OSError as e:
+        return [f"cannot start: {e}"]
+    report = _gpu_report(p.stdout)
+    if report is not None and report["failed"]:
+        return [f"{f['node']} (rank {f['rank']}): {f['error']}" for f in report["failed"]]
+    if report is not None and p.returncode == 0:
+        return []
+    died = [f"{node} ({tasks}): {reason}" for node, tasks, reason in SRUN_FAILURE.findall(p.stderr)
+            if reason != "Terminated"]  # the ranks srun stopped because another died
+    if died:
+        return list(dict.fromkeys(died))
+    last = next((ln.strip() for ln in reversed(p.stderr.splitlines()) if ln.strip()), "no output")
+    return [f"exit code {p.returncode}: {last}"]
+
+
+def _gpu_report(stdout: str) -> dict | None:
+    """mpibench --check-gpus's report: its last line starting with "{"."""
+    for line in reversed(stdout.splitlines()):
+        if line.startswith("{"):
+            try:
+                report = json.loads(line)
+            except ValueError:
+                return None
+            return report if isinstance(report, dict) and isinstance(report.get("failed"), list) \
+                else None
+    return None
 
 
 def exe(m: Machine, target: str) -> Path:

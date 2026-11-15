@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -95,3 +96,67 @@ def test_machine_without_distributed_settings(tmp_path):
     m = load_machine("m", machines_dir=tmp_path, env={"SCRATCH": "/s"})
     with pytest.raises(ValueError, match="no \\[distributed\\] settings"):
         distributed.srun_args(m, 1)
+
+
+MPIBENCH = Path("/b/mpibench")
+
+
+def fake_run(returncode=0, stdout="", stderr="", seen=None):
+    def run(cmd, **kw):
+        if seen is not None:
+            seen.append((cmd, kw))
+        return subprocess.CompletedProcess(cmd, returncode, stdout, stderr)
+    return run
+
+
+def test_gpu_check_command(m):
+    # the ranks of n GPUs, run as the benchmarks are, with srun's time limit
+    assert distributed.gpu_check_command(m, 64, MPIBENCH) == [
+        "srun", *distributed.srun_args(m, 64), "--time=6", *m.distributed.wrapper,
+        "/b/mpibench", "--check-gpus"]
+
+
+def test_gpu_check_passes(m):
+    seen = []
+    run = fake_run(stdout='{"ranks": 64, "failed": []}\n', seen=seen)
+    assert distributed.gpu_check(m, 64, MPIBENCH, env={"A": "1"}, run=run) == []
+    cmd, kw = seen[0]
+    assert cmd == distributed.gpu_check_command(m, 64, MPIBENCH)
+    assert kw["env"] == {"A": "1"} and kw["timeout"] > 6 * 60
+
+
+def test_gpu_check_names_the_failed_ranks(m):
+    report = {"ranks": 8, "failed": [{"rank": 4, "node": "nid005939",
+                                      "error": "no CUDA-capable device is detected"}]}
+    run = fake_run(1, json.dumps(report) + "\n", "GTL_DEBUG: [4] cudaGetDevice\n")
+    assert distributed.gpu_check(m, 8, MPIBENCH, run=run) == [
+        "nid005939 (rank 4): no CUDA-capable device is detected"]
+
+
+def test_gpu_check_names_the_node_of_a_crash(m):
+    # a rank that dies before the report: srun names its node, and the ranks
+    # it took down as "Terminated"
+    err = ("srun: error: nid005939: task 4: Segmentation fault (core dumped)\n"
+           "srun: Terminating StepId=5354542.37\n"
+           "srun: error: nid005343: tasks 0-3: Terminated\n")
+    assert distributed.gpu_check(m, 16, MPIBENCH, run=fake_run(139, "", err)) == [
+        "nid005939 (task 4): Segmentation fault (core dumped)"]
+
+
+def test_gpu_check_without_a_report_or_a_node(m):
+    run = fake_run(2, "", "mpibench: unknown argument --check-gpus\n")
+    assert distributed.gpu_check(m, 1, MPIBENCH, run=run) == [
+        "exit code 2: mpibench: unknown argument --check-gpus"]
+    assert distributed.gpu_check(m, 1, MPIBENCH, run=fake_run(0, "", "")) == [
+        "exit code 0: no output"]
+
+
+def test_gpu_check_that_hangs_or_cannot_start(m):
+    def hangs(cmd, **kw):
+        raise subprocess.TimeoutExpired(cmd, kw["timeout"])
+
+    def missing(cmd, **kw):
+        raise FileNotFoundError(2, "No such file or directory", "srun")
+    assert distributed.gpu_check(m, 1, MPIBENCH, run=hangs) == ["no answer within 7 min"]
+    assert distributed.gpu_check(m, 1, MPIBENCH, run=missing) == [
+        "cannot start: [Errno 2] No such file or directory: 'srun'"]

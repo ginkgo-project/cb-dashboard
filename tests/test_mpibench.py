@@ -80,3 +80,11 @@ def test_single_rank(exe):
 
 def test_output_passes_find_failures(four):
     assert find_failures(four) == (len(four), [])
+
+
+def test_check_gpus_with_host_buffers(exe):
+    # host buffers: no GPU to check, so every rank passes, and nothing is measured
+    r = subprocess.run(["mpirun", "--oversubscribe", "-n", "3", str(exe), "--check-gpus"],
+                       capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stderr
+    assert json.loads(r.stdout) == {"ranks": 3, "failed": []}

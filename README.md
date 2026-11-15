@@ -270,9 +270,9 @@ MPI operation it depends on, the cause is MPI or the network.
 
     python -m bench distributed <machine> [--gpus 1,8] [--dry-run]
 
-Inside an allocation of the machine's nodes, this builds Ginkgo with MPI and
-builds `mpibench`. Then it runs every GPU count in turn, each as `srun` steps
-on the nodes it needs. The settings are in the `[distributed]` table of
+Inside an allocation of the machine's nodes, this builds `mpibench`, checks
+the GPUs with it, and builds Ginkgo with MPI. Then it runs every GPU count in
+turn, each as `srun` steps on the nodes it needs. The settings are in the `[distributed]` table of
 `bench/machines/<machine>.toml`:
 
 - nodes and GPUs per node;
@@ -288,6 +288,12 @@ worktree (`$CB_ROOT/worktrees/<user>/<machine>-distributed`) and state
 **Results:** the runs go to `$SCRATCH/cb/results/distributed/<machine>/<dir>/`,
 with `run.json` and `gpus-<n>/<group>.json`. The groups are `mpi`, `spmv`,
 `spgemm`, `solver` and `preconditioner`.
+
+**GPU check:** before anything else, `mpibench --check-gpus` runs on the
+ranks of the largest GPU count, launched as the benchmarks are. Each rank
+writes a value to its GPU and reads it back. If a rank fails, the job stops
+within minutes with the node and the error of each failed rank, and writes no
+run, so the import takes nothing and a rerun starts afresh.
 
 **Failures:** a failed GPU count or benchmark doesn't stop the run. It is
 recorded as failed.

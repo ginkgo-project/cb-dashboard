@@ -526,18 +526,24 @@ def fake_dist_machine(tmp_path):
 
 def dist_run(tmp_path, monkeypatch, argv=(), during=None, fail=None, mpibench_fails=False,
              patches=None, wrapper=None, wrappers_seen=None, invs_seen=None,
-             missing_targets=frozenset()):
+             missing_targets=frozenset(), bad_gpus=()):
     """Run `bench distributed` with fakes; `during(n, group)` runs inside each
     fake group, and a group raises when `fail(n, group)`. `wrappers_seen` gets
     the wrapper of every group, `invs_seen` its invocations. The fake checkout
-    has every target but `missing_targets`."""
+    has every target but `missing_targets`, and the GPU check finds `bad_gpus`."""
     m = fake_dist_machine(tmp_path)
     monkeypatch.setattr(D, "missing_targets", lambda worktree: set(missing_targets))
+    calls = []
+
+    def gpu_check(cm, n, mpibench, env=None):
+        calls.append(("gpu-check", n, env.get("MPICH_GPU_SUPPORT_ENABLED")))
+        assert mpibench == tmp_path / "mbuild" / "mpibench"
+        return list(bad_gpus)
+    monkeypatch.setattr(D, "gpu_check", gpu_check)
     if wrapper is not None:
         m.distributed.wrapper = list(wrapper)
     patch_common(monkeypatch, m, COMMIT)
     monkeypatch.setenv("MPICH_GPU_SUPPORT_ENABLED", "0")  # restored after the test
-    calls = []
     wrappers = set()
 
     def build(bm, src, **kw):
@@ -585,11 +591,13 @@ def dist_last(m):
 def test_distributed_full_run(tmp_path, monkeypatch):
     m, rc, calls = dist_run(tmp_path, monkeypatch)
     assert rc == 0
-    assert calls[0] == ("build", m.distributed.build_dir,
+    # mpibench first: its GPU check, with the run's environment, comes before the build
+    assert calls[0] == ("mpibench",)
+    assert calls[1] == ("gpu-check", 64, "1")
+    assert calls[2] == ("build", m.distributed.build_dir,
                         ("-DGINKGO_BUILD_MPI=OFF", "-DGINKGO_BUILD_MPI=ON"), tuple(D.TARGETS))
-    assert calls[1] == ("mpibench",)
-    assert [c[:2] for c in calls[2:]] == [(n, g) for n in D.GPU_COUNTS for g in D.GROUPS]
-    assert calls[2][2] == ("--nodes=1", "--ntasks=1", "--ntasks-per-node=1")
+    assert [c[:2] for c in calls[3:]] == [(n, g) for n in D.GPU_COUNTS for g in D.GROUPS]
+    assert calls[3][2] == ("--nodes=1", "--ntasks=1", "--ntasks-per-node=1")
     assert [c[2] for c in calls if c[:2] == (64, "mpi")] == [
         ("--nodes=16", "--ntasks=64", "--ntasks-per-node=4")]
     rec = dist_json(m)
@@ -610,6 +618,27 @@ def test_distributed_records_the_nodes(tmp_path, monkeypatch):
     assert dist_json(m)["distributed"]["nodes"] == "nid[001-016]"
 
 
+def test_distributed_stops_at_a_bad_gpu(tmp_path, monkeypatch, capsys):
+    # nothing is built, run or written, so the job fails within minutes and
+    # the import has no run to take
+    path_file = tmp_path / "path"
+    bad = ["nid005939 (rank 4): no CUDA-capable device is detected"]
+    m, rc, calls = dist_run(tmp_path, monkeypatch, ["--path-file", str(path_file)],
+                            bad_gpus=bad)
+    assert rc == 1
+    assert calls == [("mpibench",), ("gpu-check", 64, "1")]
+    assert not path_file.exists()
+    assert not list(m.distributed.results_dir.glob("*/run.json"))
+    assert not dist_last(m).exists()
+    err = capsys.readouterr().err
+    assert "GPU check failed" in err and bad[0] in err
+
+
+def test_distributed_checks_the_gpus_of_its_largest_count(tmp_path, monkeypatch):
+    _, rc, calls = dist_run(tmp_path, monkeypatch, ["--gpus", "1,8"])
+    assert rc == 0 and [c for c in calls if c[0] == "gpu-check"] == [("gpu-check", 8, "1")]
+
+
 def test_distributed_skips_what_the_commit_lacks(tmp_path, monkeypatch):
     # as on v1.11.0: no distributed SpGEMM benchmark, no PMIS or uniform coarsening
     asked, invs = [], []
@@ -618,7 +647,8 @@ def test_distributed_skips_what_the_commit_lacks(tmp_path, monkeypatch):
         "lacks": lambda clone, sha, added: asked.append(set(added)) or {"mg-uniform", "mg-pmis"}})
     assert rc == 0
     assert asked == [{"mg-uniform", "mg-pmis"}]
-    assert calls[0][3] == tuple(t for t in D.TARGETS if t != "sparse_blas_distributed")
+    build = next(c for c in calls if c[0] == "build")
+    assert build[3] == tuple(t for t in D.TARGETS if t != "sparse_blas_distributed")
     assert {(i.group, i.label) for i in invs if i.unavailable} == {
         ("spgemm", "stencil"), ("preconditioner", "mg-uniform"), ("preconditioner", "mg-pmis")}
 
@@ -643,11 +673,15 @@ def test_distributed_dry_run_lists_every_gpu_count(tmp_path, monkeypatch, capsys
         monkeypatch.setattr(cli, n, lambda *a, **k: pytest.fail("ran"))
     assert cli.main(["distributed", "daint-gh200", "--dry-run"]) == 0
     lines = [ln for ln in capsys.readouterr().out.splitlines() if " srun " in ln]
-    assert len(lines) == len(D.GPU_COUNTS) * 8
+    # the GPU check first, on the ranks of the largest count
+    assert lines[0].startswith("check srun --nodes=16 --ntasks=64 ")
+    assert lines[0].endswith("/mpibench --check-gpus")
+    assert len(lines) == 1 + len(D.GPU_COUNTS) * 8
     assert any(ln.startswith("8 mpi mpibench srun --nodes=2 --ntasks=8") for ln in lines)
     assert cli.main(["distributed", "daint-gh200", "--dry-run", "--gpus", "1,8"]) == 0
     lines = [ln for ln in capsys.readouterr().out.splitlines() if " srun " in ln]
-    assert {ln.split()[0] for ln in lines} == {"1", "8"}
+    assert lines[0].startswith("check srun --nodes=2 --ntasks=8 ")
+    assert {ln.split()[0] for ln in lines[1:]} == {"1", "8"}
 
 
 def test_distributed_paths(tmp_path, monkeypatch):
@@ -701,6 +735,8 @@ def test_distributed_build_failure(tmp_path, monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, ["cmake"])
     monkeypatch.setattr(cli, "build", boom)
+    monkeypatch.setattr(cli, "build_mpibench", lambda bm: tmp_path / "mbuild" / "mpibench")
+    monkeypatch.setattr(D, "gpu_check", lambda *a, **k: [])
     monkeypatch.setattr(cli, "run_group", lambda *a, **k: pytest.fail("ran"))
     assert cli.main(["distributed", "daint-gh200"]) == 1
     rec = dist_json(m)
@@ -709,9 +745,12 @@ def test_distributed_build_failure(tmp_path, monkeypatch):
                for gs in rec["gpus"].values() for r in gs.values())
 
 
-def test_mpibench_build_failure_fails_only_the_mpi_group(tmp_path, monkeypatch):
+def test_mpibench_build_failure_fails_only_the_mpi_group(tmp_path, monkeypatch, capsys):
     m, rc, calls = dist_run(tmp_path, monkeypatch, mpibench_fails=True)
     assert rc == 0
+    # without mpibench there's no GPU check; the Ginkgo benchmarks still run
+    assert not [c for c in calls if c[0] == "gpu-check"]
+    assert "no GPU check" in capsys.readouterr().err
     rec = dist_json(m)
     assert "no mpicxx" in rec["mpibench_build"]["error"]
     for n in D.GPU_COUNTS:

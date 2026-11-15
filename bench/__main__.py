@@ -221,6 +221,7 @@ def cmd_distributed(args) -> int:
         print(f"machine: {m.name}")
         print(f"ref: {args.ref}")
         mpibench = d.mpibench_build_dir / "mpibench"
+        print(f"check {' '.join(distributed.gpu_check_command(m, max(gpus), mpibench))}")
         for n in gpus:
             for inv in distributed.invocations(m, n, mpibench):
                 print(f"{n} {inv.group} {inv.label} srun "
@@ -241,6 +242,26 @@ def cmd_distributed(args) -> int:
         print(f"nothing to do: {commit.sha} already benchmarked")
         return 0
     started = _now()
+    # mpibench first, for its GPU check on the ranks of the largest GPU count:
+    # a broken GPU stops the job before anything is built or written, so the
+    # import gets no run and a rerun starts afresh
+    mpibench = None
+    mpibench_info: dict = {}
+    try:
+        mpibench = build_mpibench(m)
+    except Exception as e:  # the Ginkgo benchmarks still run
+        mpibench_info = {"error": f"{type(e).__name__}: {e}"}
+        print(f"error: mpibench build failed: {e}", file=sys.stderr)
+    if mpibench is None:
+        print("warning: no GPU check without mpibench", file=sys.stderr)
+    else:
+        problems = distributed.gpu_check(m, max(gpus), mpibench, env={**os.environ, **d.env})
+        if problems:
+            print("error: GPU check failed; no benchmark ran and no run was written:", file=sys.stderr)
+            for p in problems:
+                print(f"  {p}", file=sys.stderr)
+            return 1
+        print(f"GPU check: the GPUs of all {max(gpus)} ranks work")
     gpu, toolchain = gpu_info(m), toolchain_info(m)
     counters = pm_counters()
     script = script_version(subprocess.run, REPO)
@@ -258,7 +279,6 @@ def cmd_distributed(args) -> int:
 
     results = {str(n): {g: {"status": "pending"} for g in distributed.GROUPS} for n in gpus}
     build_info: dict | None = None
-    mpibench_info: dict = {}
 
     def record(finished=None):
         info = build_info if build_info is not None else {}
@@ -297,12 +317,6 @@ def cmd_distributed(args) -> int:
                 record(_now())
                 print(f"error: build failed: {e}", file=sys.stderr)
                 return 1
-            mpibench = None
-            try:
-                mpibench = build_mpibench(m)
-            except Exception as e:  # the Ginkgo benchmarks still run
-                mpibench_info = {"error": f"{type(e).__name__}: {e}"}
-                print(f"error: mpibench build failed: {e}", file=sys.stderr)
             record()
             os.environ.update(d.env)  # srun passes it on (--export=ALL)
             deadline = job_deadline()

@@ -7,6 +7,12 @@
 //
 // Usage: mpibench [--max-allreduce-k K] [--max-alltoallv-k K] [--pingpong]
 //                 [--max-pingpong-bytes B] [--ranks-per-node R] [--min-time S]
+//        mpibench --check-gpus
+//
+// --check-gpus measures nothing: each rank writes a value to its GPU and reads
+// it back, and rank 0 prints {"ranks", "failed": [{"rank", "node", "error"}]}.
+// Every rank exits with 1 if one failed. The distributed run starts with it, so
+// that a node with a broken GPU stops the job before anything is built.
 //
 // Rank 0 prints a JSON array of cases shaped like Ginkgo's benchmark output,
 // {"operation", "count", "bytes", "ranks", "mpi": {<operation>: {"completed",
@@ -69,6 +75,7 @@ void to_host(void* dst, const void* src, std::size_t bytes)
     DEVICE_CHECK(cudaMemcpy(dst, src, bytes, cudaMemcpyDeviceToHost));
 }
 const char* buffers = "cuda";
+#define GPU_API(name) cuda##name
 #elif defined(MPIBENCH_HIP)
 #define DEVICE_CHECK(call)                                              \
     do {                                                                \
@@ -93,6 +100,7 @@ void to_host(void* dst, const void* src, std::size_t bytes)
     DEVICE_CHECK(hipMemcpy(dst, src, bytes, hipMemcpyDeviceToHost));
 }
 const char* buffers = "hip";
+#define GPU_API(name) hip##name
 #else
 void* device_alloc(std::size_t bytes)
 {
@@ -113,6 +121,44 @@ void to_host(void* dst, const void* src, std::size_t bytes)
 }
 const char* buffers = "host";
 #endif
+
+
+// Whether this rank's GPU works: an empty string if a value written to it reads
+// back, else the error. It never aborts, so that rank 0 can report every rank.
+// With host buffers there is no GPU to check.
+std::string gpu_problem()
+{
+#if defined(MPIBENCH_CUDA) || defined(MPIBENCH_HIP)
+    int count = 0;
+    auto err = GPU_API(GetDeviceCount)(&count);
+    if (err != GPU_API(Success)) {
+        return std::string("no GPU: ") + GPU_API(GetErrorString)(err);
+    }
+    if (count < 1) {
+        return "no GPU visible";
+    }
+    const double value = 42.0;
+    double back = 0.0;
+    void* p = nullptr;
+    err = GPU_API(Malloc)(&p, sizeof value);
+    if (err == GPU_API(Success)) {
+        err = GPU_API(Memcpy)(p, &value, sizeof value, GPU_API(MemcpyHostToDevice));
+    }
+    if (err == GPU_API(Success)) {
+        err = GPU_API(Memcpy)(&back, p, sizeof back, GPU_API(MemcpyDeviceToHost));
+    }
+    if (p != nullptr) {
+        static_cast<void>(GPU_API(Free)(p));
+    }
+    if (err != GPU_API(Success)) {
+        return std::string("a buffer on the GPU: ") + GPU_API(GetErrorString)(err);
+    }
+    if (back != value) {
+        return "a value written to the GPU read back wrong";
+    }
+#endif
+    return "";
+}
 
 
 // An array of doubles in device memory.
@@ -152,6 +198,7 @@ struct Options {
     long long max_pingpong_bytes = 1LL << 30;
     int ranks_per_node = 4;
     double min_time = 0.2;  // time budget per size, sets the repetitions
+    bool check_gpus = false;
 };
 
 
@@ -178,6 +225,8 @@ Options parse(int argc, char** argv)
             o.ranks_per_node = std::stoi(value());
         } else if (arg == "--min-time") {
             o.min_time = std::stod(value());
+        } else if (arg == "--check-gpus") {
+            o.check_gpus = true;
         } else {
             die("unknown argument " + arg);
         }
@@ -267,6 +316,48 @@ std::string escape(const std::string& s)
         out += (c == '\n' || c == '\t') ? ' ' : c;
     }
     return out;
+}
+
+
+// --check-gpus: rank 0 prints which ranks' GPUs failed (gpu_problem), with
+// their nodes. Returns 1 on every rank if one failed, else 0.
+int check_gpus(MPI_Comm comm)
+{
+    int rank, size;
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+    constexpr int node_width = MPI_MAX_PROCESSOR_NAME;
+    constexpr int error_width = 256;
+    char node[node_width] = {};
+    int length = 0;
+    MPI_Get_processor_name(node, &length);
+    node[node_width - 1] = '\0';
+    char error[error_width] = {};
+    std::snprintf(error, error_width, "%s", gpu_problem().c_str());
+    const auto all = rank == 0 ? static_cast<std::size_t>(size) : 0;
+    std::vector<char> nodes(all * node_width);
+    std::vector<char> errors(all * error_width);
+    MPI_Gather(node, node_width, MPI_CHAR, nodes.data(), node_width, MPI_CHAR, 0,
+               comm);
+    MPI_Gather(error, error_width, MPI_CHAR, errors.data(), error_width,
+               MPI_CHAR, 0, comm);
+    int failed = 0;
+    if (rank == 0) {
+        std::printf("{\"ranks\": %d, \"failed\": [", size);
+        for (std::size_t r = 0; r < all; ++r) {
+            const char* e = errors.data() + r * error_width;
+            if (*e != '\0') {
+                std::printf("%s{\"rank\": %zu, \"node\": \"%s\", \"error\": \"%s\"}",
+                            failed > 0 ? ", " : "", r,
+                            escape(nodes.data() + r * node_width).c_str(),
+                            escape(e).c_str());
+                ++failed;
+            }
+        }
+        std::printf("]}\n");
+    }
+    MPI_Bcast(&failed, 1, MPI_INT, 0, comm);
+    return failed > 0 ? 1 : 0;
 }
 
 
@@ -513,6 +604,12 @@ int main(int argc, char** argv)
     int rank, size;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
+    if (options.check_gpus) {
+        const int code = check_gpus(comm);
+        MPI_Comm_free(&comm);
+        MPI_Finalize();
+        return code;
+    }
 
     std::vector<Case> cases;
     allreduce(comm, options, cases);
