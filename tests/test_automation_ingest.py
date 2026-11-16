@@ -317,3 +317,13 @@ def test_main_imports_a_distributed_job(repo, gitlab):
     assert not (repo / "daint-gh200").exists()
     assert run_ingest(repo) == 0
     assert len(log(repo)) == 2  # not imported again
+
+
+def test_accepts_run_with_failed_kernels():
+    from automation.ingest import accept
+    rec = {"machine": "daint-gh200",
+           "ginkgo": {"ref": "origin/develop", "commit": "a" * 40},
+           "groups": {g: {"status": "ok"} for g in ("blas", "spmv", "spgemm", "solver",
+                                                    "preconditioner")},
+           "kernels": {"status": "failed", "reason": "boom"}}
+    assert accept(rec, "daint-gh200", lambda sha: True) is None

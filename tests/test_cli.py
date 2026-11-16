@@ -776,3 +776,66 @@ def test_distributed_needs_the_settings(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(cli, "load_machine", lambda name, **kw: fake_machine(tmp_path))
     assert cli.main(["distributed", "daint-gh200"]) == 2
     assert "[distributed]" in capsys.readouterr().err
+
+
+def kernels_run(tmp_path, monkeypatch, manifest, argv=(), result=None, raises=None):
+    """full_run with [kernels] settings and a fake stage recording its cases."""
+    from bench.machine import Kernels
+    seen = {}
+
+    def fake(m, cases, out, deadline, run=None):
+        seen["cases"] = [c.key for c in cases]
+        if raises:
+            raise raises
+        return result or {"status": "ok", "seconds": 1.0, "cases": []}
+
+    monkeypatch.setattr(cli, "run_kernels", fake)
+    orig = fake_machine
+
+    def with_kernels(tmp_path, arch=None):
+        m = orig(tmp_path, arch)
+        m.kernels = Kernels("ncu", ["ncu"], ["nsys"], [["dram__bytes_read.sum"]])
+        return m
+
+    monkeypatch.setattr(sys.modules[__name__], "fake_machine", with_kernels)
+    m, rc, order = full_run(tmp_path, monkeypatch, manifest, argv)
+    return m, rc, order, seen
+
+
+def test_kernels_stage_after_groups(tmp_path, monkeypatch, manifest):
+    m, rc, order, seen = kernels_run(tmp_path, monkeypatch, manifest)
+    assert rc == 0
+    rec = run_json(m)
+    assert rec["kernels"] == {"status": "ok", "seconds": 1.0, "cases": []}
+    assert set(rec["groups"]) == {"blas", "spmv", "spgemm", "solver", "preconditioner"}
+    assert "kernels" not in rec["groups"]
+    assert (m.root / "state" / m.name / "last_commit").read_text().strip() == COMMIT.sha
+    assert "spmv/csr/m1" not in seen["cases"]  # m1 isn't a selected matrix
+    assert seen["cases"][-3:] == ["blas/gemv/2048", "blas/gemv/8192", "blas/gemv/32768"]
+
+
+def test_no_kernels_flag(tmp_path, monkeypatch, manifest):
+    m, rc, order, seen = kernels_run(tmp_path, monkeypatch, manifest, ["--no-kernels"])
+    assert rc == 0 and "cases" not in seen and "kernels" not in run_json(m)
+
+
+def test_kernel_cases_flag(tmp_path, monkeypatch, manifest):
+    m, rc, order, seen = kernels_run(tmp_path, monkeypatch, manifest,
+                                     ["--kernel-cases", "spmv/csr/m1"])
+    assert rc == 0 and seen["cases"][-1] == "spmv/csr/m1"
+
+
+def test_unknown_kernel_case_exits_two(tmp_path, monkeypatch, manifest, capsys):
+    m = fake_machine(tmp_path)
+    patch_common(monkeypatch, m, COMMIT)
+    assert cli.main(["run", "daint-gh200", "--manifest", str(manifest),
+                     "--kernel-cases", "spmv/csr/nope"]) == 2
+    assert "nope" in capsys.readouterr().err
+
+
+def test_stage_failure_keeps_run(tmp_path, monkeypatch, manifest):
+    m, rc, order, seen = kernels_run(tmp_path, monkeypatch, manifest, raises=RuntimeError("boom"))
+    assert rc == 0
+    rec = run_json(m)
+    assert rec["kernels"]["status"] == "failed" and "boom" in rec["kernels"]["reason"]
+    assert (m.root / "state" / m.name / "last_commit").read_text().strip() == COMMIT.sha

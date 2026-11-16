@@ -21,6 +21,8 @@ from bench.checkout import (DEVELOP, ensure_clone, lacks, prepare_worktree, read
                             resolve, should_run, write_last)
 from bench.energy import snapshot as pm_counters
 from bench.groups import ADDED, GROUPS, invocations
+from bench.kernel_cases import kernel_cases, parse_case_keys
+from bench.kernels import run_kernels
 from bench.machine import load_machine
 from bench.mpibench import build as build_mpibench
 from bench.record import (REPO, ci_info, gpu_info, results_dir_name, run_record, script_version,
@@ -96,12 +98,22 @@ def cmd_run(args) -> int:
         return 2
     groups = [g for g in GROUPS if g in requested]  # the spec's order, no repeats
     manifest = json.loads(Path(args.manifest).read_text())
+    extra = parse_case_keys(args.kernel_cases)
+    try:  # an unknown case is an error before anything runs
+        kernel_cases(m, manifest, extra=extra)
+    except KeyError as e:
+        print(f"error: --kernel-cases: {e.args[0]}", file=sys.stderr)
+        return 2
+    with_kernels = m.kernels is not None and not args.no_kernels
     if args.dry_run:
         print(f"machine: {m.name}")
         print(f"ref: {args.ref}")
         for inv in invocations(m, manifest, groups):
             note = f"  # {inv.disabled}" if inv.disabled else ""
             print(f"{inv.group} {inv.label} {inv.exe} {' '.join(inv.args)}{note}")
+        if with_kernels:
+            for case in kernel_cases(m, manifest, extra=extra):
+                print(f"kernels {case.key} {case.exe} {' '.join(case.args)}")
         return 0
     if platform.machine() != m.arch:
         print(f"error: {m.name} needs {m.arch} but this host is {platform.machine()}", file=sys.stderr)
@@ -136,6 +148,7 @@ def cmd_run(args) -> int:
                {"status": "skipped", "reason": "not requested"} for g in GROUPS}
     build_info: dict | None = None
     stream_info: dict | None = None
+    kernels_info: dict | None = None
 
     def record(finished=None):
         info = build_info if build_info is not None else {}
@@ -146,6 +159,8 @@ def cmd_run(args) -> int:
         rec["pm_counters"] = counters
         if stream_info is not None:
             rec["stream"] = stream_info
+        if kernels_info is not None:
+            rec["kernels"] = kernels_info
         if ci is not None:
             rec["ci"] = ci
         _write_json(out / "run.json", rec)
@@ -183,6 +198,15 @@ def cmd_run(args) -> int:
                                   "seconds": time.monotonic() - t, "invocations": []}
                 current = None
                 record()
+            if with_kernels:  # after the groups, outside them: it never fails the run
+                kernels_info = {"status": "running"}
+                record()
+                try:
+                    kernels_info = run_kernels(m, kernel_cases(m, manifest, unavailable, extra),
+                                               out, deadline)
+                except Exception as e:
+                    kernels_info = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
+                record()
             record(_now())
         except Killed as k:
             if build_info is None:
@@ -191,6 +215,8 @@ def cmd_run(args) -> int:
                 results[current] = k.group_result or {"status": "killed",
                                                       "reason": "job killed (SIGTERM)"}
             skip_pending("job killed")
+            if kernels_info is not None and kernels_info.get("status") == "running":
+                kernels_info = {"status": "killed", "reason": "job killed (SIGTERM)"}
             record(_now())
             print(f"error: killed by signal {k.signum}; run.json written", file=sys.stderr)
             return 128 + k.signum
@@ -376,6 +402,10 @@ def main(argv=None) -> int:
     r.add_argument("--groups", default=",".join(GROUPS))
     r.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     r.add_argument("--dry-run", action="store_true")
+    r.add_argument("--no-kernels", action="store_true",
+                   help="leave out the kernel counter stage after the groups")
+    r.add_argument("--kernel-cases", default="",
+                   help="more cases for the kernel counters, by their dashboard keys, comma separated")
     dist = sub.add_parser("distributed", help="the weekly distributed run, every GPU count")
     dist.add_argument("machine")
     dist.add_argument("--ref", default=DEVELOP)
