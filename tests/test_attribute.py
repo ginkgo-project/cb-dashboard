@@ -128,3 +128,22 @@ def test_daint_fixtures_end_to_end():
     assert 0 < launched <= 60
     assert any(r.get("dram_read_bytes") for r in out)
     assert any(r["time"] is not None and r["time"] > 0 for r in out)
+
+
+def test_beverin_fixtures_end_to_end():
+    from bench.profilers import read_rocprof
+    b = DATA / "beverin"
+    ranges, kernels, copies = read_rocprof(b / "pgm-0")
+    trace = A.attribute_trace(ranges, kernels, copies, MEASURED, STAGES)
+    counters = []
+    for i in range(4):
+        r, k, _ = read_rocprof(b / f"pgm-{i}")
+        counters.append(A.attribute_counters("rocprofv3", k, MEASURED, STAGES, r))
+    times = read_detailed((b / "pgm-detailed.json").read_text(), STAGES)
+    out = A.rows(trace, counters, times)
+    assert out and all(r["stage"] == "generate" for r in out)
+    assert sum(r["launches"] for r in out) == 40
+    measured = [r for r in out if r["launches"]]
+    assert all("dram_read_bytes" in r and "dram_write_bytes" in r and "fp64_ops" in r
+               and "l2_hit_rate" in r for r in measured)
+    assert any(r["time"] for r in out)

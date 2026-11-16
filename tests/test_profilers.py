@@ -166,3 +166,25 @@ def test_read_detailed():
     assert abs(pgm["generate"]["total"] - 0.11827667236328125) < 1e-12
     dot = P.read_detailed((DATA / "daint" / "dot-detailed.json").read_text(), ())
     assert dot == {"": {"total": 1.3248000293970109e-05, "components": {}}}
+
+
+def test_read_rocprof_dot():
+    ranges, kernels, copies = P.read_rocprof(DATA / "beverin" / "dot-0")
+    assert len(kernels) == 9 and all(k.launch is not None and k.thread is not None for k in kernels)
+    assert all(set(k.metrics) == {"FETCH_SIZE"} for k in kernels)
+    assert any(r.name == "repetition" for r in ranges)
+    # ROCm 6.3's copy trace has no sizes: a count and a direction only
+    assert copies and all(c.bytes is None and c.kind.startswith("MEMORY_COPY_") for c in copies)
+
+
+def test_read_rocprof_pgm_counters():
+    ranges, kernels, _ = P.read_rocprof(DATA / "beverin" / "pgm-2")
+    assert len(kernels) == 40
+    assert {"SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64", "SQ_INSTS_VALU_MUL_F64"} <= {
+        n for k in kernels for n in k.metrics}
+    assert any(r.name == "repetition generate" for r in ranges)
+    assert all(r.parent is None or ranges[r.parent].thread == r.thread for r in ranges)
+
+
+def test_read_rocprof_missing_directory(tmp_path):
+    assert P.read_rocprof(tmp_path / "nope") == ([], [], [])
