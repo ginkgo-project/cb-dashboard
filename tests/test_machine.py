@@ -107,3 +107,35 @@ def test_machine_without_distributed_section(tmp_path):
     (tmp_path / "m.toml").write_text(
         'executor = "reference"\nuenv = "u"\narch = "x86_64"\nsbatch = []\nsrun = []\n')
     assert load_machine("m", machines_dir=tmp_path, env={"SCRATCH": "/s"}).distributed is None
+
+
+def test_kernels_settings_daint():
+    k = load_machine("daint-gh200", env={"SCRATCH": "/s"}).kernels
+    assert k.tool == "ncu" and k.profiler == ["ncu"] and k.tracer == ["nsys"]
+    assert len(k.metrics) == 1 and len(k.metrics[0]) == 7
+    assert "dram__bytes_read.sum" in k.metrics[0]
+    assert k.budget_s == 2700 and k.timeout_s == 900
+
+
+def test_kernels_settings_beverin():
+    k = load_machine("beverin-mi300a", env={"SCRATCH": "/s"}).kernels
+    assert k.tool == "rocprofv3" and k.profiler == ["/opt/rocm-6.3.0/bin/rocprofv3"]
+    assert k.tracer == []
+    assert k.metrics == [["FETCH_SIZE"], ["WRITE_SIZE"],
+                         ["SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64", "SQ_INSTS_VALU_MUL_F64"],
+                         ["TCC_HIT_sum", "TCC_MISS_sum"]]
+    assert k.budget_s == 2700
+
+
+def test_no_kernels_table_is_none(tmp_path):
+    (tmp_path / "m.toml").write_text(
+        'executor = "cuda"\nuenv = "u"\narch = "x"\nsbatch = []\nsrun = []\n')
+    assert load_machine("m", machines_dir=tmp_path, env={"SCRATCH": "/s"}).kernels is None
+
+
+def test_kernels_tool_must_be_known(tmp_path):
+    (tmp_path / "m.toml").write_text(
+        'executor = "cuda"\nuenv = "u"\narch = "x"\nsbatch = []\nsrun = []\n'
+        '[kernels]\ntool = "likwid"\nprofiler = ["likwid-perfctr"]\nmetrics = [["X"]]\n')
+    with pytest.raises(ValueError):
+        load_machine("m", machines_dir=tmp_path, env={"SCRATCH": "/s"})

@@ -39,3 +39,21 @@ mpibench_cmake_flags = ["-DMPIBENCH_GPU=cuda", "-DCMAKE_CXX_COMPILER=g++"]
 
 [distributed.env]
 MPICH_GPU_SUPPORT_ENABLED = "1"
+
+# The kernel counters (README "Kernel counters"): Nsight Systems traces each case
+# for the counts (launches, allocations, copies), Nsight Compute reads the
+# hardware counters of every kernel, replaying each kernel as often as the
+# hardware needs, so all metrics go in one pass. Both come with the uenv.
+[kernels]
+tool = "ncu"
+profiler = ["ncu"]
+tracer = ["nsys"]
+metrics = [[
+    "dram__bytes_read.sum",
+    "dram__bytes_write.sum",
+    "sm__sass_thread_inst_executed_op_dfma_pred_on.sum",
+    "sm__sass_thread_inst_executed_op_dadd_pred_on.sum",
+    "sm__sass_thread_inst_executed_op_dmul_pred_on.sum",
+    "lts__t_sectors_lookup_hit.sum",
+    "lts__t_sectors_lookup_miss.sum",
+]]

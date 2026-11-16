@@ -27,6 +27,20 @@ class Distributed:
     wrapper: list[str] = field(default_factory=list)
 
 
+KERNEL_TOOLS = ("ncu", "rocprofv3")
+
+
+@dataclass
+class Kernels:
+    """The kernel counters' settings (a machine file's [kernels])."""
+    tool: str  # one of KERNEL_TOOLS: how the counters are read and parsed
+    profiler: list[str]  # the profiler's command, e.g. ["ncu"]
+    tracer: list[str]  # the tracer's command for the counts, or [] if the profiler traces too
+    metrics: list[list[str]]  # the counters, one list per profiler pass
+    budget_s: int = 45 * 60  # the whole stage, per run
+    timeout_s: int = 15 * 60  # one pass of one case
+
+
 @dataclass
 class Machine:
     name: str
@@ -43,6 +57,7 @@ class Machine:
     stream_cmake_flags: list[str] = field(default_factory=list)
     disabled_preconditioners: list[str] = field(default_factory=list)
     distributed: Distributed | None = None
+    kernels: Kernels | None = None
 
 
 def _known(machines_dir: Path) -> list[str]:
@@ -82,6 +97,7 @@ def load_machine(
         stream_cmake_flags=list(data.get("stream_cmake_flags", [])),
         disabled_preconditioners=list(data.get("disabled_preconditioners", [])),
         distributed=_distributed(name, data.get("distributed"), scratch),
+        kernels=_kernels(name, data.get("kernels")),
     )
 
 
@@ -99,4 +115,20 @@ def _distributed(name: str, data: dict | None, scratch: Path) -> Distributed | N
         mpibench_build_dir=scratch / "cb" / "build" / f"{name}-mpibench",
         results_dir=scratch / "cb" / "results" / "distributed" / name,
         wrapper=list(data.get("wrapper", [])),
+    )
+
+
+def _kernels(name: str, data: dict | None) -> Kernels | None:
+    if data is None:
+        return None
+    if data.get("tool") not in KERNEL_TOOLS:
+        raise ValueError(f"{name}: [kernels] tool must be one of {', '.join(KERNEL_TOOLS)}, "
+                         f"not {data.get('tool')!r}")
+    return Kernels(
+        tool=data["tool"],
+        profiler=list(data["profiler"]),
+        tracer=list(data.get("tracer", [])),
+        metrics=[list(g) for g in data["metrics"]],
+        budget_s=int(data.get("budget_s", 45 * 60)),
+        timeout_s=int(data.get("timeout_s", 15 * 60)),
     )

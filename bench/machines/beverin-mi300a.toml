@@ -49,3 +49,17 @@ mpibench_cmake_flags = ["-DMPIBENCH_GPU=hip", "-DCMAKE_CXX_COMPILER={gcc_root}/b
 
 [distributed.env]
 MPICH_GPU_SUPPORT_ENABLED = "1"
+
+# The kernel counters (README "Kernel counters"): rocprofv3 of the system ROCm,
+# since the uenv has no rocprofiler-sdk. The hardware collects only some counters
+# at once, so each list is its own run of the benchmark; the first one also
+# traces the ranges, kernels and copies for the counts.
+[kernels]
+tool = "rocprofv3"
+profiler = ["/opt/rocm-6.3.0/bin/rocprofv3"]
+metrics = [
+    ["FETCH_SIZE"],
+    ["WRITE_SIZE"],
+    ["SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64", "SQ_INSTS_VALU_MUL_F64"],
+    ["TCC_HIT_sum", "TCC_MISS_sum"],
+]
