@@ -79,6 +79,8 @@ def passes(m: Machine, case: KernelCase, logdir: Path, rawdir: Path | None = Non
             out.append(p(f"counters-{i}",
                          [*k.profiler, "--nvtx", "--nvtx-include", NCU_FILTER,
                           "--cache-control", "none", "--clock-control", "none",
+                          # the symbol: nsys and ncu print readable names differently
+                          "--print-kernel-base", "mangled",
                           "--metrics", ",".join(group), "--csv", "--log-file", str(csv), *profiled],
                          csv))
     else:  # rocprofv3: the first counters pass also traces what the counts need
@@ -118,6 +120,7 @@ class Kernel:
     stack: list[str] | None = None
     metrics: dict[str, float] = field(default_factory=dict)
     correlation: int | None = None
+    display: str | None = None  # a readable name where `name` is the mangled symbol (nsys)
 
 
 @dataclass
@@ -138,14 +141,21 @@ def _number(text: str) -> float | None:
 
 
 _RANGE = re.compile(r'"([^"]*)"')
+# Ginkgo's ranges are in NVTX's default domain. Thrust and CUB (CCCL) put their own ranges,
+# in their own domain, inside Ginkgo's operations; they don't place kernels, so a sort's
+# kernels stay with the Ginkgo operation (components::sort_row_major) that has the time.
+DEFAULT_DOMAIN = "<default domain>:"
 
 
 def _ncu_stack(text: str) -> list[str]:
-    """`"<default domain>:dot:none:...:ASCII:dot"  "..."` -> ["dot", ...], outermost first."""
+    """`"<default domain>:dot:none:...:ASCII:dot"  "..."` -> ["dot", ...], outermost first;
+    the ranges of other NVTX domains are left out."""
     names = []
     for part in _RANGE.findall(text):
+        if not part.startswith(DEFAULT_DOMAIN):
+            continue
         names.append(part.split(":ASCII:", 1)[1].strip() if ":ASCII:" in part
-                     else part.split(":", 1)[-1].strip())
+                     else part[len(DEFAULT_DOMAIN):].split(":", 1)[0].strip())
     return names
 
 
@@ -187,7 +197,7 @@ def _nest(ranges: list[Range]) -> list[Range]:
     return ranges
 
 
-NVTX_PUSH_POP = 59  # NVTX_EVENTS.eventType of push/pop ranges
+NVTX_PUSH_POP = 59  # NVTX_EVENTS.eventType of push/pop ranges; domainId 0 is the default domain
 
 
 def read_nsys(sqlite_path: Path) -> tuple[list[Range], list[Kernel], list[Copy]]:
@@ -204,13 +214,20 @@ def read_nsys(sqlite_path: Path) -> tuple[list[Range], list[Kernel], list[Copy]]
     ranges = [Range(text if text is not None else strings.get(tid, ""), start, end, thread)
               for start, end, text, tid, thread in con.execute(
                   "select start, end, text, textId, globalTid from NVTX_EVENTS "
-                  "where eventType = ? and end is not null", (NVTX_PUSH_POP,))]
+                  "where eventType = ? and end is not null and coalesce(domainId, 0) = 0",
+                  (NVTX_PUSH_POP,))]
     kernels = []
     if "CUPTI_ACTIVITY_KIND_KERNEL" in tables:
-        for corr, name in con.execute(
-                "select correlationId, demangledName from CUPTI_ACTIVITY_KIND_KERNEL order by start"):
+        cols = {r[1] for r in con.execute("pragma table_info(CUPTI_ACTIVITY_KIND_KERNEL)")}
+        symbol = "mangledName" if "mangledName" in cols else "demangledName"
+        for corr, sym, name in con.execute(
+                f"select correlationId, {symbol}, demangledName from CUPTI_ACTIVITY_KIND_KERNEL "
+                "order by start"):
             at, thread = launch.get(corr, (None, None))
-            kernels.append(Kernel(strings.get(name, str(name)), at, thread, correlation=corr))
+            readable = strings.get(name, str(name))
+            # the symbol joins with ncu (--print-kernel-base mangled); the readable name is shown
+            kernels.append(Kernel(strings.get(sym, readable) or readable, at, thread,
+                                  correlation=corr, display=readable))
     copies = []
     if "CUPTI_ACTIVITY_KIND_MEMCPY" in tables:
         for corr, nbytes, kind in con.execute(

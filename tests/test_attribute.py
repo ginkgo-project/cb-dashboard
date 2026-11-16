@@ -147,3 +147,17 @@ def test_beverin_fixtures_end_to_end():
     assert all("dram_read_bytes" in r and "dram_write_bytes" in r and "fp64_ops" in r
                and "l2_hit_rate" in r for r in measured)
     assert any(r["time"] for r in out)
+
+
+def test_trace_and_ncu_kernels_meet_by_symbol():
+    """nsys and ncu print a kernel's name differently; both give its mangled symbol, which
+    joins them, and the trace's readable name is the one shown."""
+    rs = ranges(("repetition", 0, 100), ("csr::spmv", 10, 20))
+    trace = A.attribute_trace(rs, [Kernel("_Z4spmvv", 12, 1, display="void gko::csr::spmv<(int)32>()")],
+                              [], ("repetition",), ())
+    counters = [A.attribute_counters("ncu", [Kernel("_Z4spmvv", stack=["repetition", "csr::spmv"],
+                                                    metrics={"dram__bytes_read.sum": 8.0})],
+                                     ("repetition",), ())]
+    [row] = A.rows(trace, counters, {"": {"total": 1.0, "components": {}}})
+    assert row["kernels"] == [{"name": "void gko::csr::spmv<(int)32>()", "launches": 1,
+                               "dram_read_bytes": 8.0}]

@@ -126,7 +126,10 @@ def attribute_trace(ranges: list[Range], kernels: list[Kernel], copies: list[Cop
             continue
         row = rows[(place[0], place[1])]
         row.launches += 1
-        row.kernels.setdefault(k.name, {"launches": 0})["launches"] += 1
+        entry = row.kernels.setdefault(k.name, {"launches": 0})
+        entry["launches"] += 1
+        if k.display and k.display != k.name:
+            entry["display"] = k.display
     for c in copies:
         place = _place(ranges, index.innermost(c.thread, c.launch), measured, stages)
         if place is None:
@@ -185,6 +188,7 @@ def rows(trace: dict[tuple[str, str], Row], counters: list[dict], times: dict[st
         stage, name = key
         t = trace.get(key, Row())
         kernels: dict[str, dict] = {n: {"launches": v["launches"]} for n, v in t.kernels.items()}
+        shown = {n: v.get("display", n) for n, v in t.kernels.items()}
         for part in counters:
             for kname, sums in part.get(key, {}).items():
                 kd = kernels.setdefault(kname, {"launches": None})
@@ -206,7 +210,7 @@ def rows(trace: dict[tuple[str, str], Row], counters: list[dict], times: dict[st
             if vals:
                 row[c] = sum(vals)
         _with_rate(row)
-        row["kernels"] = [_with_rate({"name": n, **kd}) for n, kd in
+        row["kernels"] = [_with_rate({"name": shown.get(n, n), **kd}) for n, kd in
                           sorted(kernels.items(), key=lambda kv: -(kv[1].get("launches") or 0))]
         out.append(row)
     return out

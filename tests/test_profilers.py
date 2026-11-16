@@ -41,6 +41,7 @@ def test_daint_passes(tmp_path):
     assert trace.out == log / "trace.sqlite"
     assert c0.argv == ["ncu", "--nvtx", "--nvtx-include", "regex:repetition.*/",
                        "--cache-control", "none", "--clock-control", "none",
+                       "--print-kernel-base", "mangled",
                        "--metrics", "dram__bytes_read.sum,dram__bytes_write.sum",
                        "--csv", "--log-file", str(log / "counters-0.csv")] + bench + ["-profile"]
     assert c0.out == log / "counters-0.csv"
@@ -188,3 +189,39 @@ def test_read_rocprof_pgm_counters():
 
 def test_read_rocprof_missing_directory(tmp_path):
     assert P.read_rocprof(tmp_path / "nope") == ([], [], [])
+
+
+def test_ncu_stack_only_ginkgos_domain():
+    """Thrust/CUB (CCCL) annotate their own work inside Ginkgo's ranges, in their own NVTX
+    domain and with registered strings; only Ginkgo's (the default domain) place kernels."""
+    stack = ('1  "<default domain>:case:none:none:RGB:0xffffcb05:ASCII:case"  '
+             '"<default domain>:components::sort_row_major:none:none:RGB:0xffffcb05:ASCII:'
+             'components::sort_row_major"  '
+             '"CCCL:thrust::sort_by_key:none:none:none:none:REGISTERED:thrust::sort_by_key" ')
+    assert P._ncu_stack(stack) == ["case", "components::sort_row_major"]
+
+
+def test_nsys_only_ginkgos_domain(tmp_path):
+    import sqlite3
+    db = tmp_path / "t.sqlite"
+    c = sqlite3.connect(db)
+    c.executescript("""
+        create table StringIds (id integer, value text);
+        create table NVTX_EVENTS (start integer, end integer, eventType integer, text text,
+                                  textId integer, globalTid integer, domainId integer);
+        insert into NVTX_EVENTS values (0, 100, 59, 'components::sort_row_major', null, 1, 0);
+        insert into NVTX_EVENTS values (10, 20, 59, 'thrust::sort_by_key', null, 1, 1);
+        insert into NVTX_EVENTS values (0, 0, 33, 'gko::operation', null, 1, 0);
+    """)
+    c.commit()
+    c.close()
+    ranges, kernels, copies = P.read_nsys(db)
+    assert [r.name for r in ranges] == ["components::sort_row_major"]
+
+
+def test_nsys_kernels_by_symbol():
+    ranges, kernels, copies = P.read_nsys(DATA / "daint" / "pgm-nsys.sqlite")
+    # the symbol joins with ncu; the readable name is for display
+    assert all(k.name.startswith("_Z") or k.display == k.name for k in kernels)
+    assert any(k.name.startswith("_Z") and k.display and not k.display.startswith("_Z")
+               for k in kernels)
