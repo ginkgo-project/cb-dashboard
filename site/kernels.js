@@ -159,7 +159,8 @@ export async function renderKernels(root, ui) {
     put(root, el("p", { class: "legend" },
       "On the MI300A: \"DRAM\" bytes are everything fetched past the L2, including what the 256 MB "
       + "Infinity Cache serves; FP64 operations are counted per wavefront of 64 lanes, so partly "
-      + "filled wavefronts count as full; copies have no sizes (ROCm 6.3). Compare hit rates, not "
+      + "filled wavefronts count as full, and include the matrix cores', where rocBLAS runs a GEMV "
+      + "as a GEMM padded to 16 columns; copies have no sizes (ROCm 6.3). Compare hit rates, not "
       + "counts, across the two machines."));
   }
 }

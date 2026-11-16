@@ -122,7 +122,8 @@ def test_kernels_settings_beverin():
     assert k.tool == "rocprofv3" and k.profiler == ["/opt/rocm-6.3.0/bin/rocprofv3"]
     assert k.tracer == []
     assert k.metrics == [["FETCH_SIZE"], ["WRITE_SIZE"],
-                         ["SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64", "SQ_INSTS_VALU_MUL_F64"],
+                         ["SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64", "SQ_INSTS_VALU_MUL_F64",
+                          "SQ_INSTS_VALU_MFMA_MOPS_F64"],
                          ["TCC_HIT_sum", "TCC_MISS_sum"]]
     assert k.budget_s == 2700
 

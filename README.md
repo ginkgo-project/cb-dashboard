@@ -387,7 +387,10 @@ from separate runs, so they are combined per range and kernel name.
 
 **Across vendors:** DRAM bytes on the MI300A are everything fetched past the L2,
 including what its Infinity Cache serves; its FP64 operations are counted per
-wavefront of 64 lanes; its copy trace has no sizes. Compare hit rates, not
+wavefront of 64 lanes and include the matrix cores', where rocBLAS runs a GEMV as
+a GEMM padded to 16 columns (16 times the useful work); its copy trace has no
+sizes. SpMV and BLAS have no per-range times: their case's time goes to the
+range that launched the kernels. Compare hit rates, not
 counts, between the machines.
 
 ### Results

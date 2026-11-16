@@ -68,8 +68,8 @@ def test_beverin_passes(tmp_path):
                        "-o", "run",
                        "--output-format", "csv", "--"] + bench + ["-profile"]
     assert c0.out == log / "counters-0"
-    assert c2.argv[:6] == [rp, "--pmc", "SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64",
-                           "SQ_INSTS_VALU_MUL_F64", "--marker-trace"]
+    assert c2.argv[:7] == [rp, "--pmc", "SQ_INSTS_VALU_FMA_F64", "SQ_INSTS_VALU_ADD_F64",
+                           "SQ_INSTS_VALU_MUL_F64", "SQ_INSTS_VALU_MFMA_MOPS_F64", "--marker-trace"]
     # only the first counter pass traces the copies; every pass traces the launches, which
     # place each kernel in the range open when it was launched
     assert all("--memory-copy-trace" not in p.argv for p in ps[2:])

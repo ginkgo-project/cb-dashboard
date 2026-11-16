@@ -161,3 +161,21 @@ def test_trace_and_ncu_kernels_meet_by_symbol():
     [row] = A.rows(trace, counters, {"": {"total": 1.0, "components": {}}})
     assert row["kernels"] == [{"name": "void gko::csr::spmv<(int)32>()", "launches": 1,
                                "dram_read_bytes": 8.0}]
+
+
+def test_normalize_beverin_matrix_cores():
+    """rocBLAS runs GEMV as a GEMM on the MI300A's matrix cores: those FP64 operations are
+    counted by SQ_INSTS_VALU_MFMA_MOPS_F64, in units of 512."""
+    m = A.normalize("rocprofv3", {"SQ_INSTS_VALU_FMA_F64": 0.0, "SQ_INSTS_VALU_ADD_F64": 6180.0,
+                                  "SQ_INSTS_VALU_MUL_F64": 2060.0,
+                                  "SQ_INSTS_VALU_MFMA_MOPS_F64": 4218880.0})
+    assert m["fp64_ops"] == (6180 + 2060) * 64 + 4218880 * 512
+
+
+def test_total_time_to_the_row_that_launches():
+    """SpMV and BLAS write only the case's time, no per-range times: it goes to the one row
+    that launched kernels, not to the linear operator's apply(...) around it."""
+    rs = ranges(("repetition", 0, 100), ("apply(gko::matrix::Csr)", 5, 50), ("csr::spmv", 10, 20))
+    trace = A.attribute_trace(rs, [Kernel("k", 12, 1)], [], ("repetition",), ())
+    out = {r["name"]: r["time"] for r in A.rows(trace, [], {"": {"total": 2.0, "components": {}}})}
+    assert out == {"apply(gko::matrix::Csr)": None, "csr::spmv": 2.0}

@@ -38,8 +38,10 @@ def normalize(tool: str, metrics: dict[str, float]) -> dict[str, float]:
                  "dram_write_bytes": None if g("WRITE_SIZE") is None else g("WRITE_SIZE") * 1024,
                  "l2_hits": g("TCC_HIT_sum"), "l2_misses": g("TCC_MISS_sum")}
         fp = [g(f"SQ_INSTS_VALU_{op}_F64") for op in ("FMA", "ADD", "MUL")]
-        if any(v is not None for v in fp):  # counted per wavefront of 64 lanes
-            pairs["fp64_ops"] = (2 * (fp[0] or 0) + (fp[1] or 0) + (fp[2] or 0)) * 64
+        mfma = g("SQ_INSTS_VALU_MFMA_MOPS_F64")  # matrix cores, in units of 512 operations
+        if any(v is not None for v in fp) or mfma is not None:
+            # vector instructions are counted per wavefront of 64 lanes
+            pairs["fp64_ops"] = (2 * (fp[0] or 0) + (fp[1] or 0) + (fp[2] or 0)) * 64 + (mfma or 0) * 512
     else:
         raise ValueError(f"unknown tool {tool!r}")
     for k, v in pairs.items():
@@ -180,9 +182,12 @@ def rows(trace: dict[tuple[str, str], Row], counters: list[dict], times: dict[st
     for part in counters:
         keys += [k for k in part if k not in trace and k not in keys]
     per_stage: dict[str, int] = defaultdict(int)
+    launching: dict[str, list[str]] = defaultdict(list)
     for stage, name in keys:
         if name != OUTSIDE:
             per_stage[stage] += 1
+            if trace.get((stage, name), Row()).launches:
+                launching[stage].append(name)
     out = []
     for key in keys:
         stage, name = key
@@ -198,7 +203,10 @@ def rows(trace: dict[tuple[str, str], Row], counters: list[dict], times: dict[st
         comps = stage_times.get("components") or {}
         if name in comps:
             time = comps[name]
-        elif not comps and name != OUTSIDE and per_stage[stage] == 1:
+        elif not comps and name != OUTSIDE and (
+                launching[stage] == [name] or (not launching[stage] and per_stage[stage] == 1)):
+            # no per-range times (SpMV, BLAS): the case's time goes to the one range that
+            # launched kernels, not to the linear operator's apply(...) around it
             time = stage_times.get("total")
         else:
             time = None
