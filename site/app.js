@@ -4,6 +4,7 @@
 import { TABS, parseHash, formatHash, caseLabel, flagText, renderTokens, heatmapModel, formatValue, formatChange,
   flatChildren, cellLink, clickedCell, revealCell, rawNote, baselineText, flagBadge, runSummary, formatSeconds, markerSeries, rowFilter, scatterProps, scatterModel, rooflineModel, zoomView, panView, plotFraction, childPath, solverRows, preconditionerRows, triadChartModel, energyRows, shortVersion } from "./logic.js";
 import { renderDistributed } from "./distributed.js";
+import { renderKernels } from "./kernels.js";
 
 // tabs: the tab files, loaded on the first visit of the tab; shown: the route
 // of the last rendered tab; views: the roofline view of each tab
@@ -628,6 +629,16 @@ async function render() {
   replace(root);
   if (tab === "machines") {
     await renderMachines(root, token);
+    return;
+  }
+  if (tab === "kernels") {
+    try {
+      await renderKernels(root, { el, put, replace, loadJson, formatHash, machineLabel,
+        params: state.route.params, isLatest: () => tokens.isLatest(token) });
+    } catch (error) {
+      showBanner("error", `Could not load the kernel counters: ${error.message}`);
+    }
+    window.scrollTo(0, scrollY);
     return;
   }
   if (tab === "distributed") {

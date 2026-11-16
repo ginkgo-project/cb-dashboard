@@ -212,3 +212,43 @@ td.number { text-align: right; white-space: nowrap; }
 .dist-numbers thead th { color: var(--muted); font-weight: 500; }
 .dist-chips a { margin-right: 6px; }
 .dist-chips a[aria-current="true"] { font-weight: 600; color: var(--fg); }
+
+/* the Kernels tab: one bar per run, split by Ginkgo range, and the table of ranges */
+:root {
+  --k0: #2a78d6; --k1: #eb6834; --k2: #1baf7a; --k3: #eda100;
+  --k4: #e87ba4; --k5: #6250d6; --k6: #0e9aa7; --k7: #8c6d46;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --k0: #4f94e6; --k1: #f08257; --k2: #35c48f; --k3: #f2b632;
+    --k4: #ee93b5; --k5: #8577e6; --k6: #2cb6c2; --k7: #b08f63;
+  }
+}
+.kbars { display: grid; gap: 4px; margin: 8px 0; max-width: 960px; }
+.kbar-row { display: grid; grid-template-columns: 9.5rem 1fr 5.5rem; align-items: center; gap: 8px;
+  font-size: 0.8rem; }
+.kbar-label { color: var(--muted); white-space: nowrap; }
+.kbar { display: flex; height: 14px; background: var(--panel); border-radius: 2px; overflow: hidden; }
+.kseg { height: 100%; box-shadow: inset -1px 0 0 var(--bg); }
+.kbar-total { text-align: right; font-variant-numeric: tabular-nums; }
+.kbar-none { color: var(--muted); font-style: italic; }
+.k0 { background: var(--k0); } .k1 { background: var(--k1); } .k2 { background: var(--k2); }
+.k3 { background: var(--k3); } .k4 { background: var(--k4); } .k5 { background: var(--k5); }
+.k6 { background: var(--k6); } .k7 { background: var(--k7); } .other { background: var(--none); }
+.klegend { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.kkey { display: inline-flex; align-items: center; gap: 4px; }
+.kswatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+table.kernels { border-collapse: collapse; font-size: 0.8rem; margin: 6px 0; }
+table.kernels th, table.kernels td { padding: 2px 8px; text-align: right; white-space: nowrap;
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+table.kernels thead th { color: var(--muted); font-weight: 500; }
+table.kernels tbody th { text-align: left; font-weight: 400; }
+table.kernels tbody th a { color: var(--fg); text-decoration: none; }
+table.kernels tr.opened th a { font-weight: 600; }
+table.kernels tr.kernel-of th { padding-left: 24px; color: var(--muted); }
+table.kernels tr.kernel-of td { color: var(--muted); }
+table.kernels tr.gone { color: var(--muted); text-decoration: line-through; }
+table.kernels .tag { margin-left: 6px; font-size: 0.7rem; color: var(--muted); text-decoration: none; }
+table.kernels td.chg-up { color: var(--fail); font-weight: 600; }
+table.kernels td.chg-down { color: var(--ok); font-weight: 600; }
+table.kernels td.chg-changed { color: var(--cancel); font-weight: 600; }

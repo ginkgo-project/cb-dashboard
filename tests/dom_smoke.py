@@ -11,7 +11,9 @@ selected, and the stage filter on the preconditioners tab. Every flag
 link found on the tabs is followed too: it must show its cell. The
 distributed tab shows its change table (or that there are no runs yet); with
 runs, an opened benchmark row must show its two plots and its blocks, and an
-opened MPI row its change map and plots. Without a
+opened MPI row its change map and plots. The kernels tab shows its bars
+and table (or that a machine has no kernel counters yet); with counters, a
+case with an opened row shows that row's kernels. Without a
 browser the test skips, unless --require-browser is given (as in CI).
 Standard library only.
 """
@@ -141,6 +143,11 @@ DIST_OPEN = ("opened row with its two plots and blocks",
 DIST_MPI = ("opened MPI row with its change map and plots",
             lambda d: d.has("table", "dist-small") and d.count("svg", "dist-chart") == 3
             and d.has("polyline", "line", "ideal") and d.has("td", "selected"))
+KERNELS = ("kernels bars and table or its no-counters note",
+           lambda d: (d.has("table", "kernels") and d.has("div", "kbars"))
+           or d.has("p", "kernels-none"))
+KERNELS_OPEN = ("opened kernels row with its kernels",
+                lambda d: d.has("tr", "kernel-of"))
 GENERATE = ("generate rows",
             lambda d: any(t.strip().endswith("(generate)") for t in d.texts))
 
@@ -159,6 +166,26 @@ def distributed_pages(site: Path) -> list:
             pages.append((f"#distributed?machine={q}&row={quote(mpi[0], safe='')}",
                           [DISTRIBUTED, DIST_MPI]))
         return pages
+    return []
+
+
+def kernels_pages(site: Path) -> list:
+    """The first case of the first machine with kernel counters, with its slowest row opened."""
+    path = site / "data" / "kernels.json"
+    data = json.loads(path.read_text()) if path.is_file() else {"machines": {}}
+    for machine, m in data["machines"].items():
+        for key, case in m["cases"].items():
+            ok = [r for r in case["runs"] if r["operations"]]
+            if not ok:
+                continue
+            ops = sorted(ok[-1]["operations"], key=lambda o: -(o.get("time") or 0))
+            row = next((o["name"] for o in ops if o.get("kernels")), None)
+            if row is None:
+                continue
+            stage = ops[0].get("stage") or ""
+            q = (f"machine={quote(machine, safe='')}&case={quote(key, safe='')}"
+                 f"&row={quote(row, safe='')}" + (f"&stage={stage}" if stage else ""))
+            return [(f"#kernels?{q}", [KERNELS, KERNELS_OPEN])]
     return []
 
 
@@ -196,8 +223,9 @@ def main(argv=None) -> int:
     pages = [("#basic", [HEATMAP, ROOFLINE]), ("#solvers", [HEATMAP, ROOFLINE]),
              ("#preconditioners", [HEATMAP, STAGES, ROOFLINE]),
              ("#preconditioners?stage=generate", [HEATMAP, GENERATE]),
-             ("#distributed", [DISTRIBUTED]), ("#machines", [SETUP])]
+             ("#distributed", [DISTRIBUTED]), ("#kernels", [KERNELS]), ("#machines", [SETUP])]
     pages += distributed_pages(site)
+    pages += kernels_pages(site)
     cell = default_cell(site)
     if cell is None:
         print("FAIL: basic.json has no SpMV csr cell to select")
