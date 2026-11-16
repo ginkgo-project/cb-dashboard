@@ -242,7 +242,8 @@ table.kernels { border-collapse: collapse; font-size: 0.8rem; margin: 6px 0; }
 table.kernels th, table.kernels td { padding: 2px 8px; text-align: right; white-space: nowrap;
   border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 table.kernels thead th { color: var(--muted); font-weight: 500; }
-table.kernels tbody th { text-align: left; font-weight: 400; }
+table.kernels tbody th { text-align: left; font-weight: 400; max-width: 26rem; overflow: hidden;
+  text-overflow: ellipsis; }
 table.kernels tbody th a { color: var(--fg); text-decoration: none; }
 table.kernels tr.opened th a { font-weight: 600; }
 table.kernels tr.kernel-of th { padding-left: 24px; color: var(--muted); }

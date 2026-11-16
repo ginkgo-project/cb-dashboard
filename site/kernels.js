@@ -2,7 +2,7 @@
 // run by run (one bar per run, split by Ginkgo range), and a table that maps each range's
 // time in the newest run to its counts and hardware counters, against the run before.
 // A row opens into its GPU kernels. The DOM helpers come from app.js.
-import { barModel, tableModel, shortKernel, modelRatio, OTHER } from "./kernels-logic.js";
+import { barModel, tableModel, shortKernel, shortRange, modelRatio, OTHER } from "./kernels-logic.js";
 import { formatValue } from "./logic.js";
 import { formatBytes } from "./distributed-logic.js";
 
@@ -93,7 +93,7 @@ export async function renderKernels(root, ui) {
     const segments = b.segments.map((s) => {
       names.set(s.name, s.colour);
       return el("span", { class: `kseg ${s.colour}`, style: `width: ${(100 * s.time / scale).toFixed(2)}%`,
-        title: `${s.name}: ${fmtTime(s.time)}` });
+        title: `${shortRange(s.name)}: ${fmtTime(s.time)}` });
     });
     return el("div", { class: "kbar-row" }, label, el("span", { class: "kbar" }, segments),
       el("span", { class: "kbar-total" }, fmtTime(b.total)));
@@ -101,7 +101,8 @@ export async function renderKernels(root, ui) {
   put(root, el("div", { class: "kbars", role: "img",
     "aria-label": `Time of ${c.label}${stage ? ` (${stage})` : ""} by range, per run` }, barRows));
   put(root, el("p", { class: "legend klegend" }, [...names].map(([name, colour]) =>
-    el("span", { class: "kkey" }, el("span", { class: `kswatch ${colour}` }), name === OTHER ? "other" : name))));
+    el("span", { class: "kkey", title: name }, el("span", { class: `kswatch ${colour}` }),
+      name === OTHER ? "other" : shortRange(name)))));
   put(root, el("p", { class: "legend" },
     "Times from Ginkgo's own timing of each range (-detailed), exclusive of the ranges inside it; "
     + "the counters from a separate profiled run."));
@@ -124,10 +125,10 @@ export async function renderKernels(root, ui) {
     const opened = params.row === row.name;
     const cls = [row.isNew ? "new" : "", row.isGone ? "gone" : "", opened ? "opened" : ""].filter(Boolean).join(" ");
     const name = row.kernels.length && !row.isGone
-      ? el("a", { href: link({ row: opened ? undefined : row.name }) }, `${opened ? "▾" : "▸"} ${row.name}`)
-      : row.name;
-    put(body, el("tr", { class: cls || undefined, title: row.parent ? `in ${row.parent}` : undefined },
-      el("th", { scope: "row" }, name, row.isNew ? el("span", { class: "tag" }, "new") : null,
+      ? el("a", { href: link({ row: opened ? undefined : row.name }) }, `${opened ? "▾" : "▸"} ${shortRange(row.name)}`)
+      : shortRange(row.name);
+    put(body, el("tr", { class: cls || undefined },
+      el("th", { scope: "row", title: row.parent ? `${row.name}, in ${row.parent}` : row.name }, name, row.isNew ? el("span", { class: "tag" }, "new") : null,
         row.isGone ? el("span", { class: "tag" }, "gone") : null),
       COLUMNS.map(([k, , f]) => el("td", { class: row.changes[k] ? `chg-${row.changes[k]}` : undefined },
         row.isGone ? dash : f(row.values[k]))),

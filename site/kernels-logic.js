@@ -101,7 +101,24 @@ export function shortKernel(name) {
       depth++;
     } else if (c === ">" || c === ")") depth--;
   }
-  return s.replace(/^gko::kernels::\w+::/, "").replace(/\(anonymous namespace\)::/g, "").replace(/^gko::/, "");
+  return s.replace(/^gko::kernels::\w+::/, "").replace(/\(anonymous namespace\)::/g, "").replace(/^gko::/, "")
+    .replace(/CUB_\w+_NS::/g, "");
+}
+
+// a range's name for the table: an operation as it is; a linear operator's without "gko::"
+// and with its types' template arguments folded ("generate(multigrid::Pgm<…>::Factory)")
+export function shortRange(name) {
+  if (!name.includes("(")) return name;
+  let out = "";
+  let depth = 0;
+  for (const c of name.replace(/gko::/g, "")) {
+    if (c === "<") {
+      if (depth === 0) out += "<…>";
+      depth++;
+    } else if (c === ">") depth--;
+    else if (depth === 0) out += c;
+  }
+  return out;
 }
 
 // measured DRAM bytes against the dashboard's model of the case, or null without either

@@ -83,3 +83,16 @@ test("the hit rate and bytes against the model", () => {
   assert.equal(K.modelRatio({ dram_read_bytes: 150, dram_write_bytes: 50 }, 100), 2);
   assert.equal(K.modelRatio({ dram_read_bytes: 150 }, undefined), null);
 });
+
+test("short range names keep operations and fold linear operators' types", () => {
+  assert.equal(K.shortRange("csr::transpose"), "csr::transpose");
+  assert.equal(K.shortRange("generate(gko::multigrid::Pgm<double, int>::Factory)"),
+    "generate(multigrid::Pgm<…>::Factory)");
+  assert.equal(K.shortRange("advanced_apply(gko::matrix::Dense<double> * gko::matrix::Csr<double, int> * gko::matrix::Identity<double> + gko::matrix::Dense<double> * gko::matrix::Csr<double, int>)"),
+    "advanced_apply(matrix::Dense<…> * matrix::Csr<…> * matrix::Identity<…> + matrix::Dense<…> * matrix::Csr<…>)");
+});
+
+test("cub's versioned namespace is dropped", () => {
+  assert.equal(K.shortKernel("cub::CUB_200101_750_800_860_NS::DeviceRadixSortOnesweepKernel<cub::A, true>(int)"),
+    "cub::DeviceRadixSortOnesweepKernel");
+});
