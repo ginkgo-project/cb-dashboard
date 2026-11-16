@@ -13,6 +13,7 @@ from typing import Callable
 from .cases import Measurement, measurements
 from .changes import Cell, Point, cells_for_case, flags, unchanged
 from .distributed import build_distributed
+from .kernels import build_kernels
 from .load import GROUPS, Column, Run, columns, load_runs
 from .models import MODELS, compare_kind, cost, model_name, stencil_nonzeros
 from .reproduce import command
@@ -561,6 +562,9 @@ def build_site(results: Path, manifest: Path, catalog: Path, out: Path, *,
         history[name] = _machine_history(mruns)
     _write(out / "machines.json", {"machines": history})
     build_distributed(results, out, warnings)  # the Distributed tab, before meta's warnings
+    build_kernels(results, out, warnings,  # the Kernels tab, with the modelled bytes
+                  {name: {d: {k: p.nbytes for k, p in pts.items() if p.nbytes}
+                          for d, pts in mp.items()} for name, mp in points.items()})
     _write(out / "meta.json", {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "machines": meta_machines, "flag_counts": flag_counts,
