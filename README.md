@@ -328,3 +328,76 @@ recorded as failed.
   - for the solvers, the iterations.
 - **Opening an MPI row** shows a change map of message size against GPU count,
   and the time and bandwidth for one GPU count.
+
+## Kernel counters
+
+After the five timing groups, each single-node run reads, for a few selected
+cases, where the time goes inside Ginkgo and what the hardware counted there.
+For every range Ginkgo times in its own `-detailed` mode (an operation such as
+`csr::spgemm`, a linear operator's `generate(...)`, `allocate`, `copy`), it
+records the time, the calls, the GPU kernels it launched, the allocations and
+copies inside it, the DRAM bytes read and written, the FP64 operations and the
+L2 hit rate, also per GPU kernel. The Kernels tab shows them run by run.
+
+### The cases
+
+A few per group, chosen to cover different structures rather than all of them:
+the matrix decides which code paths run (CSR SpMV's strategy, hybrid's split,
+SpGEMM's subwarp size, PGM's matching rounds) and how irregularly the vector is
+read, but several matrices of the suite take the same paths.
+
+- multigrid (PGM, uniform, PMIS), setup and apply: curl_curl, elasticity_p2;
+- SpMV in the four formats: ecology2, audikw1, TSOPF_RS_b2383_c1, com-Orkut;
+- SpGEMM on both of its matrices; `dot` and `axpy` at the three vector lengths;
+- GEMV (Ginkgo's `mm` with one column) at three sizes, from cache-resident to
+  memory-bound. It is only in this tab.
+
+`bench run --kernel-cases <key>,...` adds any other case of the suite by its
+dashboard key, e.g. when a timing tab flags SpMV on USA-road-d.USA.
+`--no-kernels` leaves the stage out. The cases are in `bench/kernel_cases.py`.
+
+### How a case is measured
+
+Each case is its own invocation, in several passes, all through `srun` like the
+groups:
+
+1. **time:** the benchmark with `-detailed`; the only times kept, since
+   profiling changes them.
+2. **trace** (NVIDIA): Nsight Systems, for the kernels, allocations and copies
+   of each range.
+3. **counters:** one pass per group of the machine's counters, with Ginkgo's
+   `-profile` (one repetition, Ginkgo's NVTX/ROCTX ranges on). On NVIDIA,
+   Nsight Compute with each group fitting one hardware pass, without flushing
+   caches between kernels, and only for the kernels in the measured ranges; on
+   AMD, `rocprofv3` with one run of the benchmark per group, the first of which
+   also traces what the counts need.
+
+The settings are the `[kernels]` table of `bench/machines/<machine>.toml`: the
+profiler, the counter groups, the stage's budget (45 min) and each pass's
+timeout. The stage runs the cases in a fixed order, multigrid first, and skips
+the rest (recorded as skipped) once the budget is used.
+
+A kernel belongs to the range open on its thread when it was **launched**, not
+when it ran: Ginkgo's ranges don't wait for the GPU. Only the benchmark's
+measured ranges (`repetition`, `repetition generate`, `repetition apply`)
+count; reading the matrix, conversions and the preconditioner benchmark's
+second setup for its storage are left out, and a kernel in a measured range but
+in no range below it is listed as `(outside operations)`. Counter groups come
+from separate runs, so they are combined per range and kernel name.
+
+**Across vendors:** DRAM bytes on the MI300A are everything fetched past the L2,
+including what its Infinity Cache serves; its FP64 operations are counted per
+wavefront of 64 lanes; its copy trace has no sizes. Compare hit rates, not
+counts, between the machines.
+
+### Results
+
+- `<run>/kernels.json`: per case its status and its rows, rewritten after every
+  case; committed with the run. `run.json["kernels"]` records the stage (status,
+  seconds, each case's passes and exit codes), outside `groups`: the stage never
+  fails a run, never moves `last_commit` and never keeps the import from taking
+  the run.
+- `<run>/logs/kernels/<case>/`: the time pass's output and every pass's stderr.
+- The profilers' own outputs are large and go to
+  `$SCRATCH/cb/kernels-raw/<machine>/<run>/<case>/`, outside the run directory,
+  which goes into the CI artifacts the import takes only up to 50 MB.
