@@ -18,7 +18,6 @@ import csv
 import io
 import json
 import re
-import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -194,6 +193,7 @@ NVTX_PUSH_POP = 59  # NVTX_EVENTS.eventType of push/pop ranges
 def read_nsys(sqlite_path: Path) -> tuple[list[Range], list[Kernel], list[Copy]]:
     """The tables of `nsys export --type sqlite`: ranges, kernels and copies, the latter two
     with the CPU time and thread of the call that launched them."""
+    import sqlite3  # here, not at the top: Beverin's venv Python has no sqlite3, and only nsys needs it
     con = sqlite3.connect(str(sqlite_path))
     tables = {r[0] for r in con.execute("select name from sqlite_master where type='table'")}
     strings = dict(con.execute("select id, value from StringIds")) if "StringIds" in tables else {}

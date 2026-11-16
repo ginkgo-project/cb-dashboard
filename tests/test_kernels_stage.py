@@ -126,3 +126,16 @@ def test_unreadable_output_is_partial(m, tmp_path):
     rec = S.run_kernels(m, [a], tmp_path / "run", deadline=None, run=run)
     c = rec["cases"][0]
     assert c["status"] == "partial" and "cannot read" in c["reason"]
+
+
+def test_imports_without_sqlite3():
+    """Beverin's venv Python has no sqlite3; only Daint's nsys reader needs it."""
+    import sys
+    code = ("import sys; sys.modules['sqlite3'] = None; sys.modules['_sqlite3'] = None\n"
+            "import bench.__main__, bench.kernels, bench.profilers\n"
+            "from bench.profilers import read_rocprof\n"
+            f"print(len(read_rocprof({str(DATA.parent / 'beverin' / 'dot-0')!r})[1]))")
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                       cwd=Path(__file__).parent.parent)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip() == "9"

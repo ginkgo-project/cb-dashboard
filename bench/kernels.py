@@ -14,7 +14,6 @@ artifacts and the import takes only up to 50 MB.
 from __future__ import annotations
 
 import json
-import sqlite3
 import subprocess
 import time
 from pathlib import Path
@@ -26,6 +25,12 @@ from bench.machine import Machine
 from bench.profilers import (measured_ranges, passes, read_detailed, read_ncu, read_nsys,
                              read_rocprof)
 from bench.runner import srun_time_minutes
+
+try:  # Beverin's venv Python has no sqlite3 (only Daint's nsys trace is a database)
+    from sqlite3 import Error as _DbError
+except ImportError:
+    class _DbError(Exception):
+        pass
 
 
 def raw_dir(m: Machine, out: Path) -> Path:
@@ -65,7 +70,7 @@ def _rows(m: Machine, case: KernelCase, done: dict, problems: list[str]) -> list
     def read(p, f):
         try:
             return f(p.out)
-        except (OSError, ValueError, KeyError, IndexError, sqlite3.Error) as e:
+        except (OSError, ValueError, KeyError, IndexError, _DbError) as e:
             problems.append(f"cannot read {p.name}: {type(e).__name__}: {e}")
             return None
 
