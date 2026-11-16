@@ -42,18 +42,18 @@ MPICH_GPU_SUPPORT_ENABLED = "1"
 
 # The kernel counters (README "Kernel counters"): Nsight Systems traces each case
 # for the counts (launches, allocations, copies), Nsight Compute reads the
-# hardware counters of every kernel, replaying each kernel as often as the
-# hardware needs, so all metrics go in one pass. Both come with the uenv.
+# hardware counters. Each list is its own ncu run: each takes one hardware pass,
+# while all of them at once take four, and ncu replays every kernel once per
+# pass (233 s instead of about 90 s for a PGM setup). Both tools come with the uenv.
 [kernels]
 tool = "ncu"
 profiler = ["ncu"]
 tracer = ["nsys"]
-metrics = [[
-    "dram__bytes_read.sum",
-    "dram__bytes_write.sum",
-    "sm__sass_thread_inst_executed_op_dfma_pred_on.sum",
-    "sm__sass_thread_inst_executed_op_dadd_pred_on.sum",
-    "sm__sass_thread_inst_executed_op_dmul_pred_on.sum",
-    "lts__t_sectors_lookup_hit.sum",
-    "lts__t_sectors_lookup_miss.sum",
-]]
+metrics = [
+    ["dram__bytes_read.sum", "dram__bytes_write.sum"],
+    ["sm__sass_thread_inst_executed_op_dfma_pred_on.sum",
+     "sm__sass_thread_inst_executed_op_dadd_pred_on.sum",
+     "sm__sass_thread_inst_executed_op_dmul_pred_on.sum"],
+    ["lts__t_sectors_lookup_hit.sum"],
+    ["lts__t_sectors_lookup_miss.sum"],
+]

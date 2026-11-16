@@ -112,8 +112,8 @@ def test_machine_without_distributed_section(tmp_path):
 def test_kernels_settings_daint():
     k = load_machine("daint-gh200", env={"SCRATCH": "/s"}).kernels
     assert k.tool == "ncu" and k.profiler == ["ncu"] and k.tracer == ["nsys"]
-    assert len(k.metrics) == 1 and len(k.metrics[0]) == 7
-    assert "dram__bytes_read.sum" in k.metrics[0]
+    assert [len(g) for g in k.metrics] == [2, 3, 1, 1]
+    assert k.metrics[0] == ["dram__bytes_read.sum", "dram__bytes_write.sum"]
     assert k.budget_s == 2700 and k.timeout_s == 900
 
 

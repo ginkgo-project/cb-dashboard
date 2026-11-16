@@ -1,0 +1,312 @@
+[
+    {
+        "filename": "/capstor/store/cscs/userlab/d131/cb/matrices/fem/elasticity_p2.bin",
+        "preconditioner": {
+            "mg-pgm": {
+                "generate": {
+                    "components": {
+                        "generate(gko::solver::Multigrid::Factory)": 0.0019564042,
+                        "generate(gko::multigrid::Pgm<double, int>::Factory)": 0.0098951012,
+                        "allocate": 0.3553265318,
+                        "components::fill_array": 0.0013925900000000002,
+                        "copy": 0.027959271600000002,
+                        "free": 0.0401257578,
+                        "csr::sort_by_column_index": 0.009731127000000001,
+                        "components::outplace_absolute_array": 0.0012690076000000002,
+                        "csr::transpose": 0.0618871728,
+                        "components::compute_max_row_nnz": 0.0018587722000000001,
+                        "advanced_apply(gko::matrix::Dense<double> * gko::matrix::Csr<double, int> * gko::matrix::Identity<double> + gko::matrix::Dense<double> * gko::matrix::Csr<double, int>)": 0.0009711096,
+                        "copy(gko::matrix::Csr<double, int>,gko::matrix::Csr<double, int>)": 0.0009382286,
+                        "csr::spgeam": 0.0047081318,
+                        "csr::extract_diagonal": 0.0013767982000000001,
+                        "pgm::find_strongest_neighbor": 0.011541951600000001,
+                        "pgm::match_edge": 0.00036560440000000003,
+                        "pgm::count_unagg": 0.0025701984000000002,
+                        "pgm::assign_to_exist_agg": 0.0008204322,
+                        "pgm::renumber": 0.0009734918,
+                        "components::fill_seq_array": 0.0001254754,
+                        "pgm::sort_agg": 0.0018432516,
+                        "components::convert_idxs_to_ptrs": 0.00028668720000000006,
+                        "pgm::map_row": 0.002597721,
+                        "pgm::map_col": 0.0005813344000000001,
+                        "components::sort_row_major": 0.09105834260000001,
+                        "pgm::count_unrepeated_nnz": 0.0011990084000000002,
+                        "pgm::compute_coarse_coo": 0.003656485,
+                        "move(gko::matrix::Coo<double, int>,gko::matrix::Csr<double, int>)": 0.0004944748,
+                        "generate(gko::solver::Ir<double>::Factory)": 0.0010013862,
+                        "generate(gko::preconditioner::Jacobi<double, int>::Factory)": 0.0013585694000000001,
+                        "jacobi::invert_diagonal": 0.000344616,
+                        "generate(gko::solver::Cg<double>::Factory)": 1.8920000000000002e-05,
+                        "jacobi::find_blocks": 0.0002854698,
+                        "jacobi::generate": 0.00026948080000000006,
+                        "overhead": 0.01549036
+                    },
+                    "time": 0.592772216796875,
+                    "repetitions": 5,
+                    "repetition_times": [
+                        0.592772216796875,
+                        0.6222764282226563,
+                        0.5800233764648437,
+                        0.605179443359375,
+                        0.5797064819335938
+                    ]
+                },
+                "apply": {
+                    "components": {
+                        "apply(gko::solver::Multigrid * gko::matrix::Dense<double> = gko::matrix::Dense<double>)": 1.2576600000000001e-05,
+                        "iteration": 0.0038608494,
+                        "dense::fill": 0.00010618380000000001,
+                        "allocate": 0.00024113980000000003,
+                        "ir::initialize": 0.000145293,
+                        "check(gko::stop::Iteration)": 0.0005378406,
+                        "apply(gko::solver::Ir<double> * gko::matrix::Dense<double> = gko::matrix::Dense<double>)": 0.00027290880000000004,
+                        "advanced_apply(gko::matrix::Dense<double> * gko::preconditioner::Jacobi<double, int> * gko::matrix::Dense<double> + gko::matrix::Dense<double> * gko::matrix::Dense<double>)": 0.000331412,
+                        "jacobi::scalar_apply": 0.00019333300000000001,
+                        "set_all_statuses::set_all_statuses": 0.0001583802,
+                        "copy(gko::matrix::Dense<double>,gko::matrix::Dense<double>)": 0.0003191882,
+                        "dense::copy": 0.00017278900000000002,
+                        "advanced_apply(gko::matrix::Dense<double> * gko::matrix::Csr<double, int> * gko::matrix::Dense<double> + gko::matrix::Dense<double> * gko::matrix::Dense<double>)": 0.0003595248,
+                        "csr::advanced_spmv": 0.0017064430000000002,
+                        "apply(gko::matrix::SparsityCsr<double, int> * gko::matrix::Dense<double> = gko::matrix::Dense<double>)": 0.00015972920000000002,
+                        "sparsity_csr::spmv": 8.2907e-05,
+                        "apply(gko::solver::Cg<double> * gko::matrix::Dense<double> = gko::matrix::Dense<double>)": 0.0002091302,
+                        "cg::initialize": 1.22724e-05,
+                        "apply(gko::preconditioner::Jacobi<double, int> * gko::matrix::Dense<double> = gko::matrix::Dense<double>)": 0.00033624260000000004,
+                        "jacobi::simple_apply": 0.00025175800000000004,
+                        "dense::compute_conj_dot_dispatch": 0.00033503060000000004,
+                        "cg::step_1": 0.00013151580000000002,
+                        "apply(gko::matrix::Csr<double, int> * gko::matrix::Dense<double> = gko::matrix::Dense<double>)": 0.0003484712,
+                        "csr::spmv": 0.0001363106,
+                        "cg::step_2": 0.0001487666,
+                        "advanced_apply(gko::matrix::Dense<double> * gko::matrix::RowGatherer<int> * gko::matrix::Dense<double> + gko::matrix::Dense<double> * gko::matrix::Dense<double>)": 0.0001938496,
+                        "dense::advanced_row_gather": 8.530740000000002e-05,
+                        "overhead": 0.004227114400000001
+                    },
+                    "time": 0.002335891008377075,
+                    "repetitions": 5,
+                    "repetition_times": [
+                        0.003423465967178345,
+                        0.0023279719352722167,
+                        0.002335891008377075,
+                        0.002374221086502075,
+                        0.0023298909664154054
+                    ]
+                },
+                "parameters": {
+                    "coarsest_solver": [
+                        {
+                            "criteria": [
+                                {
+                                    "max_iters": 20,
+                                    "type": "Iteration"
+                                }
+                            ],
+                            "preconditioner": {
+                                "accuracy": 0.1,
+                                "aggregate_l1": false,
+                                "max_block_size": 32,
+                                "max_block_stride": 0,
+                                "skip_sorting": false,
+                                "storage_optimization": [
+                                    0,
+                                    0
+                                ],
+                                "type": "preconditioner::Jacobi",
+                                "value_type": "float64"
+                            },
+                            "type": "solver::Cg",
+                            "value_type": "float64"
+                        }
+                    ],
+                    "criteria": [
+                        {
+                            "max_iters": 1,
+                            "type": "Iteration"
+                        }
+                    ],
+                    "cycle": "v",
+                    "default_initial_guess": "zero",
+                    "kcycle_base": 1,
+                    "kcycle_rel_tol": 0.25,
+                    "max_levels": 10,
+                    "mg_level": [
+                        {
+                            "deterministic": false,
+                            "max_iterations": 15,
+                            "max_unassigned_ratio": 0.05,
+                            "skip_sorting": false,
+                            "type": "multigrid::Pgm",
+                            "value_type": "float64"
+                        }
+                    ],
+                    "mid_case": "standalone",
+                    "min_coarse_rows": 64,
+                    "post_uses_pre": true,
+                    "smoother_iters": 1,
+                    "smoother_relax": [
+                        0.9,
+                        0.0
+                    ],
+                    "type": "solver::Multigrid"
+                },
+                "storage": 1696346132,
+                "levels": [
+                    {
+                        "fine_rows": 605694,
+                        "coarse_rows": 288145,
+                        "coarse_nonzeros": 22402343,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 605694,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 605694,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 288145,
+                        "coarse_rows": 139271,
+                        "coarse_nonzeros": 11266769,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 288145,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 288145,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 139271,
+                        "coarse_rows": 67169,
+                        "coarse_nonzeros": 5112057,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 139271,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 139271,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 67169,
+                        "coarse_rows": 32574,
+                        "coarse_nonzeros": 2367852,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 67169,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 67169,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 32574,
+                        "coarse_rows": 15814,
+                        "coarse_nonzeros": 1114248,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 32574,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 32574,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 15814,
+                        "coarse_rows": 7688,
+                        "coarse_nonzeros": 525456,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 15814,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 15814,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 7688,
+                        "coarse_rows": 3720,
+                        "coarse_nonzeros": 242824,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 7688,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 7688,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 3720,
+                        "coarse_rows": 1798,
+                        "coarse_nonzeros": 110162,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 3720,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 3720,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 1798,
+                        "coarse_rows": 869,
+                        "coarse_nonzeros": 48717,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 1798,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 1798,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    },
+                    {
+                        "fine_rows": 869,
+                        "coarse_rows": 418,
+                        "coarse_nonzeros": 20380,
+                        "restrict_type": "sparsity_csr",
+                        "restrict_nonzeros": 869,
+                        "prolong_type": "row_gatherer",
+                        "prolong_nonzeros": 869,
+                        "pre_smoother": "gko::solver::Ir<double>",
+                        "pre_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "mid_smoother": "gko::solver::Ir<double>",
+                        "mid_smoother_solver": "gko::preconditioner::Jacobi<double, int>",
+                        "post_smoother": "gko::solver::Ir<double>",
+                        "post_smoother_solver": "gko::preconditioner::Jacobi<double, int>"
+                    }
+                ],
+                "completed": true
+            }
+        },
+        "rows": 605694,
+        "cols": 605694,
+        "nonzeros": 49960456
+    }
+]
