@@ -96,3 +96,12 @@ test("cub's versioned namespace is dropped", () => {
   assert.equal(K.shortKernel("cub::CUB_200101_750_800_860_NS::DeviceRadixSortOnesweepKernel<cub::A, true>(int)"),
     "cub::DeviceRadixSortOnesweepKernel");
 });
+
+test("a case timed only as a whole has no bar, and says why", () => {
+  // a hybrid SpMV: two operations launch kernels, and the benchmark times only the whole case
+  const ops = [row("apply(gko::matrix::Hybrid<double, int>)", null, { launches: 0 }),
+    row("ell::spmv", null), row("coo::spmv2", null)].map((o) => ({ ...o, stage: "" }));
+  const bars = K.barModel([run("r1", ops)], "");
+  assert.equal(bars[0].total, null);
+  assert.equal(bars[0].reason, K.UNSPLIT);
+});

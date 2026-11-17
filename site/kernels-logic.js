@@ -6,6 +6,9 @@ export const OTHER = "other";
 export const COLOURS = 8;            // named colours; the rest fold into "other"
 export const OTHER_BELOW = 0.03;     // a range under 3 % of the total folds into "other"
 export const CHANGE = 0.05;          // a time or counter that moves more than this is marked
+// a case whose benchmark times it only as a whole, while several of its ranges launch kernels
+// (a hybrid SpMV: the ELL and the COO part)
+export const UNSPLIT = "no time per range: the benchmark times this case only as a whole";
 export const COUNTS = ["calls", "launches", "allocations", "copies"];
 export const MEASURES = ["time", "copy_bytes", "dram_read_bytes", "dram_write_bytes", "fp64_ops",
   "l2_hit_rate"];
@@ -35,7 +38,8 @@ export function barModel(runs, stage, { otherBelow = OTHER_BELOW } = {}) {
     const ops = ofStage(run, stage).filter((o) => o.time);
     if (run.status === "failed" || run.status === "skipped" || run.status === "not_available"
         || !ops.length) {
-      return { dir: run.dir, total: null, segments: [], reason: run.reason ?? run.status };
+      const unsplit = !ops.length && ofStage(run, stage).length && (run.status === "ok" || run.status === "partial");
+      return { dir: run.dir, total: null, segments: [], reason: unsplit ? UNSPLIT : run.reason ?? run.status };
     }
     const total = ops.reduce((s, o) => s + o.time, 0);
     const segments = [];
