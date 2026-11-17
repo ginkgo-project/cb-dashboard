@@ -1,0 +1,1389 @@
+{
+  "machine": "beverin-mi300a",
+  "node": "nid002668",
+  "gpu": {
+    "gpu": "Aqua Vanjaram [Instinct MI300A]",
+    "driver": "6.12.12",
+    "clocks": {
+      "sclk_mhz": 95,
+      "mclk_mhz": 1300,
+      "fclk_mhz": 2000
+    },
+    "binding": {
+      "srun": [
+        "srun",
+        "--ntasks=1",
+        "--gpus-per-task=1",
+        "--cpus-per-task=24",
+        "--hint=nomultithread",
+        "--export=ALL,OMP_NUM_THREADS=20"
+      ],
+      "visible_devices": "0",
+      "cpus": "0-23"
+    }
+  },
+  "toolchain": {
+    "g++": "g++ (Spack GCC) 13.4.0",
+    "clang++": "AMD clang version 18.0.0git",
+    "cmake": "cmake version 3.31.9"
+  },
+  "uenv": "prgenv-gnu/25.07-6.3.3:v12",
+  "cmake_cache": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CXX_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/g++",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_CXX_FLAGS_DEBUG": "-g",
+    "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_C_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/gcc",
+    "CMAKE_EXE_LINKER_FLAGS": "",
+    "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_HIP_COMPILER": "/user-environment/env/default/bin/clang++",
+    "CMAKE_HIP_FLAGS": "--gcc-toolchain=/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn",
+    "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_HIP_FLAGS_DEBUG": "-g -O",
+    "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_HIP_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_HIP_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_HIP_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_MODULE_LINKER_FLAGS": "",
+    "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_SHARED_LINKER_FLAGS": "",
+    "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_STATIC_LINKER_FLAGS": "",
+    "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+    "GINKGO_BUILD_BENCHMARKS": "ON",
+    "GINKGO_BUILD_CUDA": "OFF",
+    "GINKGO_BUILD_DOC": "OFF",
+    "GINKGO_BUILD_EXAMPLES": "OFF",
+    "GINKGO_BUILD_HIP": "ON",
+    "GINKGO_BUILD_MPI": "OFF",
+    "GINKGO_BUILD_OMP": "ON",
+    "GINKGO_BUILD_PAPI_SDE": "OFF",
+    "GINKGO_BUILD_REFERENCE": "ON",
+    "GINKGO_BUILD_SYCL": "OFF",
+    "GINKGO_BUILD_TESTS": "OFF",
+    "GINKGO_BUILD_UMPIRE": "OFF",
+    "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+    "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+    "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+    "GINKGO_CUDA_ARCHITECTURES": "Auto",
+    "GINKGO_DEVEL_TOOLS": "OFF",
+    "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+    "GINKGO_ENABLE_BFLOAT16": "OFF",
+    "GINKGO_ENABLE_HALF": "OFF",
+    "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+    "GINKGO_FAST_TESTS": "OFF",
+    "GINKGO_FORCE_GPU_AWARE_MPI": "OFF",
+    "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+    "GINKGO_INSTALL_RPATH": "ON",
+    "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+    "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+    "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+    "GINKGO_MIXED_PRECISION": "OFF",
+    "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+    "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+    "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+    "GINKGO_VERBOSE_LEVEL": "1",
+    "GINKGO_WITH_CCACHE": "ON",
+    "GINKGO_WITH_CLANG_TIDY": "OFF",
+    "GINKGO_WITH_IWYU": "OFF"
+  },
+  "ginkgo": {
+    "commit": "796a388db0e8fb8c2a2d9918c658858bcab9c798",
+    "commit_date": "2026-11-14",
+    "develop_base": "796a388db0e8fb8c2a2d9918c658858bcab9c798",
+    "ref": "origin/develop"
+  },
+  "dataset_version": "2",
+  "script_version": "f633a5e5351e48258fd0ac8bb12aa8f789c10e2b",
+  "started": "2026-11-17T07:09:40+00:00",
+  "finished": "2026-11-17T07:29:02+00:00",
+  "groups": {
+    "blas": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "spmv": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "spgemm": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "solver": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "preconditioner": {
+      "status": "skipped",
+      "reason": "not requested"
+    }
+  },
+  "build": {
+    "configured": false,
+    "fresh": false,
+    "seconds": 1.0034279620740563,
+    "cmake_cache": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_CXX_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/g++",
+      "CMAKE_CXX_FLAGS": "",
+      "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_CXX_FLAGS_DEBUG": "-g",
+      "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_C_COMPILER": "/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn/bin/gcc",
+      "CMAKE_EXE_LINKER_FLAGS": "",
+      "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_HIP_COMPILER": "/user-environment/env/default/bin/clang++",
+      "CMAKE_HIP_FLAGS": "--gcc-toolchain=/user-environment/linux-zen3/gcc-13.4.0-elkcnvsf7vgij5svtegpkqecv6hyswzn",
+      "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_HIP_FLAGS_DEBUG": "-g -O",
+      "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_HIP_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_HIP_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_HIP_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_MODULE_LINKER_FLAGS": "",
+      "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_SHARED_LINKER_FLAGS": "",
+      "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_STATIC_LINKER_FLAGS": "",
+      "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+      "GINKGO_BUILD_BENCHMARKS": "ON",
+      "GINKGO_BUILD_CUDA": "OFF",
+      "GINKGO_BUILD_DOC": "OFF",
+      "GINKGO_BUILD_EXAMPLES": "OFF",
+      "GINKGO_BUILD_HIP": "ON",
+      "GINKGO_BUILD_MPI": "OFF",
+      "GINKGO_BUILD_OMP": "ON",
+      "GINKGO_BUILD_PAPI_SDE": "OFF",
+      "GINKGO_BUILD_REFERENCE": "ON",
+      "GINKGO_BUILD_SYCL": "OFF",
+      "GINKGO_BUILD_TESTS": "OFF",
+      "GINKGO_BUILD_UMPIRE": "OFF",
+      "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+      "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+      "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+      "GINKGO_CUDA_ARCHITECTURES": "Auto",
+      "GINKGO_DEVEL_TOOLS": "OFF",
+      "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+      "GINKGO_ENABLE_BFLOAT16": "OFF",
+      "GINKGO_ENABLE_HALF": "OFF",
+      "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+      "GINKGO_FAST_TESTS": "OFF",
+      "GINKGO_FORCE_GPU_AWARE_MPI": "OFF",
+      "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+      "GINKGO_INSTALL_RPATH": "ON",
+      "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+      "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+      "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+      "GINKGO_MIXED_PRECISION": "OFF",
+      "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+      "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+      "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+      "GINKGO_VERBOSE_LEVEL": "1",
+      "GINKGO_WITH_CCACHE": "ON",
+      "GINKGO_WITH_CLANG_TIDY": "OFF",
+      "GINKGO_WITH_IWYU": "OFF"
+    }
+  },
+  "pm_counters": {
+    "accel0_energy": "1982859596 J 7161934237535 us",
+    "accel0_power": "184 W 7161934237535 us",
+    "accel0_power_cap": "0 W",
+    "accel1_energy": "1716024794 J 7161934237535 us",
+    "accel1_power": "162 W 7161934237535 us",
+    "accel1_power_cap": "0 W",
+    "accel2_energy": "1822139516 J 7161934237535 us",
+    "accel2_power": "187 W 7161934237535 us",
+    "accel2_power_cap": "0 W",
+    "accel3_energy": "1637178522 J 7161934237535 us",
+    "accel3_power": "160 W 7161934237535 us",
+    "accel3_power_cap": "0 W",
+    "capped_energy": "5080975 J 7161934237535 us",
+    "energy": "7986250235 J 7161934237535 us",
+    "freshness": "55435882",
+    "generation": "48",
+    "overshoot": "25167",
+    "overshoot_energy": "2126245 J 7161934237535 us",
+    "power": "809 W 7161934237535 us",
+    "power_cap": "2894 W",
+    "raw_scan_hz": "10",
+    "startup": "1787737849181601",
+    "version": "3"
+  },
+  "stream": {
+    "url": "https://github.com/UoB-HPC/BabelStream.git",
+    "commit": "17ab377b0e919e14fd3df2b67268761fdac8abb3",
+    "array_size": 134217728,
+    "num_times": 100,
+    "results": {
+      "copy": {
+        "bandwidth": 3338310000000.0,
+        "avg_bandwidth": 3098532617536.0435,
+        "min_runtime": 0.000643284,
+        "max_runtime": 0.000744634,
+        "avg_runtime": 0.000693064
+      },
+      "mul": {
+        "bandwidth": 3312310000000.0,
+        "avg_bandwidth": 3087824589398.7935,
+        "min_runtime": 0.000648334,
+        "max_runtime": 0.000741205,
+        "avg_runtime": 0.000695468
+      },
+      "add": {
+        "bandwidth": 3314680000000.0,
+        "avg_bandwidth": 3214318442109.4644,
+        "min_runtime": 0.000971807,
+        "max_runtime": 0.00112324,
+        "avg_runtime": 0.00100215
+      },
+      "triad": {
+        "bandwidth": 3350110000000.0,
+        "avg_bandwidth": 3239576659321.717,
+        "min_runtime": 0.000961527,
+        "max_runtime": 0.00104088,
+        "avg_runtime": 0.000994334
+      },
+      "dot": {
+        "bandwidth": 2513690000000.0,
+        "avg_bandwidth": 2360291860472.0176,
+        "min_runtime": 0.000854316,
+        "max_runtime": 0.000996696,
+        "avg_runtime": 0.000909839
+      }
+    },
+    "seconds": 5.645184281980619,
+    "gpu_after": {
+      "rocm-smi": {
+        "card0": {
+          "Temperature (Sensor junction) (C)": "40.0",
+          "Temperature (Sensor memory) (C)": "35.0",
+          "fclk clock speed:": "(2000Mhz)",
+          "fclk clock level:": "3",
+          "mclk clock speed:": "(1300Mhz)",
+          "mclk clock level:": "3",
+          "sclk clock speed:": "(99Mhz)",
+          "sclk clock level:": "S",
+          "socclk clock speed:": "(36Mhz)",
+          "socclk clock level:": "S",
+          "Max Graphics Package Power (W)": "550.0",
+          "Current Socket Graphics Package Power (W)": "115.0"
+        }
+      },
+      "partition": {
+        "card0": {
+          "Compute Partition": "SPX",
+          "Memory Partition": "NPS1"
+        }
+      }
+    }
+  },
+  "kernels": {
+    "status": "ok",
+    "seconds": 1150.3011424830183,
+    "cases": [
+      {
+        "key": "preconditioner/mg-pgm/curl_curl",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 16.907884569023736
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 11.049067531013861
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 8.690925822011195
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 8.641062011942267
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 8.841505392920226
+          }
+        ],
+        "seconds": 54.86645828804467
+      },
+      {
+        "key": "preconditioner/mg-uniform/curl_curl",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 20.21671899606008
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 9.547990345046856
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 9.69685747299809
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 9.297062682919204
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 9.445670507964678
+          }
+        ],
+        "seconds": 58.71552177204285
+      },
+      {
+        "key": "preconditioner/mg-pmis/curl_curl",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 8.996629237080924
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 7.942191235953942
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.741352127981372
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.944351279060356
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.838659971021116
+          }
+        ],
+        "seconds": 40.97844231699128
+      },
+      {
+        "key": "preconditioner/mg-pgm/elasticity_p2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 13.251532013062388
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 8.594679596018977
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 8.793028560932726
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 8.742010509013198
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 9.140862775035203
+          }
+        ],
+        "seconds": 49.24112088500988
+      },
+      {
+        "key": "preconditioner/mg-uniform/elasticity_p2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 15.755519656930119
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 10.24820825108327
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 8.891918184002861
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 10.09487048711162
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 9.394881770946085
+          }
+        ],
+        "seconds": 54.90866747801192
+      },
+      {
+        "key": "preconditioner/mg-pmis/elasticity_p2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 7.445621942984872
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 7.943085180944763
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.941799913998693
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.643607949023135
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.592431619064882
+          }
+        ],
+        "seconds": 39.011180976056494
+      },
+      {
+        "key": "spmv/csr/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.0802104040049016
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.786166399018839
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.084782492020167
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.5883537019835785
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.133283152943477
+          }
+        ],
+        "seconds": 19.706840171013027
+      },
+      {
+        "key": "spmv/coo/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.8763880289625376
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.1845443869242445
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.185219620005228
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 5.285834862967022
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.9324803380295634
+          }
+        ],
+        "seconds": 19.496485854964703
+      },
+      {
+        "key": "spmv/hybrid/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.9289091969840229
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.035699744941667
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.983390259090811
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.9327911300351843
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.032536845072173
+          }
+        ],
+        "seconds": 17.94544322299771
+      },
+      {
+        "key": "spmv/sellp/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.9775828240672126
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.936866516014561
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.8813327599782497
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.934451921028085
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.9792202400276437
+          }
+        ],
+        "seconds": 17.74455022707116
+      },
+      {
+        "key": "spmv/csr/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 7.190380995045416
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 8.848663246957585
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 8.79439417598769
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 8.844875121954829
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 8.744251072057523
+          }
+        ],
+        "seconds": 42.48288537294138
+      },
+      {
+        "key": "spmv/coo/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 7.138990083010867
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 8.896808287943713
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 9.194159826030955
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 8.94417988404166
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 9.044703071936965
+          }
+        ],
+        "seconds": 43.2501049839193
+      },
+      {
+        "key": "spmv/hybrid/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 7.090168030001223
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 9.246992797008716
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 9.399604990961961
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 9.148770413943566
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 9.09368202695623
+          }
+        ],
+        "seconds": 44.010900591965765
+      },
+      {
+        "key": "spmv/sellp/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 6.98928789794445
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 9.295053206966259
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 9.19551816501189
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 8.895275937975384
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 8.992802005959675
+          }
+        ],
+        "seconds": 43.400510113919154
+      },
+      {
+        "key": "spmv/csr/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.8354057690594345
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 5.188540127011947
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.934431564062834
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 5.335398788913153
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 5.0914903490338475
+          }
+        ],
+        "seconds": 23.41922889102716
+      },
+      {
+        "key": "spmv/coo/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.729642856051214
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.631699461024255
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.7346559460274875
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.782704234938137
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.834418429993093
+          }
+        ],
+        "seconds": 21.746087957988493
+      },
+      {
+        "key": "spmv/hybrid/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.729983099969104
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.634495851001702
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.5859982669353485
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.733691600034945
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.733148544910364
+          }
+        ],
+        "seconds": 21.44786649593152
+      },
+      {
+        "key": "spmv/sellp/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.6784358069999143
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.783693831996061
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.585577154997736
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.73235594003927
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.685676280991174
+          }
+        ],
+        "seconds": 21.50146818102803
+      },
+      {
+        "key": "spmv/csr/com-Orkut",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 19.62050483794883
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 20.42203115695156
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 20.72269998304546
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 20.420682015945204
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 20.11738954100292
+          }
+        ],
+        "seconds": 101.33597606094554
+      },
+      {
+        "key": "spmv/coo/com-Orkut",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 19.166628418955952
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 20.47073190100491
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 20.61929019598756
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 20.42085129104089
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 20.420537775033154
+          }
+        ],
+        "seconds": 101.13118914200459
+      },
+      {
+        "key": "spmv/hybrid/com-Orkut",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 19.66855158598628
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 20.97019757993985
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 21.11667302402202
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 20.626282674027607
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 20.72174689802341
+          }
+        ],
+        "seconds": 103.13743746897671
+      },
+      {
+        "key": "spgemm/poisson_p1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 6.639087997027673
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 7.290526726981625
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.338586477912031
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.087126314989291
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.287900810013525
+          }
+        ],
+        "seconds": 35.6779175469419
+      },
+      {
+        "key": "spgemm/elasticity_p2_graded",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 3.77967650804203
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.789813502924517
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.635179404984228
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.684371871990152
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.732587630976923
+          }
+        ],
+        "seconds": 22.661500953952782
+      },
+      {
+        "key": "blas/dot/1048576",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.628411725978367
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.751547939958982
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.582389216986485
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.6815147040179
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.6310027190484107
+          }
+        ],
+        "seconds": 16.303527807001956
+      },
+      {
+        "key": "blas/dot/16777216",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.627230138052255
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.631432472029701
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.5318433300126344
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.680492767947726
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.585706148063764
+          }
+        ],
+        "seconds": 16.08319374092389
+      },
+      {
+        "key": "blas/dot/134217728",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.627624741056934
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.632824501954019
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.6312232890632004
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.6333713750354946
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.681696866056882
+          }
+        ],
+        "seconds": 16.234756851103157
+      },
+      {
+        "key": "blas/axpy/1048576",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.5778593299910426
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.685277989017777
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.5814879190875217
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.530650891014375
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.583064671023749
+          }
+        ],
+        "seconds": 15.986251696012914
+      },
+      {
+        "key": "blas/axpy/16777216",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.5771497649839148
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.83267747994978
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.8332865639822558
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.7835774610284716
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.889500009943731
+          }
+        ],
+        "seconds": 16.94372994301375
+      },
+      {
+        "key": "blas/axpy/134217728",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.729324238956906
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.582726467982866
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.4824628960341215
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.5311178129632026
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.732717750943266
+          }
+        ],
+        "seconds": 16.086288393009454
+      },
+      {
+        "key": "blas/gemv/2048",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.9784392550354823
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.7884113239124417
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.732886372017674
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.731085740029812
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.7798466969979927
+          }
+        ],
+        "seconds": 17.040681156911887
+      },
+      {
+        "key": "blas/gemv/8192",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.9267522199079394
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.7826891439035535
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.9804989689728245
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.8824862230103463
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.079663030919619
+          }
+        ],
+        "seconds": 17.682810342055745
+      },
+      {
+        "key": "blas/gemv/32768",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.079420962021686
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.38535741600208
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.333395059918985
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.43913818593137
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.383299884037115
+          }
+        ],
+        "seconds": 19.64943718991708
+      }
+    ]
+  }
+}
