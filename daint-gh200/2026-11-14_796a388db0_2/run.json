@@ -1,0 +1,1685 @@
+{
+  "machine": "daint-gh200",
+  "node": "nid005866",
+  "gpu": {
+    "gpu": "NVIDIA GH200 120GB",
+    "driver": "595.91.07",
+    "clocks": {
+      "sm_mhz": 345,
+      "mem_mhz": 2619,
+      "max_sm_mhz": 1980,
+      "max_mem_mhz": 2619,
+      "power_limit_w": 900.0
+    },
+    "binding": {
+      "srun": [
+        "srun",
+        "--ntasks=1",
+        "--gpus-per-task=1",
+        "--cpus-per-task=72",
+        "--cpu-bind=cores",
+        "--export=ALL,OMP_NUM_THREADS=64"
+      ],
+      "visible_devices": "0",
+      "cpus": "0-71"
+    }
+  },
+  "toolchain": {
+    "g++": "g++ (Spack GCC) 14.3.0",
+    "cuda": "Build cuda_13.1.r13.1/compiler.37061995_0",
+    "cmake": "cmake version 3.31.11"
+  },
+  "uenv": "prgenv-gnu/26.3:v1",
+  "cmake_cache": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CUDA_COMPILER": "/user-environment/env/default/bin/nvcc",
+    "CMAKE_CUDA_FLAGS": "",
+    "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+    "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+    "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_CUDA_HOST_COMPILER": "g++",
+    "CMAKE_CXX_COMPILER": "/user-environment/env/default/bin/g++",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_CXX_FLAGS_DEBUG": "-g",
+    "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+    "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_C_COMPILER": "gcc",
+    "CMAKE_EXE_LINKER_FLAGS": "",
+    "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+    "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+    "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+    "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+    "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+    "CMAKE_MODULE_LINKER_FLAGS": "",
+    "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_SHARED_LINKER_FLAGS": "",
+    "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "CMAKE_STATIC_LINKER_FLAGS": "",
+    "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+    "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+    "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+    "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+    "GINKGO_BUILD_BENCHMARKS": "ON",
+    "GINKGO_BUILD_CUDA": "ON",
+    "GINKGO_BUILD_DOC": "OFF",
+    "GINKGO_BUILD_EXAMPLES": "OFF",
+    "GINKGO_BUILD_HIP": "OFF",
+    "GINKGO_BUILD_MPI": "OFF",
+    "GINKGO_BUILD_OMP": "ON",
+    "GINKGO_BUILD_PAPI_SDE": "OFF",
+    "GINKGO_BUILD_REFERENCE": "ON",
+    "GINKGO_BUILD_SYCL": "OFF",
+    "GINKGO_BUILD_TESTS": "OFF",
+    "GINKGO_BUILD_UMPIRE": "OFF",
+    "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+    "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+    "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+    "GINKGO_CUDA_ARCHITECTURES": "90",
+    "GINKGO_DEVEL_TOOLS": "OFF",
+    "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+    "GINKGO_ENABLE_BFLOAT16": "OFF",
+    "GINKGO_ENABLE_HALF": "OFF",
+    "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+    "GINKGO_FAST_TESTS": "OFF",
+    "GINKGO_FORCE_GPU_AWARE_MPI": "OFF",
+    "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+    "GINKGO_INSTALL_RPATH": "ON",
+    "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+    "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+    "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+    "GINKGO_MIXED_PRECISION": "OFF",
+    "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+    "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+    "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+    "GINKGO_VERBOSE_LEVEL": "1",
+    "GINKGO_WITH_CCACHE": "ON",
+    "GINKGO_WITH_CLANG_TIDY": "OFF",
+    "GINKGO_WITH_IWYU": "OFF"
+  },
+  "ginkgo": {
+    "commit": "796a388db0e8fb8c2a2d9918c658858bcab9c798",
+    "commit_date": "2026-11-14",
+    "develop_base": "796a388db0e8fb8c2a2d9918c658858bcab9c798",
+    "ref": "origin/develop"
+  },
+  "dataset_version": "2",
+  "script_version": "f633a5e5351e48258fd0ac8bb12aa8f789c10e2b",
+  "started": "2026-11-17T07:09:41+00:00",
+  "finished": "2026-11-17T07:39:40+00:00",
+  "groups": {
+    "blas": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "spmv": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "spgemm": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "solver": {
+      "status": "skipped",
+      "reason": "not requested"
+    },
+    "preconditioner": {
+      "status": "skipped",
+      "reason": "not requested"
+    }
+  },
+  "build": {
+    "configured": false,
+    "fresh": false,
+    "seconds": 0.8263870849623345,
+    "cmake_cache": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_CUDA_COMPILER": "/user-environment/env/default/bin/nvcc",
+      "CMAKE_CUDA_FLAGS": "",
+      "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+      "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+      "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_CUDA_HOST_COMPILER": "g++",
+      "CMAKE_CXX_COMPILER": "/user-environment/env/default/bin/g++",
+      "CMAKE_CXX_FLAGS": "",
+      "CMAKE_CXX_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_CXX_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_CXX_FLAGS_DEBUG": "-g",
+      "CMAKE_CXX_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+      "CMAKE_CXX_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_CXX_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_C_COMPILER": "gcc",
+      "CMAKE_EXE_LINKER_FLAGS": "",
+      "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_HIP_FLAGS_ASAN": "-g -O1 -fsanitize=address -fno-omit-frame-pointer",
+      "CMAKE_HIP_FLAGS_COVERAGE": "-g -O0 --coverage",
+      "CMAKE_HIP_FLAGS_LSAN": "-g -O1 -fsanitize=leak",
+      "CMAKE_HIP_FLAGS_TSAN": "-g -O1 -fsanitize=thread -fno-omit-frame-pointer -fPIC",
+      "CMAKE_HIP_FLAGS_UBSAN": "-g -O1 -fsanitize=undefined -static-libubsan",
+      "CMAKE_MODULE_LINKER_FLAGS": "",
+      "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_SHARED_LINKER_FLAGS": "",
+      "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "CMAKE_STATIC_LINKER_FLAGS": "",
+      "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+      "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+      "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+      "GINKGO_BENCHMARK_ENABLE_TUNING": "OFF",
+      "GINKGO_BUILD_BENCHMARKS": "ON",
+      "GINKGO_BUILD_CUDA": "ON",
+      "GINKGO_BUILD_DOC": "OFF",
+      "GINKGO_BUILD_EXAMPLES": "OFF",
+      "GINKGO_BUILD_HIP": "OFF",
+      "GINKGO_BUILD_MPI": "OFF",
+      "GINKGO_BUILD_OMP": "ON",
+      "GINKGO_BUILD_PAPI_SDE": "OFF",
+      "GINKGO_BUILD_REFERENCE": "ON",
+      "GINKGO_BUILD_SYCL": "OFF",
+      "GINKGO_BUILD_TESTS": "OFF",
+      "GINKGO_BUILD_UMPIRE": "OFF",
+      "GINKGO_CHECK_CIRCULAR_DEPS": "OFF",
+      "GINKGO_CI_TEST_OMP_PARALLELISM": "4",
+      "GINKGO_CONFIG_LOG_DETAILED": "OFF",
+      "GINKGO_CUDA_ARCHITECTURES": "90",
+      "GINKGO_DEVEL_TOOLS": "OFF",
+      "GINKGO_DPCPP_SINGLE_MODE": "OFF",
+      "GINKGO_ENABLE_BFLOAT16": "OFF",
+      "GINKGO_ENABLE_HALF": "OFF",
+      "GINKGO_EXTENSION_KOKKOS_CHECK_TYPE_ALIGNMENT": "ON",
+      "GINKGO_FAST_TESTS": "OFF",
+      "GINKGO_FORCE_GPU_AWARE_MPI": "OFF",
+      "GINKGO_HIP_AMD_UNSAFE_ATOMIC": "ON",
+      "GINKGO_INSTALL_RPATH": "ON",
+      "GINKGO_INSTALL_RPATH_DEPENDENCIES": "OFF",
+      "GINKGO_INSTALL_RPATH_ORIGIN": "ON",
+      "GINKGO_JACOBI_FULL_OPTIMIZATIONS": "OFF",
+      "GINKGO_MIXED_PRECISION": "OFF",
+      "GINKGO_SKIP_DEPENDENCY_UPDATE": "ON",
+      "GINKGO_SPLIT_TEMPLATE_INSTANTIATIONS": "ON",
+      "GINKGO_TEST_NONDEFAULT_STREAM": "OFF",
+      "GINKGO_VERBOSE_LEVEL": "1",
+      "GINKGO_WITH_CCACHE": "ON",
+      "GINKGO_WITH_CLANG_TIDY": "OFF",
+      "GINKGO_WITH_IWYU": "OFF"
+    }
+  },
+  "pm_counters": {
+    "accel0_energy": "2387991094 J 1794899383469294 us",
+    "accel0_power": "95 W 1794899383469294 us",
+    "accel0_power_cap": "900 W",
+    "accel1_energy": "2213932016 J 1794899383485519 us",
+    "accel1_power": "95 W 1794899383485519 us",
+    "accel1_power_cap": "900 W",
+    "accel2_energy": "2204430827 J 1794899383502808 us",
+    "accel2_power": "89 W 1794899383502808 us",
+    "accel2_power_cap": "900 W",
+    "accel3_energy": "2232539838 J 1794899383527124 us",
+    "accel3_power": "86 W 1794899383527124 us",
+    "accel3_power_cap": "900 W",
+    "cpu0_energy": "815858712 J 1794899383466747 us",
+    "cpu0_power": "46 W 1794899383466747 us",
+    "cpu0_temp": "31 C 1794899383457217 us",
+    "cpu1_energy": "671024863 J 1794899383467295 us",
+    "cpu1_power": "38 W 1794899383467295 us",
+    "cpu1_temp": "35 C 1794899383456003 us",
+    "cpu2_energy": "799383060 J 1794899383463809 us",
+    "cpu2_power": "36 W 1794899383463809 us",
+    "cpu2_temp": "35 C 1794899383458722 us",
+    "cpu3_energy": "672401811 J 1794899383466128 us",
+    "cpu3_power": "41 W 1794899383466128 us",
+    "cpu3_temp": "31 C 1794899383456171 us",
+    "cpu_energy": "2958668446 J 1794899383467295 us",
+    "cpu_power": "161 W 1794899383467295 us",
+    "energy": "13297401997 J 1794899383371848 us",
+    "freshness": "75213476",
+    "generation": "37",
+    "power": "660 W 1794899383371848 us",
+    "power_cap": "2852 W",
+    "raw_scan_hz": "10",
+    "startup": "1784044418148065",
+    "version": "3"
+  },
+  "stream": {
+    "url": "https://github.com/UoB-HPC/BabelStream.git",
+    "commit": "17ab377b0e919e14fd3df2b67268761fdac8abb3",
+    "array_size": 134217728,
+    "num_times": 100,
+    "results": {
+      "copy": {
+        "bandwidth": 3530110000000.0,
+        "avg_bandwidth": 3522882789747.7285,
+        "min_runtime": 0.000608334,
+        "max_runtime": 0.000611471,
+        "avg_runtime": 0.000609582
+      },
+      "mul": {
+        "bandwidth": 3486450000000.0,
+        "avg_bandwidth": 3480206600292.356,
+        "min_runtime": 0.000615951,
+        "max_runtime": 0.000619406,
+        "avg_runtime": 0.000617056
+      },
+      "add": {
+        "bandwidth": 3702870000000.0,
+        "avg_bandwidth": 3695109618642.4155,
+        "min_runtime": 0.000869927,
+        "max_runtime": 0.000873479,
+        "avg_runtime": 0.000871754
+      },
+      "triad": {
+        "bandwidth": 3708600000000.0,
+        "avg_bandwidth": 3697909655903.9556,
+        "min_runtime": 0.000868583,
+        "max_runtime": 0.000876902,
+        "avg_runtime": 0.000871094
+      },
+      "dot": {
+        "bandwidth": 3651690000000.0,
+        "avg_bandwidth": 3634533351685.2695,
+        "min_runtime": 0.000588079,
+        "max_runtime": 0.000595887,
+        "avg_runtime": 0.000590855
+      }
+    },
+    "seconds": 3.6270998480031267,
+    "gpu_after": {
+      "nvidia-smi": {
+        "Timestamp": "Tue Nov 17 08:09:49 2026",
+        "Driver Version": "595.91.07",
+        "CUDA Version": "13.2",
+        "Attached GPUs": "4",
+        "GPU 00000009:01:00.0": {
+          "Performance State": "P0",
+          "Clocks Event Reasons": {
+            "Idle": "Not Active",
+            "Applications Clocks Setting": "Not Active",
+            "SW Power Cap": "Not Active",
+            "HW Slowdown": "Not Active",
+            "HW Thermal Slowdown": "Not Active",
+            "HW Power Brake Slowdown": "Not Active",
+            "Sync Boost": "Not Active",
+            "SW Thermal Slowdown": "Not Active",
+            "Display Clock Setting": "Not Active"
+          },
+          "Clocks Event Reasons Counters": {
+            "SW Power Capping": "183492326312 us",
+            "Sync Boost": "0 us",
+            "SW Thermal Slowdown": "0 us",
+            "HW Thermal Slowdown": "0 us",
+            "HW Power Braking": "0 us"
+          },
+          "Sparse Operation Mode": "Disabled",
+          "ECC Mode": {
+            "Current": "Enabled",
+            "Pending": "Enabled"
+          },
+          "ECC Errors": {
+            "Volatile": {
+              "SRAM Correctable": "0",
+              "SRAM Uncorrectable Parity": "0",
+              "SRAM Uncorrectable SEC-DED": "0",
+              "DRAM Correctable": "0",
+              "DRAM Uncorrectable": "0"
+            },
+            "Aggregate": {
+              "SRAM Correctable": "0",
+              "SRAM Uncorrectable Parity": "0",
+              "SRAM Uncorrectable SEC-DED": "0",
+              "DRAM Correctable": "0",
+              "DRAM Uncorrectable": "0",
+              "SRAM Threshold Exceeded": "No"
+            },
+            "Aggregate Uncorrectable SRAM Sources": {
+              "SRAM L2": "0",
+              "SRAM SM": "0",
+              "SRAM Microcontroller": "0",
+              "SRAM PCIE": "0",
+              "SRAM Other": "0"
+            },
+            "Channel Repair Pending": "No",
+            "TPC Repair Pending": "No",
+            "Unrepairable Memory": "No"
+          },
+          "Temperature": {
+            "GPU Current Temp": "27 C",
+            "GPU T.Limit Temp": "59 C",
+            "GPU Shutdown T.Limit Temp": "-8 C",
+            "GPU Slowdown T.Limit Temp": "-2 C",
+            "GPU Max Operating T.Limit Temp": "0 C",
+            "GPU Target Temperature": "N/A",
+            "Memory Current Temp": "36 C",
+            "Memory Max Operating T.Limit Temp": "0 C"
+          },
+          "GPU Power Readings": {
+            "Average Power Draw": "186.23 W",
+            "Instantaneous Power Draw": "147.38 W",
+            "Current Power Limit": "900.00 W",
+            "Requested Power Limit": "900.00 W",
+            "Default Power Limit": "900.00 W",
+            "Min Power Limit": "100.00 W",
+            "Max Power Limit": "900.00 W"
+          },
+          "Power Samples": {
+            "Duration": "2.36 sec",
+            "Number of Samples": "119",
+            "Max": "525.58 W",
+            "Min": "94.12 W",
+            "Avg": "187.25 W"
+          },
+          "GPU Memory Power Readings": {
+            "Average Power Draw": "34.37 W",
+            "Instantaneous Power Draw": "N/A"
+          },
+          "Module Power Readings": {
+            "Average Power Draw": "273.76 W",
+            "Instantaneous Power Draw": "230.36 W",
+            "Current Power Limit": "660.12 W",
+            "Requested Power Limit": "1000.00 W",
+            "Default Power Limit": "1000.00 W",
+            "Min Power Limit": "200.00 W",
+            "Max Power Limit": "1000.00 W"
+          },
+          "EDPp Multiplier": "0.00%",
+          "Clocks": {
+            "Graphics": "1980 MHz",
+            "SM": "1980 MHz",
+            "Memory": "2619 MHz",
+            "Video": "1545 MHz"
+          },
+          "Applications Clocks": {
+            "Graphics": "Requested functionality has been deprecated",
+            "Memory": "Requested functionality has been deprecated"
+          },
+          "Default Applications Clocks": {
+            "Graphics": "Requested functionality has been deprecated",
+            "Memory": "Requested functionality has been deprecated"
+          },
+          "Deferred Clocks": {
+            "Memory": "N/A"
+          },
+          "Max Clocks": {
+            "Graphics": "1980 MHz",
+            "SM": "1980 MHz",
+            "Memory": "2619 MHz",
+            "Video": "1545 MHz"
+          },
+          "Max Customer Boost Clocks": {
+            "Graphics": "1980 MHz"
+          },
+          "SM Clock Samples": {
+            "Duration": "Not Found",
+            "Number of Samples": "Not Found",
+            "Max": "Not Found",
+            "Min": "Not Found",
+            "Avg": "Not Found"
+          },
+          "Memory Clock Samples": {
+            "Duration": "Not Found",
+            "Number of Samples": "Not Found",
+            "Max": "Not Found",
+            "Min": "Not Found",
+            "Avg": "Not Found"
+          },
+          "Clock Policy": {
+            "Auto Boost": "N/A",
+            "Auto Boost Default": "N/A"
+          }
+        }
+      }
+    }
+  },
+  "kernels": {
+    "status": "ok",
+    "seconds": 1791.1446195269818,
+    "cases": [
+      {
+        "key": "preconditioner/mg-pgm/curl_curl",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 8.534292468975764
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 14.459661756001879
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 30.105207866989076
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 12.438706399989314
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 36.76413375802804
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 36.917434333998244
+          }
+        ],
+        "seconds": 139.45367041096324
+      },
+      {
+        "key": "preconditioner/mg-uniform/curl_curl",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 9.33159454894485
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 13.708672880020458
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 23.44738446199335
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 11.282810167991556
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 28.604375467984937
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 28.656500813027378
+          }
+        ],
+        "seconds": 115.23005887400359
+      },
+      {
+        "key": "preconditioner/mg-pmis/curl_curl",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 6.180709150969051
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 13.05998505599564
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 26.6535896230489
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 11.838223949016538
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 33.11244194599567
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 32.81208976596827
+          }
+        ],
+        "seconds": 123.8853876760113
+      },
+      {
+        "key": "preconditioner/mg-pgm/elasticity_p2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.978639520006254
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 13.108094413997605
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 28.705768333980814
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 12.535301148018334
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 35.71426680905279
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 35.915832506958395
+          }
+        ],
+        "seconds": 132.22983838099753
+      },
+      {
+        "key": "preconditioner/mg-uniform/elasticity_p2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 7.980839076975826
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 13.460758101951797
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 22.196973062003963
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 11.034396581992041
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 27.300392506993376
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 27.10278707498219
+          }
+        ],
+        "seconds": 109.25146053102799
+      },
+      {
+        "key": "preconditioner/mg-pmis/elasticity_p2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.477375824993942
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 12.907295000972226
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 23.546418394020293
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 10.934194027038757
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 29.205645967042074
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 29.354654646012932
+          }
+        ],
+        "seconds": 111.61134209600277
+      },
+      {
+        "key": "spmv/csr/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.626491020026151
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.954070059990045
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.978762465005275
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.574009788047988
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.623999249015469
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.775913764955476
+          }
+        ],
+        "seconds": 27.624853215005714
+      },
+      {
+        "key": "spmv/coo/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.4736060579889454
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.80570066603832
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.994100341980811
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.4754309469717555
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.5243371030082926
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.5261512550059706
+          }
+        ],
+        "seconds": 25.89116101001855
+      },
+      {
+        "key": "spmv/hybrid/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.5731762039940804
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.959331310004927
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.523268208024092
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.674410604988225
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.7254173049586825
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.526500942010898
+          }
+        ],
+        "seconds": 26.054567609971855
+      },
+      {
+        "key": "spmv/sellp/ecology2",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.4240313780028373
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.656543839955702
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.7742071830434725
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.4746956109884195
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.574648868001532
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.3266436029807664
+          }
+        ],
+        "seconds": 25.307856091007125
+      },
+      {
+        "key": "spmv/csr/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.577936219982803
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 13.957687038986478
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 7.728056707012001
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.580368463997729
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.73072257702006
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.58295737701701
+          }
+        ],
+        "seconds": 50.23877019295469
+      },
+      {
+        "key": "spmv/coo/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.427455823984928
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 14.161742147989571
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 7.578884435002692
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.628895194968209
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.579148585966323
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.830002018017694
+          }
+        ],
+        "seconds": 50.2962633750285
+      },
+      {
+        "key": "spmv/hybrid/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.477108069055248
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 14.560175580962095
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 8.179749463044573
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.680070875037927
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.527959953004029
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.729496602958534
+          }
+        ],
+        "seconds": 51.22598619997734
+      },
+      {
+        "key": "spmv/sellp/audikw1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.727667210972868
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 14.563228601997253
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 7.729306805005763
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 7.428807076998055
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.481560560991056
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.679440819018055
+          }
+        ],
+        "seconds": 50.68602512101643
+      },
+      {
+        "key": "spmv/csr/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.123494869971182
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.704783411987592
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.675150829018094
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.12456095602829
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.978358150983695
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.374762294988614
+          }
+        ],
+        "seconds": 30.064807749004103
+      },
+      {
+        "key": "spmv/coo/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.0232278060284443
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.405541554035153
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.1749636370223016
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.124774400959723
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.075134237005841
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.125390831031837
+          }
+        ],
+        "seconds": 29.004260288958903
+      },
+      {
+        "key": "spmv/hybrid/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.172941277967766
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.60426098498283
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.225381697004195
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.924873976968229
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.97595553699648
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.326339191000443
+          }
+        ],
+        "seconds": 29.30743397999322
+      },
+      {
+        "key": "spmv/sellp/TSOPF_RS_b2383_c1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 2.123291256953962
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.609523607010487
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.22549430700019
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.22866816498572
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 4.075201019993983
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 4.025247711979318
+          }
+        ],
+        "seconds": 29.373442523006815
+      },
+      {
+        "key": "spmv/csr/com-Orkut",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 15.688843925949186
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 24.723505094996653
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 17.640054979012348
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 17.291899460018612
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 17.143443048989866
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 17.642672324960586
+          }
+        ],
+        "seconds": 110.21114213601686
+      },
+      {
+        "key": "spmv/coo/com-Orkut",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 15.58969726000214
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 24.47189716604771
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 17.38949621998472
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 17.49246546399081
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 17.19478978397092
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 17.146631660987623
+          }
+        ],
+        "seconds": 109.35060819197679
+      },
+      {
+        "key": "spmv/hybrid/com-Orkut",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 15.488733695005067
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 24.77430602995446
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 17.640697719994932
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 17.292772438027896
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 17.393078148015775
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 17.642955156974494
+          }
+        ],
+        "seconds": 110.2925957540283
+      },
+      {
+        "key": "spgemm/poisson_p1",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 5.67992059502285
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 12.708020356018096
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 6.878473053977359
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 6.278201000008266
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 7.282208275049925
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 7.229146052966826
+          }
+        ],
+        "seconds": 46.12520989996847
+      },
+      {
+        "key": "spgemm/elasticity_p2_graded",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 4.125427616992965
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 11.20650884200586
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 4.776463600981515
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 4.374842248973437
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 5.025959438004065
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 5.376737567014061
+          }
+        ],
+        "seconds": 34.96054061403265
+      },
+      {
+        "key": "blas/dot/1048576",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.3244227099930868
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.953473353991285
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.674044429033529
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.2239905020105653
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.5242887279600836
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.1245928849675693
+          }
+        ],
+        "seconds": 24.888248398026917
+      },
+      {
+        "key": "blas/dot/16777216",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.62565329100471
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.204463292961009
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.374539189040661
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.6254895519814454
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.2262682339642197
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.3277823019889183
+          }
+        ],
+        "seconds": 25.63742835703306
+      },
+      {
+        "key": "blas/dot/134217728",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.2758080950006843
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 10.109757548023481
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.524886238970794
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.177768810011912
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.2748608390102163
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.3762864629970863
+          }
+        ],
+        "seconds": 24.794624871981796
+      },
+      {
+        "key": "blas/axpy/1048576",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.273452934983652
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.604563002008945
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.27501616202062
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.380939598020632
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.524822265957482
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.1248095029732212
+          }
+        ],
+        "seconds": 24.241180688957684
+      },
+      {
+        "key": "blas/axpy/16777216",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.3231731959967874
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.855292026011739
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.3240151010104455
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.1745336889871396
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.6767927010077983
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.125454539025668
+          }
+        ],
+        "seconds": 24.532820743042976
+      },
+      {
+        "key": "blas/axpy/134217728",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.5735128560336307
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.90489266399527
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.474574462044984
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.374621049966663
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.324967933993321
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.927323361975141
+          }
+        ],
+        "seconds": 25.64467767899623
+      },
+      {
+        "key": "blas/gemv/2048",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.3228742619976401
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.453412653005216
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.675626103999093
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.6249616079730913
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.4745363800320774
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.3753983310307376
+          }
+        ],
+        "seconds": 24.999752133036964
+      },
+      {
+        "key": "blas/gemv/8192",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.1736240950413048
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.552828526997473
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.323793368996121
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.2254209599923342
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.22394964605337
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.3745566290454008
+          }
+        ],
+        "seconds": 23.94936551997671
+      },
+      {
+        "key": "blas/gemv/32768",
+        "status": "ok",
+        "reason": null,
+        "passes": [
+          {
+            "name": "time",
+            "exit_code": 0,
+            "seconds": 1.3231341210193932
+          },
+          {
+            "name": "trace",
+            "exit_code": 0,
+            "seconds": 9.603514221031219
+          },
+          {
+            "name": "counters-0",
+            "exit_code": 0,
+            "seconds": 3.424313102965243
+          },
+          {
+            "name": "counters-1",
+            "exit_code": 0,
+            "seconds": 3.176016217970755
+          },
+          {
+            "name": "counters-2",
+            "exit_code": 0,
+            "seconds": 3.57452371501131
+          },
+          {
+            "name": "counters-3",
+            "exit_code": 0,
+            "seconds": 3.173971257987432
+          }
+        ],
+        "seconds": 24.346675453998614
+      }
+    ]
+  }
+}
